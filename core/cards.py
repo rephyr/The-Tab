@@ -1,0 +1,34 @@
+"""
+basic playing cards 
+"""
+from dataclasses import dataclass
+from typing import ClassVar, List
+
+SUIT_SYMBOLS = {
+    "Hearts": "♥",
+    "Diamonds": "♦",
+    "Clubs": "♣",
+    "Spades": "♠",
+}
+
+@dataclass
+class Cards:
+    rank: str
+    suit: str
+
+    SUITS: ClassVar[List[str]] = ["Hearts", "Diamonds", "Clubs", "Spades"]
+    RANKS: ClassVar[List[str]] = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+
+    def __str__(self) -> str:
+        symbol = SUIT_SYMBOLS.get(self.suit, self.suit)
+        return f"{symbol}{self.rank}"
+
+    def isFaceCard(self) -> bool:
+        return self.rank in {"J", "Q", "K"}
+
+    def value(self) -> int:
+        if self.rank == "A":
+            return 11
+        if self.is_face_card():
+            return 10
+        return int(self.rank)
