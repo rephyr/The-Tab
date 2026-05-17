@@ -15,7 +15,6 @@ SUIT_SYMBOLS = {
 class Cards:
     rank: str
     suit: str
-
     SUITS: ClassVar[List[str]] = ["Hearts", "Diamonds", "Clubs", "Spades"]
     RANKS: ClassVar[List[str]] = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 
@@ -29,6 +28,12 @@ class Cards:
     def value(self) -> int:
         if self.rank == "A":
             return 11
-        if self.is_face_card():
+        if self.isFaceCard():
             return 10
         return int(self.rank)
+
+    def isRed(self) -> bool:
+        return self.suit in {"Hearts", "Diamonds"}
+
+    def isBlack(self) -> bool:
+        return self.suit in {"Clubs", "Spades"}
