@@ -39,8 +39,8 @@ class Buja(Game):
 
     @staticmethod
     def cardsNeeded(playerCount: int, boardLength: int) -> int:
-        """Minimum cards required: 4 phase cards per player + 3 per board row."""
-        return 4 * playerCount + boardLength * 3
+        """Minimum cards required: 4 phase cards per player + 3 per board row + 1 final card."""
+        return 4 * playerCount + boardLength * 3 + 1
 
     def setInput(self, fn):
         self.inputFunc = fn
@@ -243,6 +243,10 @@ class Buja(Game):
             row = [self.deck.drawCard() for _ in range(3)]
             board.append(row)
 
+        finalCard = self.deck.drawCard()
+        lastRowDrinks = startDrinks + (boardLength - 1) * increment
+        finalDrinks = lastRowDrinks * 2
+
         print("\n=== THE BOARD (DEBUG PREVIEW) ===\n")
 
         for rowIndex, row in enumerate(board):
@@ -254,6 +258,8 @@ class Buja(Game):
                 rowPreview.append(f"{card} ({action.upper()})")
 
             print(f"Row {rowIndex + 1} | {drinks} drinks | " + " | ".join(rowPreview))
+
+        print(f"Final  | {finalDrinks} drinks | {finalCard} (SHARE)")
 
         print("\n=== BOARD PHASE START ===\n")
 
@@ -296,6 +302,24 @@ class Buja(Game):
                         target.addDrinks(drinks)
                         player.addDrinksToGive(drinks)
                         self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+
+        print(f"\n=== FINAL CARD | {finalDrinks} drinks | SHARE ===")
+        input(f"\nPress Enter to reveal")
+        print(f"Card: {finalCard} | Action: SHARE")
+
+        matchedPlayers = [p for p in self.players if p.hasRank(finalCard.rank)]
+        self.emit(BoardCardEvent(str(finalCard), "share", finalDrinks, [p.getName() for p in matchedPlayers]))
+
+        if not matchedPlayers:
+            print("Nobody matched this card.")
+        else:
+            for player in matchedPlayers:
+                target = self._chooseTarget(player)
+                print(f"{player.getName()} and {target.getName()} share {finalDrinks}")
+                player.addDrinks(finalDrinks)
+                target.addDrinks(finalDrinks)
+                player.addDrinksToGive(finalDrinks)
+                self.emit(ShareEvent(player.getName(), target.getName(), finalDrinks))
 
         print("\n=== BOARD END ===\n")
 
