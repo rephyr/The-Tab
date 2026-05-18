@@ -19,25 +19,6 @@ def formatReceipt(data: dict) -> str:
     lines.append(_line("="))
     lines.append("PLAYERS: " + ", ".join(data["players"]))
 
-    for phase in data["phases"]:
-        lines.append("")
-        lines.append(_line("-"))
-        lines.append(phase["name"].upper())
-        lines.append(_line("-"))
-
-        for turn in phase["turns"]:
-            lines.append(f"\n{turn['player']}:")
-
-            if turn["guess"] is not None:
-                result = "OK" if turn["correct"] else "WRONG"
-                lines.append(f"  {turn['guess']} -> {turn['card']} [{result}]")
-
-            if turn["gave_to"]:
-                lines.append(f"  {turn['gave_to']} drinks {turn['drinks']}")
-            elif turn["drinks"] > 0:
-                note = f" ({turn['note']})" if turn["note"] else ""
-                lines.append(f"  drinks {turn['drinks']}{note}")
-
     if data["board"]:
         lines.append("")
         lines.append(_line("-"))
