@@ -5,19 +5,16 @@ from core.deck import Deck
 from core.player import Player
 from games.bujaGame.buja import Buja
 
-
 def makePlayer(id=1, name="Test"):
     return Player(id=id, name=name)
-
 
 def makeCard(rank, suit="Hearts"):
     return Cards(rank, suit)
 
-
 def makeBuja():
     deck = Deck()
     deck.resetDeck()
-    players = [makePlayer(1, "Alice"), makePlayer(2, "Bob")]
+    players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
     return Buja(players=players, deck=deck, config={})
 
 
@@ -155,8 +152,8 @@ class TestBujaBoard(unittest.TestCase):
 
     def setUp(self):
         self.game = makeBuja()
-        self.alice = self.game.players[0]
-        self.bob = self.game.players[1]
+        self.testiMatti = self.game.players[0]
+        self.testiTimo = self.game.players[1]
 
     @patch("builtins.input", return_value="")
     @patch("builtins.print")
@@ -168,8 +165,8 @@ class TestBujaBoard(unittest.TestCase):
         ]):
             self.game._board()
 
-        self.assertTrue(self.alice.getDrinksTaken() >= 0)
-        self.assertTrue(self.bob.getDrinksTaken() >= 0)
+        self.assertTrue(self.testiMatti.getDrinksTaken() >= 0)
+        self.assertTrue(self.testiTimo.getDrinksTaken() >= 0)
 
 
 if __name__ == "__main__":

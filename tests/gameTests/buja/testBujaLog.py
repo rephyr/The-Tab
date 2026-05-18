@@ -22,14 +22,14 @@ def makeBujaWithLog():
     deck = Deck()
     deck.resetDeck()
     log = GameLog()
-    players = [makePlayer(1, "Alice"), makePlayer(2, "Bob")]
+    players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
     game = Buja(players=players, deck=deck, config={}, log=log)
     return game, log
 
 
 class TestBujaUsesLog(unittest.TestCase):
 
-    def test_log_receives_events_after_round(self):
+    def testLogReceivesEventsAfterRound(self):
         game, log = makeBujaWithLog()
 
         with patch.object(game, "_redOrBlack"), \
@@ -43,7 +43,7 @@ class TestBujaUsesLog(unittest.TestCase):
 
         self.assertGreater(len(log.events), 0)
 
-    def test_log_starts_with_game_start_event(self):
+    def testLogStartsWithGameStartEvent(self):
         game, log = makeBujaWithLog()
 
         with patch.object(game, "_redOrBlack"), \
@@ -57,7 +57,7 @@ class TestBujaUsesLog(unittest.TestCase):
 
         self.assertIsInstance(log.events[0], GameStartEvent)
 
-    def test_log_ends_with_game_end_event(self):
+    def testLogEndsWithGameEndEvent(self):
         game, log = makeBujaWithLog()
 
         with patch.object(game, "_redOrBlack"), \
@@ -71,7 +71,7 @@ class TestBujaUsesLog(unittest.TestCase):
 
         self.assertIsInstance(log.events[-1], GameEndEvent)
 
-    def test_game_start_event_has_player_names(self):
+    def testGameStartEventHasPlayerNames(self):
         game, log = makeBujaWithLog()
 
         with patch.object(game, "_redOrBlack"), \
@@ -84,13 +84,13 @@ class TestBujaUsesLog(unittest.TestCase):
             game.playRound()
 
         start = log.events[0]
-        self.assertIn("Alice", start.players)
-        self.assertIn("Bob", start.players)
+        self.assertIn("Testi Matti", start.players)
+        self.assertIn("Testi Timo", start.players)
 
-    def test_no_log_does_not_crash(self):
+    def testNoLogDoesNotCrash(self):
         deck = Deck()
         deck.resetDeck()
-        game = Buja(players=[makePlayer(1, "Alice"), makePlayer(2, "Bob")], deck=deck, config={})
+        game = Buja(players=[makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")], deck=deck, config={})
 
         with patch.object(game, "_redOrBlack"), \
              patch.object(game, "_higherOrLower"), \
@@ -101,7 +101,7 @@ class TestBujaUsesLog(unittest.TestCase):
 
             game.playRound()
 
-    def test_wrong_guess_emits_drink_event(self):
+    def testWrongGuessEmitsDrinkEvent(self):
         game, log = makeBujaWithLog()
         player = game.players[0]
 
@@ -112,11 +112,11 @@ class TestBujaUsesLog(unittest.TestCase):
 
             game._redOrBlack(player)
 
-        drink_events = [e for e in log.events if isinstance(e, DrinkEvent)]
-        self.assertEqual(len(drink_events), 1)
-        self.assertEqual(drink_events[0].player, "Alice")
+        drinkEvents = [e for e in log.events if isinstance(e, DrinkEvent)]
+        self.assertEqual(len(drinkEvents), 1)
+        self.assertEqual(drinkEvents[0].player, "Testi Matti")
 
-    def test_correct_guess_emits_give_event(self):
+    def testCorrectGuessEmitsGiveEvent(self):
         game, log = makeBujaWithLog()
         player = game.players[0]
 
@@ -127,19 +127,19 @@ class TestBujaUsesLog(unittest.TestCase):
 
             game._redOrBlack(player)
 
-        give_events = [e for e in log.events if isinstance(e, GiveEvent)]
-        self.assertEqual(len(give_events), 1)
-        self.assertEqual(give_events[0].giver, "Alice")
-        self.assertEqual(give_events[0].receiver, "Bob")
+        giveEvents = [e for e in log.events if isinstance(e, GiveEvent)]
+        self.assertEqual(len(giveEvents), 1)
+        self.assertEqual(giveEvents[0].giver, "Testi Matti")
+        self.assertEqual(giveEvents[0].receiver, "Testi Timo")
 
 
 class TestFullPipeline(unittest.TestCase):
 
-    def test_game_plays_itself_and_prints_receipt(self):
+    def testGamePlaysItselfAndPrintsReceipt(self):
         deck = Deck()
         deck.resetDeck()
         log = GameLog()
-        players = [makePlayer(1, "Alice"), makePlayer(2, "Bob")]
+        players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
         game = Buja(players=players, deck=deck, config={}, log=log)
 
         # 2 players × 4 phases = 8 guesses, then 9 enter presses for the board
@@ -156,7 +156,7 @@ class TestFullPipeline(unittest.TestCase):
         # should not raise
         formatReceipt(data, p)
 
-        self.assertEqual(data["players"], ["Alice", "Bob"])
+        self.assertEqual(data["players"], ["Testi Matti", "Testi Timo"])
         self.assertEqual(len(data["board"]), 9)
         self.assertEqual(len(data["scores"]), 2)
         self.assertIsNotNone(data["timestamp"])

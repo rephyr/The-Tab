@@ -1,7 +1,6 @@
 import unittest
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt
 
-
 class MockPrinter:
     def __init__(self):
         self.lines = []
@@ -12,9 +11,8 @@ class MockPrinter:
     def text(self, text=""): self.lines.append(str(text))
     def cut(self): self.cuts += 1
 
-
-def makeTurn(player="Alice", guess="Red", card="♥A", correct=True,
-             gave_to="Bob", drinks=1, note=None, hand_before=None):
+def makeTurn(player="Testi Matti", guess="Red", card="♥A", correct=True,
+             gave_to="Testi Timo", drinks=1, note=None, hand_before=None):
     return {
         "player": player,
         "guess": guess,
@@ -26,13 +24,12 @@ def makeTurn(player="Alice", guess="Red", card="♥A", correct=True,
         "hand_before": hand_before or [],
     }
 
-
 class TestFormatTurn(unittest.TestCase):
 
     def testShowsPlayerName(self):
         p = MockPrinter()
-        formatTurn("Red or Black", makeTurn(player="Alice"), p)
-        self.assertTrue(any("Alice" in l for l in p.lines))
+        formatTurn("Red or Black", makeTurn(player="Testi Matti"), p)
+        self.assertTrue(any("Testi Matti" in l for l in p.lines))
 
     def testShowsGuess(self):
         p = MockPrinter()
@@ -46,8 +43,8 @@ class TestFormatTurn(unittest.TestCase):
 
     def testShowsGaveToOnCorrect(self):
         p = MockPrinter()
-        formatTurn("Red or Black", makeTurn(gave_to="Bob", drinks=1), p)
-        self.assertTrue(any("Bob" in l for l in p.lines))
+        formatTurn("Red or Black", makeTurn(gave_to="Testi Timo", drinks=1), p)
+        self.assertTrue(any("Testi Timo" in l for l in p.lines))
 
     def testShowsDrinksOnWrong(self):
         p = MockPrinter()
@@ -78,24 +75,22 @@ class TestFormatTurn(unittest.TestCase):
         formatTurn("Red or Black", makeTurn(), p)
         self.assertEqual(p.cuts, 0)
 
-
 class TestFormatHand(unittest.TestCase):
 
     def testShowsPlayerName(self):
         p = MockPrinter()
-        formatHand("Alice", ["♥A", "♦K"], p)
-        self.assertTrue(any("ALICE" in l for l in p.lines))
+        formatHand("Testi Matti", ["♥A", "♦K"], p)
+        self.assertTrue(any("TESTI MATTI" in l for l in p.lines))
 
     def testShowsAllCardsSideBySide(self):
         p = MockPrinter()
-        formatHand("Alice", ["♥A", "♦K", "♣Q"], p)
+        formatHand("Testi Matti", ["♥A", "♦K", "♣Q"], p)
         self.assertTrue(any("♥A" in l and "♦K" in l and "♣Q" in l for l in p.lines))
 
     def testNoCut(self):
         p = MockPrinter()
-        formatHand("Alice", ["♥A"], p)
+        formatHand("Testi Matti", ["♥A"], p)
         self.assertEqual(p.cuts, 0)
-
 
 class TestFormatBoardCard(unittest.TestCase):
 
@@ -113,53 +108,51 @@ class TestFormatBoardCard(unittest.TestCase):
         p = MockPrinter()
         card = {
             "card": "♥A", "action": "drink", "drinks": 4,
-            "matched": ["Alice"],
-            "outcomes": [{"type": "drink", "player": "Alice", "drinks": 4}],
+            "matched": ["Testi Matti"],
+            "outcomes": [{"type": "drink", "player": "Testi Matti", "drinks": 4}],
         }
         formatBoardCard(card, p)
-        self.assertTrue(any("Alice" in l and "4" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in l and "4" in l for l in p.lines))
 
     def testShowsGiveOutcome(self):
         p = MockPrinter()
         card = {
             "card": "♥A", "action": "give", "drinks": 4,
-            "matched": ["Alice"],
-            "outcomes": [{"type": "give", "giver": "Alice", "receiver": "Bob", "drinks": 4}],
+            "matched": ["Testi Matti"],
+            "outcomes": [{"type": "give", "giver": "Testi Matti", "receiver": "Testi Timo", "drinks": 4}],
         }
         formatBoardCard(card, p)
-        self.assertTrue(any("Alice" in l and "Bob" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in l and "Testi Timo" in l for l in p.lines))
 
     def testShowsShareOutcome(self):
         p = MockPrinter()
         card = {
             "card": "♥A", "action": "share", "drinks": 4,
-            "matched": ["Alice"],
-            "outcomes": [{"type": "share", "player1": "Alice", "player2": "Bob", "drinks": 4}],
+            "matched": ["Testi Matti"],
+            "outcomes": [{"type": "share", "player1": "Testi Matti", "player2": "Testi Timo", "drinks": 4}],
         }
         formatBoardCard(card, p)
-        self.assertTrue(any("Alice" in l and "Bob" in l for l in p.lines))
-
+        self.assertTrue(any("Testi Matti" in l and "Testi Timo" in l for l in p.lines))
 
 class TestFormatTally(unittest.TestCase):
 
     def testShowsEachPlayer(self):
         p = MockPrinter()
-        formatTally([{"name": "Alice", "drank": 5, "gave": 3}, {"name": "Bob", "drank": 2, "gave": 7}], p)
-        self.assertTrue(any("Alice" in l for l in p.lines))
-        self.assertTrue(any("Bob" in l for l in p.lines))
+        formatTally([{"name": "Testi Matti", "drank": 5, "gave": 3}, {"name": "Testi Timo", "drank": 2, "gave": 7}], p)
+        self.assertTrue(any("Testi Matti" in l for l in p.lines))
+        self.assertTrue(any("Testi Timo" in l for l in p.lines))
 
     def testShowsDrankAndGave(self):
         p = MockPrinter()
-        formatTally([{"name": "Alice", "drank": 5, "gave": 3}], p)
+        formatTally([{"name": "Testi Matti", "drank": 5, "gave": 3}], p)
         self.assertTrue(any("5" in l and "3" in l for l in p.lines))
-
 
 class TestFormatReceipt(unittest.TestCase):
 
     def testCutsAfterEachTurn(self):
         p = MockPrinter()
         data = {
-            "phases": [{"name": "Red or Black", "turns": [makeTurn(), makeTurn(player="Bob")]}],
+            "phases": [{"name": "Red or Black", "turns": [makeTurn(), makeTurn(player="Testi Timo")]}],
             "hands": {},
             "board": [],
             "scores": [],
@@ -171,7 +164,7 @@ class TestFormatReceipt(unittest.TestCase):
         p = MockPrinter()
         data = {
             "phases": [],
-            "hands": {"Alice": ["♥A"], "Bob": ["♦K"]},
+            "hands": {"Testi Matti": ["♥A"], "Testi Timo": ["♦K"]},
             "board": [],
             "scores": [],
         }
@@ -184,7 +177,6 @@ class TestFormatReceipt(unittest.TestCase):
         data = {"phases": [], "hands": {}, "board": [card, card], "scores": []}
         formatReceipt(data, p)
         self.assertEqual(p.cuts, 2)
-
 
 if __name__ == "__main__":
     unittest.main()

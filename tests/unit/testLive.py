@@ -11,11 +11,11 @@ from printing.live import LivePrinter
 
 def makeLog():
     log = GameLog()
-    log.add(GameStartEvent(["Alice", "Bob"]))
+    log.add(GameStartEvent(["Testi Matti", "Testi Timo"]))
     return log
 
 
-def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gave_to="Bob", drinks=1):
+def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gave_to="Testi Timo", drinks=1):
     log.add(PhaseEvent(phase, player))
     log.add(GuessEvent(player, phase, guess, card, correct))
     if gave_to:
@@ -31,7 +31,7 @@ class TestLivePrinterPhase(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Alice", correct=False, gave_to=None, drinks=1)
+        addPhaseTurn(log, "Red or Black", "Testi Matti", correct=False, gave_to=None, drinks=1)
 
         printer.printWith.assert_called_once()
 
@@ -40,7 +40,7 @@ class TestLivePrinterPhase(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Alice", correct=True, gave_to="Bob", drinks=1)
+        addPhaseTurn(log, "Red or Black", "Testi Matti", correct=True, gave_to="Testi Timo", drinks=1)
 
         printer.printWith.assert_called_once()
 
@@ -49,8 +49,8 @@ class TestLivePrinterPhase(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Alice", gave_to="Bob")
-        addPhaseTurn(log, "Red or Black", "Bob", gave_to="Alice")
+        addPhaseTurn(log, "Red or Black", "Testi Matti", gave_to="Testi Timo")
+        addPhaseTurn(log, "Red or Black", "Testi Timo", gave_to="Testi Matti")
 
         self.assertEqual(printer.printWith.call_count, 2)
 
@@ -62,8 +62,8 @@ class TestLivePrinterHands(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Alice", gave_to="Bob")
-        addPhaseTurn(log, "Red or Black", "Bob", gave_to="Alice")
+        addPhaseTurn(log, "Red or Black", "Testi Matti", gave_to="Testi Timo")
+        addPhaseTurn(log, "Red or Black", "Testi Timo", gave_to="Testi Matti")
         log.add(PhaseEvent("Board", ""))
 
         # 2 turn receipts + 2 hand receipts
@@ -77,7 +77,7 @@ class TestLivePrinterBoard(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        log.add(PhaseEvent("Board", ""))   # prints 2 hands (Alice + Bob)
+        log.add(PhaseEvent("Board", ""))   # prints 2 hands (Testi Matti + Testi Timo)
         log.add(BoardCardEvent("♥A", "drink", 2, []))
         log.add(BoardCardEvent("♦K", "give", 2, []))  # prints previous card
 
@@ -89,9 +89,9 @@ class TestLivePrinterBoard(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        log.add(PhaseEvent("Board", ""))   # prints 2 hands (Alice + Bob)
+        log.add(PhaseEvent("Board", ""))   # prints 2 hands (Testi Matti + Testi Timo)
         log.add(BoardCardEvent("♥A", "drink", 2, []))
-        log.add(GameEndEvent([{"name": "Alice", "drinksTaken": 1, "drinksToGive": 0}]))
+        log.add(GameEndEvent([{"name": "Testi Matti", "drinksTaken": 1, "drinksToGive": 0}]))
 
         # 2 hands + 1 board card + 1 tally
         self.assertEqual(printer.printWith.call_count, 4)
