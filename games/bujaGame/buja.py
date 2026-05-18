@@ -1,5 +1,6 @@
 """
-Buja — a card-based drinking game with 4 guess phases followed by a board phase.
+Buja, a card-based drinking game with 4 guess phases followed by a board phase.
+Works almost like ride the bus
 """
 from core.game import Game
 from core.deck import Deck
@@ -39,7 +40,7 @@ class Buja(Game):
         self.inputFunc = fn
 
     def playRound(self) -> None:
-        """Run a full game — all 4 phases for every player, then the board."""
+        """Run a full game: all 4 phases for every player, then the board."""
         self.emit(GameStartEvent([p.getName() for p in self.players]))
 
         print("Red or Black?")

@@ -1,5 +1,5 @@
 """
-Represents a player in the game — tracks their hand, drinks taken, and drinks given out.
+Represents a player in playing the game. Keeps track of their hand, drinks taken, and drinks given out.
 """
 from dataclasses import dataclass, field
 from typing import List, TYPE_CHECKING
