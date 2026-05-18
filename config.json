@@ -1,0 +1,8 @@
+{
+  "buja": {
+    "boardLength": 6,
+    "boardStartDrinks": 2,
+    "boardIncrement": 2,
+    "drinkAmount": 1
+  }
+}
