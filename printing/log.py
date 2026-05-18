@@ -26,11 +26,13 @@ class GameLog:
         current_phase_name = None
         current_turn = None
         in_board = False
+        player_hands = {}
 
         for event in self.events:
             if isinstance(event, GameStartEvent):
                 result["players"] = event.players
                 result["timestamp"] = event.timestamp.strftime("%Y-%m-%d %H:%M")
+                player_hands = {name: [] for name in event.players}
 
             elif isinstance(event, PhaseEvent):
                 if event.player == "":
@@ -50,6 +52,7 @@ class GameLog:
                         "gave_to": None,
                         "drinks": 0,
                         "note": None,
+                        "hand_before": list(player_hands.get(event.player, [])),
                     }
                     result["phases"][-1]["turns"].append(current_turn)
 
@@ -58,6 +61,8 @@ class GameLog:
                     current_turn["guess"] = event.guess
                     current_turn["card"] = event.card
                     current_turn["correct"] = event.correct
+                    if event.card is not None and event.player in player_hands:
+                        player_hands[event.player].append(event.card)
 
             elif isinstance(event, DrinkEvent):
                 if in_board and result["board"]:
@@ -110,5 +115,7 @@ class GameLog:
                     }
                     for s in event.scores
                 ]
+
+        result["hands"] = player_hands
 
         return result

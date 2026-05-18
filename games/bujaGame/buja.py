@@ -117,6 +117,7 @@ class Buja(Game):
         if card.value() == lastCard.value():
             print("Same value! Drink double")
             player.addDrinks(amount * 2)
+            self.emit(GuessEvent(player.getName(), "Higher or Lower", None, str(card), None))
             self.emit(DrinkEvent(player.getName(), amount * 2, "same value"))
             return
 
@@ -161,6 +162,7 @@ class Buja(Game):
         if value == low.value() or value == high.value():
             print(f"On the line! Drink {amount * 2}")
             player.addDrinks(amount * 2)
+            self.emit(GuessEvent(player.getName(), "Inside or Outside", None, str(card), None))
             self.emit(DrinkEvent(player.getName(), amount * 2, "on the line"))
             return
 

@@ -7,7 +7,7 @@ from core.events import GameStartEvent, GameEndEvent, GuessEvent, DrinkEvent, Gi
 from games.bujaGame.buja import Buja
 from printing.log import GameLog
 from printing.printer import _StdoutPrinter
-from printing.receipts.buja import formatReceipt
+from printing.formatter import formatReceipt
 
 
 def makePlayer(id=1, name="Test"):

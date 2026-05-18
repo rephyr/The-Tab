@@ -51,7 +51,6 @@ class BoardCardEvent:
     drinks: int
     matched: list
 
-
 @dataclass
 class GameEndEvent:
     scores: list

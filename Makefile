@@ -14,5 +14,8 @@ test-games:
 test-buja:
 	python -m unittest tests.games.buja.testBuja
 
+test-print:
+	python -m unittest tests.gameTests.buja.testBujaLog.TestFullPipeline -v
+
 clean:
 	python -c "import shutil, os; [shutil.rmtree(os.path.join(root, d)) for root, dirs, _ in os.walk('.') for d in dirs if d == '__pycache__']"

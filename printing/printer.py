@@ -53,9 +53,13 @@ class ReceiptPrinter:
 class _StdoutPrinter:
     def set(self, **_): pass
     def open(self): pass
-    def textln(self, text=""): sys.stdout.buffer.write((str(text) + "\n").encode("utf-8"))
-    def text(self, text=""): sys.stdout.buffer.write(str(text).encode("utf-8"))
-    def cut(self): sys.stdout.buffer.write(("\n" + "-" * 32 + "\n").encode("utf-8"))
+    def textln(self, text=""):
+        sys.stdout.buffer.write((str(text) + "\n").encode("utf-8"))
+        sys.stdout.buffer.flush()
+    def text(self, text=""):
+        sys.stdout.buffer.write(str(text).encode("utf-8"))
+        sys.stdout.buffer.flush()
+    def cut(self): sys.stdout.buffer.write(("\n~~~ RECEIPT CUT ~~~\n\n").encode("utf-8"))
     def close(self): sys.stdout.buffer.flush()
 
 

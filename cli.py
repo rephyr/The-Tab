@@ -4,7 +4,7 @@ import games
 from core.game import Game
 from core.player import Player
 from printing.log import GameLog
-from printing.receipts.buja import formatReceipt
+from printing.formatter import formatReceipt
 from printing.printer import ReceiptPrinter
 from config import Config
 
