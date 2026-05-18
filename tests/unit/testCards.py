@@ -3,7 +3,6 @@ from core.cards import Cards
 
 class TestCards(unittest.TestCase):
 
-
     def testStr(self):
         self.assertEqual(str(Cards("A", "Hearts")), "♥A")
         self.assertEqual(str(Cards("10", "Spades")), "♠10")

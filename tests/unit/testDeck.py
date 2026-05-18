@@ -3,7 +3,7 @@ from core.deck import Deck
 from core.cards import Cards
 
 class TestDeck(unittest.TestCase):
- 
+    
     def setUp(self):
         self.deck = Deck()
         self.deck.buildDeck()

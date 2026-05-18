@@ -8,7 +8,6 @@ from core.events import (
 from printing.log import GameLog
 from printing.live import LivePrinter
 
-
 def makeLog():
     log = GameLog()
     log.add(GameStartEvent(["Testi Matti", "Testi Timo"]))
@@ -22,7 +21,6 @@ def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gav
         log.add(GiveEvent(player, gave_to, drinks))
     else:
         log.add(DrinkEvent(player, drinks, "wrong guess"))
-
 
 class TestLivePrinterPhase(unittest.TestCase):
 
@@ -54,7 +52,6 @@ class TestLivePrinterPhase(unittest.TestCase):
 
         self.assertEqual(printer.printWith.call_count, 2)
 
-
 class TestLivePrinterHands(unittest.TestCase):
 
     def testPrintsHandsWhenBoardPhaseStarts(self):
@@ -68,7 +65,6 @@ class TestLivePrinterHands(unittest.TestCase):
 
         # 2 turn receipts + 2 hand receipts
         self.assertEqual(printer.printWith.call_count, 4)
-
 
 class TestLivePrinterBoard(unittest.TestCase):
 

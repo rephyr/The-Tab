@@ -2,6 +2,9 @@
 run:
 	python main.py
 
+run-admin:
+	python main.py admin
+
 test:
 	python -m unittest discover tests
 
