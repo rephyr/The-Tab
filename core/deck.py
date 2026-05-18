@@ -8,10 +8,7 @@ from .cards import Cards
 @dataclass
 class Deck:
     cards: List[Cards] = field(default_factory=list)
-    #initialize deck
-    def __post_init__(self):
-        self.resetDeck()
-        
+
     def buildDeck(self) -> None:
         self.cards.clear()
         for suit in Cards.SUITS:
@@ -25,11 +22,9 @@ class Deck:
         self.buildDeck()
         self.shuffleDeck()
 
-    def drawCard(self) -> Cards:
-        #never returns none
+    def drawCard(self) -> Optional[Cards]:
         if not self.cards:
-            self.resetDeck()
-
+            return None
         return self.cards.pop()
 
     def seeTopCard(self) -> Optional[Cards]:

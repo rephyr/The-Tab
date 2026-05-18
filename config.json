@@ -1,6 +1,9 @@
 {
+  "printer": {
+    "connection": "stdout"
+  },
   "buja": {
-    "boardLength": 6,
+    "boardLength": 3,
     "boardStartDrinks": 2,
     "boardIncrement": 2,
     "drinkAmount": 1

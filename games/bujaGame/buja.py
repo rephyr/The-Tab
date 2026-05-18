@@ -1,6 +1,11 @@
 from core.game import Game
 from core.deck import Deck
 from core.player import Player
+from core.events import (
+    GameStartEvent, PhaseEvent, GuessEvent,
+    DrinkEvent, GiveEvent, ShareEvent,
+    BoardCardEvent, GameEndEvent,
+)
 from dataclasses import dataclass, field
 
 
@@ -27,28 +32,30 @@ class Buja(Game):
         self.inputFunc = fn
 
     def playRound(self) -> None:
-        print("Red or Black?")
+        self.emit(GameStartEvent([p.getName() for p in self.players]))
 
+        print("Red or Black?")
         for player in self.players:
             print(f"\n{player.getName()}'s turn")
+            self.emit(PhaseEvent("Red or Black", player.getName()))
             self._redOrBlack(player)
 
         print("\nHigher or Lower\n")
-
         for player in self.players:
             print(f"\n{player.getName()}'s turn")
+            self.emit(PhaseEvent("Higher or Lower", player.getName()))
             self._higherOrLower(player)
 
         print("\nInside or Outside\n")
-
         for player in self.players:
             print(f"\n{player.getName()}'s turn")
+            self.emit(PhaseEvent("Inside or Outside", player.getName()))
             self._insideOrOutside(player)
 
         print("\nWhich suit?\n")
-
         for player in self.players:
             print(f"\n{player.getName()}'s turn")
+            self.emit(PhaseEvent("Suit", player.getName()))
             self._suit(player)
 
         print("\nHands for each player:\n")
@@ -57,12 +64,17 @@ class Buja(Game):
             print(f"{player.getName()}: {handStr}")
 
         print("\nNext the board phase\n")
-
+        self.emit(PhaseEvent("Board", ""))
         self._board()
 
         print("\nDrink tally:\n")
         for player in self.players:
             print(f"{player.getName()}: drank {player.getDrinksTaken()} | gave out {player.drinksToGive}")
+
+        self.emit(GameEndEvent([
+            {"name": p.getName(), "drinksTaken": p.getDrinksTaken(), "drinksToGive": p.drinksToGive}
+            for p in self.players
+        ]))
 
     def _redOrBlack(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
@@ -75,6 +87,7 @@ class Buja(Game):
         print(f"Card: {card}")
 
         correct = (guess == "r" and card.isRed()) or (guess == "b" and card.isBlack())
+        self.emit(GuessEvent(player.getName(), "Red or Black", "Red" if guess == "r" else "Black", str(card), correct))
 
         if correct:
             print("Correct!")
@@ -82,9 +95,11 @@ class Buja(Game):
             print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
+            self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
             print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
+            self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
     def _higherOrLower(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
@@ -102,10 +117,12 @@ class Buja(Game):
         if card.value() == lastCard.value():
             print("Same value! Drink double")
             player.addDrinks(amount * 2)
+            self.emit(DrinkEvent(player.getName(), amount * 2, "same value"))
             return
 
         correct = (guess == "h" and card.value() > lastCard.value()) or \
                   (guess == "l" and card.value() < lastCard.value())
+        self.emit(GuessEvent(player.getName(), "Higher or Lower", "Higher" if guess == "h" else "Lower", str(card), correct))
 
         if correct:
             print("Correct!")
@@ -113,9 +130,11 @@ class Buja(Game):
             print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
+            self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
             print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
+            self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
     def _insideOrOutside(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
@@ -142,10 +161,12 @@ class Buja(Game):
         if value == low.value() or value == high.value():
             print(f"On the line! Drink {amount * 2}")
             player.addDrinks(amount * 2)
+            self.emit(DrinkEvent(player.getName(), amount * 2, "on the line"))
             return
 
         correct = (guess == "i" and low.value() < value < high.value()) or \
                   (guess == "o" and (value < low.value() or value > high.value()))
+        self.emit(GuessEvent(player.getName(), "Inside or Outside", "Inside" if guess == "i" else "Outside", str(card), correct))
 
         if correct:
             print("Correct!")
@@ -153,9 +174,11 @@ class Buja(Game):
             print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
+            self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
             print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
+            self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
     def _suit(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
@@ -176,16 +199,20 @@ class Buja(Game):
 
         guessedSuit = suitMap[guess]
         actualSuit = card.suit.lower()
+        correct = guessedSuit == actualSuit
+        self.emit(GuessEvent(player.getName(), "Suit", guessedSuit.capitalize(), str(card), correct))
 
-        if guessedSuit == actualSuit:
+        if correct:
             print("Correct!")
             target = self._chooseTarget(player)
             print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
+            self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
             print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
+            self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
     def _board(self) -> None:
         boardLength = self._getConfig("boardLength", 3)
@@ -226,6 +253,7 @@ class Buja(Game):
                 print(f"Card: {card} | Action: {action.upper()}")
 
                 matchedPlayers = [p for p in self.players if p.hasRank(card.rank)]
+                self.emit(BoardCardEvent(str(card), action, drinks, [p.getName() for p in matchedPlayers]))
 
                 if not matchedPlayers:
                     print("Nobody matched this card.")
@@ -235,12 +263,14 @@ class Buja(Game):
                     if action == "drink":
                         print(f"{player.getName()} drinks {drinks}")
                         player.addDrinks(drinks)
+                        self.emit(DrinkEvent(player.getName(), drinks, "board"))
 
                     elif action == "give":
                         target = self._chooseTarget(player)
                         print(f"{target.getName()} gets {drinks}")
                         target.addDrinks(drinks)
                         player.addDrinksToGive(drinks)
+                        self.emit(GiveEvent(player.getName(), target.getName(), drinks))
 
                     elif action == "share":
                         target = self._chooseTarget(player)
@@ -248,6 +278,7 @@ class Buja(Game):
                         player.addDrinks(drinks)
                         target.addDrinks(drinks)
                         player.addDrinksToGive(drinks)
+                        self.emit(ShareEvent(player.getName(), target.getName(), drinks))
 
         print("\n=== BOARD END ===\n")
 
@@ -286,13 +317,12 @@ class Buja(Game):
 
     def _getConfig(self, key, default):
         return self.config.get(key, default)
-    
+
     def _handleGive(self, player: Player, drinks: int) -> None:
         target = self._chooseTarget(player)
         print(f"{target.getName()} gets {drinks}")
         target.addDrinks(drinks)
         player.addDrinksToGive(drinks)
-
 
     def _handleShare(self, player: Player, drinks: int) -> None:
         target = self._chooseTarget(player)

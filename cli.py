@@ -3,6 +3,10 @@ import pkgutil
 import games
 from core.game import Game
 from core.player import Player
+from printing.log import GameLog
+from printing.receipts.buja import formatReceipt
+from printing.printer import ReceiptPrinter
+from config import Config
 
 
 def listGames():
@@ -81,8 +85,14 @@ def runCli():
         print("No players added.")
         return
 
-    game = gameClass(players=players)
+    log = GameLog()
+    game = gameClass(players=players, log=log)
 
     print(f"\nStarting {game.gameTitle}...\n")
 
     game.playRound()
+
+    data = log.toDict()
+    receipt = formatReceipt(data)
+    printerConfig = Config().data.get("printer", {})
+    ReceiptPrinter(printerConfig).printReceipt(receipt)
