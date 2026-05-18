@@ -26,10 +26,9 @@ class Cards:
         return self.rank in {"J", "Q", "K"}
 
     def value(self) -> int:
-        if self.rank == "A":
-            return 11
-        if self.isFaceCard():
-            return 10
+        values = {"A": 14, "K": 13, "Q": 12, "J": 11}
+        if self.rank in values:
+            return values[self.rank]
         return int(self.rank)
 
     def isRed(self) -> bool:
