@@ -1,4 +1,7 @@
 
+"""
+A standard 52-card deck.
+"""
 from dataclasses import dataclass, field
 from random import shuffle
 from typing import List, Optional
@@ -7,6 +10,7 @@ from .cards import Cards
 
 @dataclass
 class Deck:
+    """Holds and manages a deck of cards. Call resetDeck() before starting a game."""
     cards: List[Cards] = field(default_factory=list)
 
     def buildDeck(self) -> None:
@@ -19,10 +23,12 @@ class Deck:
         shuffle(self.cards)
 
     def resetDeck(self) -> None:
+        """Rebuild and shuffle the deck back to 52 cards."""
         self.buildDeck()
         self.shuffleDeck()
 
     def drawCard(self) -> Optional[Cards]:
+        """Remove and return the top card, or None if the deck is empty."""
         if not self.cards:
             return None
         return self.cards.pop()

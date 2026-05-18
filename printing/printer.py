@@ -1,3 +1,15 @@
+"""
+Printer backends. ReceiptPrinter picks the right backend based on config.
+
+Supported connections (set via config["connection"]):
+  stdout   — prints to terminal, good for testing (default)
+  file     — writes to a text file (config["path"])
+  win32raw — sends to a Windows printer by name (config["printerName"])
+  usb      — USB ESC/POS printer (config["vendor_id"], config["product_id"])
+  serial   — serial ESC/POS printer (config["port"], config["baudrate"])
+
+If win32raw fails (e.g. missing pywin32 or no printer), it silently falls back to stdout.
+"""
 import sys
 
 try:
@@ -8,6 +20,7 @@ except ImportError:
 
 
 class ReceiptPrinter:
+    """Connects to a printer backend and exposes printWith() for sending receipts."""
     def __init__(self, config: dict = None):
         self.config = config or {}
         self._p = None
@@ -46,6 +59,7 @@ class ReceiptPrinter:
             self._p = _StdoutPrinter()
 
     def printWith(self, fn) -> None:
+        """Call fn(p) to write content, then cut the paper. Keeps the connection open."""
         if self._p is None:
             self._connect()
         fn(self._p)

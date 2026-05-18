@@ -1,5 +1,5 @@
 """
-basic playing cards 
+A standard playing card and its helpers.
 """
 from dataclasses import dataclass
 from typing import ClassVar, List
@@ -13,6 +13,7 @@ SUIT_SYMBOLS = {
 
 @dataclass
 class Cards:
+    """A single playing card with a rank and suit."""
     rank: str
     suit: str
     SUITS: ClassVar[List[str]] = ["Hearts", "Diamonds", "Clubs", "Spades"]
@@ -26,6 +27,7 @@ class Cards:
         return self.rank in {"J", "Q", "K"}
 
     def value(self) -> int:
+        """Numeric value of the card. Ace is 14, face cards 11–13, numbers as-is."""
         values = {"A": 14, "K": 13, "Q": 12, "J": 11}
         if self.rank in values:
             return values[self.rank]

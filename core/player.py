@@ -1,5 +1,5 @@
 """
-player class 
+Represents a player in the game — tracks their hand, drinks taken, and drinks given out.
 """
 from dataclasses import dataclass, field
 from typing import List, TYPE_CHECKING
@@ -46,6 +46,7 @@ class Player:
         self.hand.clear()
  
     def hasRank(self, rank: str) -> bool:
+        """True if the player holds at least one card with this rank."""
         return any(c.rank == rank for c in self.hand)
  
     def getHand(self) -> List["Cards"]:

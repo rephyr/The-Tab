@@ -1,4 +1,11 @@
+"""
+Receipt formatter functions. Each one writes to a printer object p using
+p.set(), p.textln(), and p.text(). formatReceipt() runs the full game through all of them.
+"""
+
+
 def formatTurn(phase_name: str, turn: dict, p) -> None:
+    """Print one player's turn receipt for a phase."""
     p.textln("=" * 24)
     p.set(align="center", bold=True)
     p.textln(phase_name.upper())
@@ -27,6 +34,7 @@ def formatTurn(phase_name: str, turn: dict, p) -> None:
 
 
 def formatHand(player: str, cards: list, p) -> None:
+    """Print a player's full hand as a single receipt."""
     p.set(align="center", bold=True)
     p.textln(player.upper())
     p.set(align="left", bold=False)
@@ -38,6 +46,7 @@ def formatHand(player: str, cards: list, p) -> None:
 
 
 def formatBoardCard(card: dict, p) -> None:
+    """Print a board card receipt with its action and outcomes."""
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
     p.textln(card["card"])
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
@@ -55,6 +64,7 @@ def formatBoardCard(card: dict, p) -> None:
 
 
 def formatTally(scores: list, p) -> None:
+    """Print the final drink tally for all players."""
     p.set(align="center", bold=True)
     p.textln("FINAL TALLY")
     p.set(align="left", bold=False)
@@ -65,6 +75,7 @@ def formatTally(scores: list, p) -> None:
 
 
 def formatReceipt(data: dict, p) -> None:
+    """Print the full game receipt: all turns, hands, board cards, and tally."""
     for phase in data["phases"]:
         for turn in phase["turns"]:
             formatTurn(phase["name"], turn, p)

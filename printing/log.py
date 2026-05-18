@@ -1,3 +1,7 @@
+"""
+GameLog collects events emitted during a game and converts them to a
+structured dict that the formatter can use to print receipts.
+"""
 from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
     DrinkEvent, GiveEvent, ShareEvent,
@@ -5,11 +9,13 @@ from core.events import (
 )
 
 class GameLog:
+    """Collects game events and can convert them to a dict for printing."""
     def __init__(self):
         self.events = []
         self._callbacks = []
 
     def on(self, callback) -> None:
+        """Register a callback(event, log) called after every event is added."""
         self._callbacks.append(callback)
 
     def add(self, event) -> None:
@@ -21,6 +27,10 @@ class GameLog:
         self.events = []
 
     def toDict(self) -> dict:
+        """
+        Convert the event log to a dict with keys:
+        players, timestamp, phases, board, hands, scores.
+        """
         result = {
             "players": [],
             "timestamp": "",

@@ -1,14 +1,22 @@
+"""
+LivePrinter listens to game events and prints receipts in real time as the game progresses,
+rather than printing everything at the end.
+
+Register it with: log.on(LivePrinter(printer).hook)
+"""
 from core.events import DrinkEvent, GiveEvent, PhaseEvent, BoardCardEvent, GameEndEvent
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally
 
 
 class LivePrinter:
+    """Reacts to game events and prints each receipt the moment it's ready."""
     def __init__(self, printer):
         self._printer = printer
         self._in_board = False
         self._board_card_count = 0
 
     def hook(self, event, log):
+        """Called by GameLog after every event. Decides what to print based on event type."""
         if isinstance(event, PhaseEvent) and event.player == "":
             self._in_board = True
             data = log.toDict()
