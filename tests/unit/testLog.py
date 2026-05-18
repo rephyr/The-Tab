@@ -7,13 +7,11 @@ from core.events import (
     BoardCardEvent, GameEndEvent,
 )
 
-
 def makeLog(*events):
     log = GameLog()
     for e in events:
         log.add(e)
     return log
-
 
 class TestGameLogBasics(unittest.TestCase):
 
@@ -28,7 +26,6 @@ class TestGameLogBasics(unittest.TestCase):
         log.clear()
         self.assertEqual(log.events, [])
 
-
 class TestToDictEmpty(unittest.TestCase):
 
     def test_empty_log_returns_base_structure(self):
@@ -38,7 +35,6 @@ class TestToDictEmpty(unittest.TestCase):
         self.assertEqual(data["phases"], [])
         self.assertEqual(data["board"], [])
         self.assertEqual(data["scores"], [])
-
 
 class TestToDictGameStart(unittest.TestCase):
 
@@ -53,7 +49,6 @@ class TestToDictGameStart(unittest.TestCase):
 
     def test_timestamp(self):
         self.assertEqual(self.data["timestamp"], "2026-05-18 21:47")
-
 
 class TestToDictCorrectGuess(unittest.TestCase):
 
@@ -83,7 +78,6 @@ class TestToDictCorrectGuess(unittest.TestCase):
         self.assertEqual(turn["gave_to"], "Teppo")
         self.assertEqual(turn["drinks"], 1)
 
-
 class TestToDictWrongGuess(unittest.TestCase):
 
     def setUp(self):
@@ -109,7 +103,6 @@ class TestToDictWrongGuess(unittest.TestCase):
         turn = self.data["phases"][0]["turns"][0]
         self.assertIsNone(turn["note"])
 
-
 class TestToDictEdgeCases(unittest.TestCase):
 
     def test_same_value_has_note(self):
@@ -129,7 +122,6 @@ class TestToDictEdgeCases(unittest.TestCase):
         ).toDict()
         turn = data["phases"][0]["turns"][0]
         self.assertEqual(turn["note"], "on the line")
-
 
 class TestToDictMultiplePhases(unittest.TestCase):
 
@@ -155,7 +147,6 @@ class TestToDictMultiplePhases(unittest.TestCase):
         for phase in self.data["phases"]:
             self.assertEqual(len(phase["turns"]), 1)
 
-
 class TestToDictMultipleTurnsSamePhase(unittest.TestCase):
 
     def setUp(self):
@@ -176,7 +167,6 @@ class TestToDictMultipleTurnsSamePhase(unittest.TestCase):
         turns = self.data["phases"][0]["turns"]
         self.assertEqual(turns[0]["player"], "Matti")
         self.assertEqual(turns[1]["player"], "Teppo")
-
 
 class TestToDictBoard(unittest.TestCase):
 
@@ -238,7 +228,6 @@ class TestToDictBoard(unittest.TestCase):
         self.assertEqual(data["board"][0]["card"], "7♥")
         self.assertEqual(data["board"][1]["card"], "K♠")
 
-
 class TestToDictScores(unittest.TestCase):
 
     def test_scores_from_game_end(self):
@@ -253,7 +242,6 @@ class TestToDictScores(unittest.TestCase):
         self.assertEqual(data["scores"][0]["drank"], 3)
         self.assertEqual(data["scores"][0]["gave"], 4)
         self.assertEqual(data["scores"][1]["name"], "Teppo")
-
 
 if __name__ == "__main__":
     unittest.main()

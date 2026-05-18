@@ -9,14 +9,11 @@ from printing.log import GameLog
 from printing.printer import _StdoutPrinter
 from printing.formatter import formatReceipt
 
-
 def makePlayer(id=1, name="Test"):
     return Player(id=id, name=name)
 
-
 def makeCard(rank, suit="Hearts"):
     return Cards(rank, suit)
-
 
 def makeBujaWithLog():
     deck = Deck()
@@ -25,7 +22,6 @@ def makeBujaWithLog():
     players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
     game = Buja(players=players, deck=deck, config={}, log=log)
     return game, log
-
 
 class TestBujaUsesLog(unittest.TestCase):
 
@@ -132,7 +128,6 @@ class TestBujaUsesLog(unittest.TestCase):
         self.assertEqual(giveEvents[0].giver, "Testi Matti")
         self.assertEqual(giveEvents[0].receiver, "Testi Timo")
 
-
 class TestFullPipeline(unittest.TestCase):
 
     def testGamePlaysItselfAndPrintsReceipt(self):
@@ -160,7 +155,6 @@ class TestFullPipeline(unittest.TestCase):
         self.assertEqual(len(data["board"]), 9)
         self.assertEqual(len(data["scores"]), 2)
         self.assertIsNotNone(data["timestamp"])
-
 
 if __name__ == "__main__":
     unittest.main()

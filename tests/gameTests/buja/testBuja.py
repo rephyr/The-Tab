@@ -17,7 +17,6 @@ def makeBuja():
     players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
     return Buja(players=players, deck=deck, config={})
 
-
 class TestBujaRedOrBlack(unittest.TestCase):
 
     def testCorrectRed(self):
@@ -45,7 +44,6 @@ class TestBujaRedOrBlack(unittest.TestCase):
             game._redOrBlack(player)
 
         self.assertEqual(player.getDrinksTaken(), 1)
-
 
 class TestBujaHigherOrLower(unittest.TestCase):
 
@@ -81,7 +79,6 @@ class TestBujaHigherOrLower(unittest.TestCase):
             self.game._higherOrLower(self.player)
 
         self.assertEqual(self.player.getDrinksTaken(), 2)
-
 
 class TestBujaInsideOrOutside(unittest.TestCase):
 
@@ -119,7 +116,6 @@ class TestBujaInsideOrOutside(unittest.TestCase):
 
         self.assertEqual(self.player.getDrinksTaken(), 2)
 
-
 class TestBujaSuit(unittest.TestCase):
 
     def testCorrect(self):
@@ -147,7 +143,6 @@ class TestBujaSuit(unittest.TestCase):
 
         self.assertEqual(player.getDrinksTaken(), 1)
 
-
 class TestBujaBoard(unittest.TestCase):
 
     def setUp(self):
@@ -167,7 +162,6 @@ class TestBujaBoard(unittest.TestCase):
 
         self.assertTrue(self.testiMatti.getDrinksTaken() >= 0)
         self.assertTrue(self.testiTimo.getDrinksTaken() >= 0)
-
 
 if __name__ == "__main__":
     unittest.main()
