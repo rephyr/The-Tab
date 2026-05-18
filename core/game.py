@@ -10,7 +10,6 @@ from .player import Player
 class Game(ABC):
     name: str
     players: List[Player] = field(default_factory=list)
-
     def addPlayer(self, player: Player) -> None:
         self.players.append(player)
 
@@ -20,7 +19,7 @@ class Game(ABC):
     def reset(self) -> None:
         for player in self.players:
             player.setDrinksTaken(0)
-
+            
     def getPlayerNames(self) -> List[str]:
         return [player.name for player in self.players]
 
