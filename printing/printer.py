@@ -35,7 +35,7 @@ class ReceiptPrinter:
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
             except Exception:
-                self._p = _StdoutPrinter()
+                self._p = StdoutPrinter()
 
         elif conn == "usb":
             if not ESCPOS_AVAILABLE:
@@ -52,11 +52,11 @@ class ReceiptPrinter:
             self._p = Serial(port, baudrate=baud)
 
         elif conn == "file":
-            self._p = _FilePrinter(self.config.get("path", "receipt.txt"))
+            self._p = FilePrinter(self.config.get("path", "receipt.txt"))
             self._p.open()
 
         else:
-            self._p = _StdoutPrinter()
+            self._p = StdoutPrinter()
 
     def printWith(self, fn) -> None:
         """Call fn(p) to write content, then cut the paper. Keeps the connection open."""
@@ -78,7 +78,7 @@ class ReceiptPrinter:
         self._p.close()
 
 
-class _StdoutPrinter:
+class StdoutPrinter:
     def __init__(self):
         self._num = 0
         self._started = False
@@ -86,7 +86,7 @@ class _StdoutPrinter:
     def set(self, **_): pass
     def open(self): pass
 
-    def _start_if_needed(self):
+    def _startIfNeeded(self):
         if not self._started:
             self._num += 1
             sys.stdout.buffer.write(f"\n~~~ RECEIPT {self._num} START ~~~\n".encode("utf-8"))
@@ -94,12 +94,12 @@ class _StdoutPrinter:
             self._started = True
 
     def textln(self, text=""):
-        self._start_if_needed()
+        self._startIfNeeded()
         sys.stdout.buffer.write((str(text) + "\n").encode("utf-8"))
         sys.stdout.buffer.flush()
 
     def text(self, text=""):
-        self._start_if_needed()
+        self._startIfNeeded()
         sys.stdout.buffer.write(str(text).encode("utf-8"))
         sys.stdout.buffer.flush()
 
@@ -112,7 +112,7 @@ class _StdoutPrinter:
         sys.stdout.buffer.flush()
 
 
-class _FilePrinter:
+class FilePrinter:
     def __init__(self, path: str):
         self.path = path
         self._buf = []

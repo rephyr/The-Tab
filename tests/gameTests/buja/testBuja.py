@@ -156,7 +156,8 @@ class TestBujaBoard(unittest.TestCase):
         with patch.object(self.game.deck, "drawCard", side_effect=[
             makeCard("A"), makeCard("K"), makeCard("Q"),
             makeCard("J"), makeCard("10"), makeCard("9"),
-            makeCard("8"), makeCard("7"), makeCard("6")
+            makeCard("8"), makeCard("7"), makeCard("6"),
+            makeCard("5"),
         ]):
             self.game._board()
 

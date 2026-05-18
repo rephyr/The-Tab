@@ -6,7 +6,7 @@ from core.player import Player
 from core.events import GameStartEvent, GameEndEvent, GuessEvent, DrinkEvent, GiveEvent
 from games.bujaGame.buja import Buja
 from printing.log import GameLog
-from printing.printer import _StdoutPrinter
+from printing.printer import StdoutPrinter
 from printing.formatter import formatReceipt
 
 def makePlayer(id=1, name="Test"):
@@ -137,8 +137,8 @@ class TestFullPipeline(unittest.TestCase):
         players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
         game = Buja(players=players, deck=deck, config={}, log=log)
 
-        # 2 players × 4 phases = 8 guesses, then 9 enter presses for the board
-        inputs = ["r", "b", "h", "l", "i", "o", "h", "d"] + [""] * 9
+        # 2 players × 4 phases = 8 guesses, then 10 enter presses for the board (9 cards + 1 final)
+        inputs = ["r", "b", "h", "l", "i", "o", "h", "d"] + [""] * 10
 
         with patch("builtins.input", side_effect=inputs), \
              patch("builtins.print"), \
@@ -146,13 +146,13 @@ class TestFullPipeline(unittest.TestCase):
             game.playRound()
 
         data = log.toDict()
-        p = _StdoutPrinter()
+        p = StdoutPrinter()
 
         # should not raise
         formatReceipt(data, p)
 
         self.assertEqual(data["players"], ["Testi Matti", "Testi Timo"])
-        self.assertEqual(len(data["board"]), 9)
+        self.assertEqual(len(data["board"]), 10)
         self.assertEqual(len(data["scores"]), 2)
         self.assertIsNotNone(data["timestamp"])
 
