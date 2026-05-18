@@ -42,5 +42,30 @@ class TestDeck(unittest.TestCase):
         shuffled = self.deck.seeDeck()
         self.assertNotEqual(original, shuffled)
         
+class TestMultiDeck(unittest.TestCase):
+    def testTwoDecksBuild104Cards(self):
+        deck = Deck(deckCount=2)
+        deck.buildDeck()
+        self.assertEqual(deck.cardsRemaining(), 104)
+
+    def testThreeDecksBuild156Cards(self):
+        deck = Deck(deckCount=3)
+        deck.buildDeck()
+        self.assertEqual(deck.cardsRemaining(), 156)
+
+    def testTwoDecksHasDuplicates(self):
+        deck = Deck(deckCount=2)
+        deck.buildDeck()
+        ranks = [c.rank for c in deck.seeDeck()]
+        self.assertEqual(ranks.count("A"), 8)
+
+    def testResetDeckRespectsMultipleDeckCount(self):
+        deck = Deck(deckCount=2)
+        deck.buildDeck()
+        deck.drawCard()
+        deck.resetDeck()
+        self.assertEqual(deck.cardsRemaining(), 104)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 
 """
-A standard 52-card deck.
+A standard 52-card deck with optional multi-deck support.
 """
 from dataclasses import dataclass, field
 from random import shuffle
@@ -10,20 +10,23 @@ from .cards import Cards
 
 @dataclass
 class Deck:
-    """Holds and manages a deck of cards. Call resetDeck() before starting a game."""
+    """Holds and manages one or more combined decks of cards."""
     cards: List[Cards] = field(default_factory=list)
+    deckCount: int = 1
 
     def buildDeck(self) -> None:
+        """Fill the deck with deckCount × 52 cards."""
         self.cards.clear()
-        for suit in Cards.SUITS:
-            for rank in Cards.RANKS:
-                self.cards.append(Cards(rank=rank, suit=suit))
+        for _ in range(self.deckCount):
+            for suit in Cards.SUITS:
+                for rank in Cards.RANKS:
+                    self.cards.append(Cards(rank=rank, suit=suit))
 
     def shuffleDeck(self) -> None:
         shuffle(self.cards)
 
     def resetDeck(self) -> None:
-        """Rebuild and shuffle the deck back to 52 cards."""
+        """Rebuild and shuffle the deck (respects deckCount)."""
         self.buildDeck()
         self.shuffleDeck()
 

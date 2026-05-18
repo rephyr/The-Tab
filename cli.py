@@ -271,6 +271,27 @@ def runCli(adminMode=False):
 
         gameConfig = configureGame(gameClass.gameTitle, config.data)
 
+        if hasattr(gameClass, "cardsNeeded"):
+            boardLength = gameConfig.get("boardLength", 3)
+            needed = gameClass.cardsNeeded(len(players), boardLength)
+            while True:
+                deckCount = gameConfig.get("deckCount", 1)
+                available = 52 * deckCount
+                if needed <= available:
+                    print(f"\nDeck check: {needed} cards needed, {available} available ({deckCount} deck(s)). OK.")
+                    break
+                recommended = -(-needed // 52)
+                print(f"\nDeck check: {needed} cards needed for {len(players)} players, "
+                      f"but only {available} available ({deckCount} deck(s)).")
+                print(f"Recommended: {recommended} deck(s).")
+                choice = input("Set number of decks or press Enter to proceed anyway: ").strip()
+                if not choice:
+                    break
+                if choice.isdigit() and int(choice) > 0:
+                    gameConfig["deckCount"] = int(choice)
+                else:
+                    print("Invalid number.")
+
         printerConfig = config.data.get("printer", {})
         log = GameLog()
         store.gameTitle = gameClass.gameTitle

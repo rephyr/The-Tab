@@ -7,6 +7,7 @@
     "boardLength": 3,
     "boardStartDrinks": 2,
     "boardIncrement": 2,
-    "drinkAmount": 1
+    "drinkAmount": 1,
+    "deckCount": 1
   }
 }

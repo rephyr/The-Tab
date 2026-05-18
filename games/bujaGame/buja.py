@@ -35,6 +35,12 @@ class Buja(Game):
 
     def __post_init__(self):
         self.inputFunc = defaultInput
+        self.deck.deckCount = self._getConfig("deckCount", 1)
+
+    @staticmethod
+    def cardsNeeded(playerCount: int, boardLength: int) -> int:
+        """Minimum cards required: 4 phase cards per player + 3 per board row."""
+        return 4 * playerCount + boardLength * 3
 
     def setInput(self, fn):
         self.inputFunc = fn
