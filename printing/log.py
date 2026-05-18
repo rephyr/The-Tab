@@ -7,9 +7,15 @@ from core.events import (
 class GameLog:
     def __init__(self):
         self.events = []
+        self._callbacks = []
+
+    def on(self, callback) -> None:
+        self._callbacks.append(callback)
 
     def add(self, event) -> None:
         self.events.append(event)
+        for cb in self._callbacks:
+            cb(event, self)
 
     def clear(self) -> None:
         self.events = []

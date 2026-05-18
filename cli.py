@@ -4,8 +4,8 @@ import games
 from core.game import Game
 from core.player import Player
 from printing.log import GameLog
-from printing.formatter import formatReceipt
 from printing.printer import ReceiptPrinter
+from printing.live import LivePrinter
 from config import Config
 
 
@@ -85,13 +85,11 @@ def runCli():
         print("No players added.")
         return
 
+    printerConfig = Config().data.get("printer", {})
     log = GameLog()
+    log.on(LivePrinter(ReceiptPrinter(printerConfig)).hook)
     game = gameClass(players=players, log=log)
 
     print(f"\nStarting {game.gameTitle}...\n")
 
     game.playRound()
-
-    data = log.toDict()
-    printerConfig = Config().data.get("printer", {})
-    ReceiptPrinter(printerConfig).printReceipt(data, formatReceipt)

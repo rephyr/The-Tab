@@ -16,10 +16,13 @@ class ReceiptPrinter:
         conn = self.config.get("connection", "stdout")
 
         if conn == "win32raw":
-            if not ESCPOS_AVAILABLE:
-                raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
-            self._p = Win32Raw(self.config.get("printerName"))
-            self._p.open()
+            try:
+                if not ESCPOS_AVAILABLE:
+                    raise RuntimeError("escpos not available")
+                self._p = Win32Raw(self.config.get("printerName"))
+                self._p.open()
+            except Exception:
+                self._p = _StdoutPrinter()
 
         elif conn == "usb":
             if not ESCPOS_AVAILABLE:
@@ -42,6 +45,17 @@ class ReceiptPrinter:
         else:
             self._p = _StdoutPrinter()
 
+    def printWith(self, fn) -> None:
+        if self._p is None:
+            self._connect()
+        fn(self._p)
+        self._p.cut()
+
+    def close(self) -> None:
+        if self._p is not None:
+            self._p.close()
+            self._p = None
+
     def printReceipt(self, data: dict, formatter) -> None:
         if self._p is None:
             self._connect()
@@ -51,16 +65,37 @@ class ReceiptPrinter:
 
 
 class _StdoutPrinter:
+    def __init__(self):
+        self._num = 0
+        self._started = False
+
     def set(self, **_): pass
     def open(self): pass
+
+    def _start_if_needed(self):
+        if not self._started:
+            self._num += 1
+            sys.stdout.buffer.write(f"\n~~~ RECEIPT {self._num} START ~~~\n".encode("utf-8"))
+            sys.stdout.buffer.flush()
+            self._started = True
+
     def textln(self, text=""):
+        self._start_if_needed()
         sys.stdout.buffer.write((str(text) + "\n").encode("utf-8"))
         sys.stdout.buffer.flush()
+
     def text(self, text=""):
+        self._start_if_needed()
         sys.stdout.buffer.write(str(text).encode("utf-8"))
         sys.stdout.buffer.flush()
-    def cut(self): sys.stdout.buffer.write(("\n~~~ RECEIPT CUT ~~~\n\n").encode("utf-8"))
-    def close(self): sys.stdout.buffer.flush()
+
+    def cut(self):
+        sys.stdout.buffer.write(f"~~~ RECEIPT {self._num} END ~~~\n".encode("utf-8"))
+        sys.stdout.buffer.flush()
+        self._started = False
+
+    def close(self):
+        sys.stdout.buffer.flush()
 
 
 class _FilePrinter:
