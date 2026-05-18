@@ -1,51 +1,42 @@
-WIDTH = 32
-
-
-def _line(char="-"):
-    return char * WIDTH
-
-
-def _center(text):
-    return text.center(WIDTH)
-
-
-def formatReceipt(data: dict) -> str:
-    lines = []
-
-    lines.append(_line("="))
-    lines.append(_center("KUITTIPELI"))
-    lines.append(_center("BUJA"))
-    lines.append(_center(data["timestamp"]))
-    lines.append(_line("="))
-    lines.append("PLAYERS: " + ", ".join(data["players"]))
+def formatReceipt(data: dict, p) -> None:
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("BUJA")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+    p.textln(data["timestamp"])
+    p.textln(", ".join(data["players"]))
+    p.textln("=" * 24)
 
     if data["board"]:
-        lines.append("")
-        lines.append(_line("-"))
-        lines.append("BOARD")
-        lines.append(_line("-"))
+        p.set(align="center", bold=True)
+        p.textln("BOARD")
+        p.set(align="left", bold=False)
+        p.textln("-" * 24)
 
         for card in data["board"]:
-            lines.append(f"\n  {card['card']} [{card['action'].upper()}] {card['drinks']} drinks")
+            p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
+            p.textln(card["card"])
+            p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+            p.textln(f"{card['action'].upper()} - {card['drinks']} drinks")
+
             if not card["matched"]:
-                lines.append("    no match")
+                p.textln("No match")
             else:
                 for outcome in card["outcomes"]:
                     if outcome["type"] == "drink":
-                        lines.append(f"    {outcome['player']} drinks {outcome['drinks']}")
+                        p.textln(f"{outcome['player']} drinks {outcome['drinks']}")
                     elif outcome["type"] == "give":
-                        lines.append(f"    {outcome['giver']} -> {outcome['receiver']} drinks {outcome['drinks']}")
+                        p.textln(f"{outcome['giver']} -> {outcome['receiver']} drinks {outcome['drinks']}")
                     elif outcome["type"] == "share":
-                        lines.append(f"    {outcome['player1']} & {outcome['player2']} share {outcome['drinks']}")
+                        p.textln(f"{outcome['player1']} & {outcome['player2']} share {outcome['drinks']}")
+            p.textln("-" * 24)
 
-    lines.append("")
-    lines.append(_line("="))
-    lines.append(_center("FINAL TALLY"))
-    lines.append(_line("="))
+    p.set(align="center", bold=True)
+    p.textln("FINAL TALLY")
+    p.set(align="left", bold=False)
+    p.textln("=" * 24)
     for score in data["scores"]:
-        lines.append(f"{score['name']}: drank {score['drank']} | gave {score['gave']}")
-    lines.append(_line("="))
-    lines.append(_center("drink responsibly"))
-    lines.append(_line("="))
-
-    return "\n".join(lines) + "\n\n\n"
+        p.textln(f"{score['name']}: drank {score['drank']} | gave {score['gave']}")
+    p.textln("=" * 24)
+    p.set(align="center")
+    p.textln("drink responsibly")

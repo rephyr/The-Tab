@@ -1,6 +1,6 @@
 {
   "printer": {
-    "connection": "stdout",
+    "connection": "win32raw",
     "printerName": "CK710 Printer"
   },
   "buja": {

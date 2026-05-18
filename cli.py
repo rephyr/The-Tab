@@ -93,6 +93,5 @@ def runCli():
     game.playRound()
 
     data = log.toDict()
-    receipt = formatReceipt(data)
     printerConfig = Config().data.get("printer", {})
-    ReceiptPrinter(printerConfig).printReceipt(receipt)
+    ReceiptPrinter(printerConfig).printReceipt(data, formatReceipt)
