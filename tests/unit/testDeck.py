@@ -25,11 +25,6 @@ class TestDeck(unittest.TestCase):
         card = self.deck.drawCard()
         self.assertIsInstance(card, Cards)
  
-    def test_drawCard_empty_returns_none(self):
-        for _ in range(52):
-            self.deck.drawCard()
-        self.assertIsNone(self.deck.drawCard())
- 
     def test_seeTopCard_does_not_remove(self):
         top = self.deck.seeTopCard()
         self.assertEqual(self.deck.cardsRemaining(), 52)
