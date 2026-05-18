@@ -181,11 +181,22 @@ class Buja(Game):
     def _chooseTarget(self, player: Player) -> Player:
         others = self._listPlayers(player)
 
+        print("\nAvailable players:")
+        for p in others:
+            print(f"- {p.getName()}")
+
         while True:
-            name = self._input("Target player: ")
-            target = next((p for p in others if p.getName().lower() == name.lower()), None)
+            name = self._input("Target player: ").strip()
+
+            target = next(
+                (p for p in others if p.getName().lower() == name.lower()),
+                None
+            )
+
             if target:
                 return target
+
+            print("Invalid name, try again")
 
     def _draw(self, player: Player):
         card = self.deck.drawCard()
