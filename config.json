@@ -1,6 +1,7 @@
 {
   "printer": {
-    "connection": "stdout"
+    "connection": "stdout",
+    "printerName": "CK710 Printer"
   },
   "buja": {
     "boardLength": 3,

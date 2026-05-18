@@ -1,5 +1,5 @@
 try:
-    from escpos.printer import Usb, Serial
+    from escpos.printer import Usb, Serial, Win32Raw
     ESCPOS_AVAILABLE = True
 except ImportError:
     ESCPOS_AVAILABLE = False
@@ -13,7 +13,14 @@ class ReceiptPrinter:
     def _connect(self):
         conn = self.config.get("connection", "stdout")
 
-        if conn == "usb":
+        if conn == "win32raw":
+            if not ESCPOS_AVAILABLE:
+                raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
+            name = self.config.get("printerName")
+            self._p = Win32Raw(name)
+            self._p.open()
+
+        elif conn == "usb":
             if not ESCPOS_AVAILABLE:
                 raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
             vid = int(self.config.get("vendor_id", "0x04b8"), 16)
