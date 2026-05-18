@@ -2,7 +2,6 @@ from core.game import Game
 from core.deck import Deck
 from core.player import Player
 from dataclasses import dataclass, field
-from core.cards import Cards
 
 
 def defaultInput(prompt: str) -> str:
@@ -15,47 +14,49 @@ def defaultInput(prompt: str) -> str:
 
 @dataclass
 class Buja(Game):
-    name: str = "Buja"
+    name: str = "Buja instance"
+    gameTitle: str = "Buja"
+
     config: dict = field(default_factory=dict)
     deck: Deck = field(default_factory=Deck)
 
     def __post_init__(self):
-        self._input = defaultInput
+        self.inputFunc = defaultInput
 
     def setInput(self, fn):
-        self._input = fn
+        self.inputFunc = fn
 
     def playRound(self) -> None:
         print("Red or Black?")
 
         for player in self.players:
-            print(f"\n{player.getName()} turn")
+            print(f"\n{player.getName()}'s turn")
             self._redOrBlack(player)
 
-        print("Higher or Lower")
+        print("\nHigher or Lower\n")
 
         for player in self.players:
-            print(f"\n{player.getName()} turn")
+            print(f"\n{player.getName()}'s turn")
             self._higherOrLower(player)
 
-        print("Inside or Outside")
+        print("\nInside or Outside\n")
 
         for player in self.players:
-            print(f"\n{player.getName()} turn")
+            print(f"\n{player.getName()}'s turn")
             self._insideOrOutside(player)
 
-        print("Which suit?")
+        print("\nWhich suit?\n")
 
         for player in self.players:
-            print(f"\n{player.getName()} turn")
+            print(f"\n{player.getName()}'s turn")
             self._suit(player)
 
         print("\nHands for each player:\n")
         for player in self.players:
-            hand_str = ", ".join(str(c) for c in player.getHand())
-            print(f"{player.getName()}: {hand_str}")
+            handStr = ", ".join(str(c) for c in player.getHand())
+            print(f"{player.getName()}: {handStr}")
 
-        print("Next the board phase")
+        print("\nNext the board phase\n")
 
         self._board()
 
@@ -68,7 +69,7 @@ class Buja(Game):
 
         guess = ""
         while guess not in ("r", "b"):
-            guess = self._input("Red or Black? (r/b) ")
+            guess = self.inputFunc("Red or Black? (r/b) ")
 
         card = self._draw(player)
         print(f"Card: {card}")
@@ -76,107 +77,179 @@ class Buja(Game):
         correct = (guess == "r" and card.isRed()) or (guess == "b" and card.isBlack())
 
         if correct:
+            print("Correct!")
             target = self._chooseTarget(player)
+            print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
         else:
+            print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
 
     def _higherOrLower(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
 
-        last = player.getHand()[-1]
-        print(f"Your last card: {last}")
+        lastCard = player.getHand()[-1]
+        print(f"Your last card: {lastCard}")
 
         guess = ""
         while guess not in ("h", "l"):
-            guess = self._input("Higher or Lower? (h/l) ")
+            guess = self.inputFunc("Higher or Lower? (h/l) ")
 
         card = self._draw(player)
         print(f"Drawn card: {card}")
 
-        if card.value() == last.value():
+        if card.value() == lastCard.value():
+            print("Same value! Drink double")
             player.addDrinks(amount * 2)
             return
 
-        correct = (guess == "h" and card.value() > last.value()) or \
-                  (guess == "l" and card.value() < last.value())
+        correct = (guess == "h" and card.value() > lastCard.value()) or \
+                  (guess == "l" and card.value() < lastCard.value())
 
         if correct:
+            print("Correct!")
             target = self._chooseTarget(player)
+            print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
         else:
+            print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
 
     def _insideOrOutside(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
 
         hand = player.getHand()
+
+        print(f"\n{player.getName()}'s cards:")
+        print(", ".join(str(c) for c in hand))
+
         low = min(hand, key=lambda c: c.value())
         high = max(hand, key=lambda c: c.value())
 
+        print(f"Range: {low} - {high}")
+
         guess = ""
         while guess not in ("i", "o"):
-            guess = self._input("Inside or Outside? (i/o) ")
+            guess = self.inputFunc("Inside or Outside? (i/o) ")
 
         card = self._draw(player)
-        v = card.value()
+        print(f"Card: {card}")
 
-        on_line = v == low.value() or v == high.value()
+        value = card.value()
 
-        if on_line:
+        if value == low.value() or value == high.value():
+            print(f"On the line! Drink {amount * 2}")
             player.addDrinks(amount * 2)
             return
 
-        correct = (guess == "i" and low.value() < v < high.value()) or \
-                  (guess == "o" and (v < low.value() or v > high.value()))
+        correct = (guess == "i" and low.value() < value < high.value()) or \
+                  (guess == "o" and (value < low.value() or value > high.value()))
 
         if correct:
+            print("Correct!")
             target = self._chooseTarget(player)
+            print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
         else:
+            print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
 
     def _suit(self, player: Player) -> None:
         amount = self._getConfig("drinkAmount", 1)
 
-        SUIT_MAP = {"h": "hearts", "d": "diamonds", "c": "clubs", "s": "spades"}
+        suitMap = {
+            "h": "hearts",
+            "d": "diamonds",
+            "c": "clubs",
+            "s": "spades"
+        }
 
         guess = ""
-        while guess not in SUIT_MAP:
-            guess = self._input("Guess suit (h/d/c/s): ")
+        while guess not in suitMap:
+            guess = self.inputFunc("Guess suit (h/d/c/s): ")
 
         card = self._draw(player)
+        print(f"Card: {card}")
 
-        if SUIT_MAP[guess] == card.suit.lower():
+        guessedSuit = suitMap[guess]
+        actualSuit = card.suit.lower()
+
+        if guessedSuit == actualSuit:
+            print("Correct!")
             target = self._chooseTarget(player)
+            print(f"{target.getName()} drinks {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
         else:
+            print(f"Wrong! You drink {amount}")
             player.addDrinks(amount)
 
     def _board(self) -> None:
-        board_length = self._getConfig("boardLength", 3)
-        start_drinks = self._getConfig("boardStartDrinks", 2)
+        boardLength = self._getConfig("boardLength", 3)
+        startDrinks = self._getConfig("boardStartDrinks", 2)
         increment = self._getConfig("boardIncrement", 2)
 
+        actions = ["drink", "give", "share"]
+
         board = []
-        for _ in range(board_length):
+        for _ in range(boardLength):
             row = [self.deck.drawCard() for _ in range(3)]
             board.append(row)
 
+        print("\n=== THE BOARD (DEBUG PREVIEW) ===\n")
+
         for rowIndex, row in enumerate(board):
-            drinks = start_drinks + rowIndex * increment
+            drinks = startDrinks + rowIndex * increment
+
+            rowPreview = []
+            for cardIndex, card in enumerate(row):
+                action = actions[cardIndex % len(actions)]
+                rowPreview.append(f"{card} ({action.upper()})")
+
+            print(f"Row {rowIndex + 1} | {drinks} drinks | " + " | ".join(rowPreview))
+
+        print("\n=== BOARD PHASE START ===\n")
+
+        for rowIndex, row in enumerate(board):
+            drinks = startDrinks + rowIndex * increment
+
+            print(f"\nRow {rowIndex + 1} | {drinks} drinks")
 
             for cardIndex, card in enumerate(row):
-                self._input(f"Press Enter ({card})")
+                action = actions[cardIndex % len(actions)]
 
-                matched = [p for p in self.players if p.hasRank(card.rank)]
+                input(f"\nPress Enter to reveal ({card} - {action.upper()})")
 
-                for player in matched:
-                    player.addDrinks(drinks)
+                print(f"Card: {card} | Action: {action.upper()}")
+
+                matchedPlayers = [p for p in self.players if p.hasRank(card.rank)]
+
+                if not matchedPlayers:
+                    print("Nobody matched this card.")
+                    continue
+
+                for player in matchedPlayers:
+                    if action == "drink":
+                        print(f"{player.getName()} drinks {drinks}")
+                        player.addDrinks(drinks)
+
+                    elif action == "give":
+                        target = self._chooseTarget(player)
+                        print(f"{target.getName()} gets {drinks}")
+                        target.addDrinks(drinks)
+                        player.addDrinksToGive(drinks)
+
+                    elif action == "share":
+                        target = self._chooseTarget(player)
+                        print(f"{player.getName()} and {target.getName()} share {drinks}")
+                        player.addDrinks(drinks)
+                        target.addDrinks(drinks)
+                        player.addDrinksToGive(drinks)
+
+        print("\n=== BOARD END ===\n")
 
     def _chooseTarget(self, player: Player) -> Player:
         others = self._listPlayers(player)
@@ -186,7 +259,7 @@ class Buja(Game):
             print(f"- {p.getName()}")
 
         while True:
-            name = self._input("Target player: ").strip()
+            name = self.inputFunc("Target player: ").strip()
 
             target = next(
                 (p for p in others if p.getName().lower() == name.lower()),
@@ -200,6 +273,11 @@ class Buja(Game):
 
     def _draw(self, player: Player):
         card = self.deck.drawCard()
+
+        if card is None:
+            self.deck.resetDeck()
+            card = self.deck.drawCard()
+
         player.addCardToHand(card)
         return card
 
@@ -208,3 +286,17 @@ class Buja(Game):
 
     def _getConfig(self, key, default):
         return self.config.get(key, default)
+    
+    def _handleGive(self, player: Player, drinks: int) -> None:
+        target = self._chooseTarget(player)
+        print(f"{target.getName()} gets {drinks}")
+        target.addDrinks(drinks)
+        player.addDrinksToGive(drinks)
+
+
+    def _handleShare(self, player: Player, drinks: int) -> None:
+        target = self._chooseTarget(player)
+        print(f"{player.getName()} and {target.getName()} share {drinks}")
+        player.addDrinks(drinks)
+        target.addDrinks(drinks)
+        player.addDrinksToGive(drinks)
