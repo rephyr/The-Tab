@@ -95,17 +95,27 @@ class TestPlayerStoreDelete(unittest.TestCase):
         self.assertTrue(result)
         self.assertNotIn("Alice", store.data["players"])
 
-    def testDeletePlayerKeepsSessions(self):
+    def testDeletePlayerRemovesTheirSessionScores(self):
         store = makeTempStore()
         store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
+        store.deletePlayer("Alice")
+        self.assertEqual(len(store.data["sessions"]), 0)
+
+    def testDeletePlayerKeepsSessionsWithOtherPlayers(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([
+            {"name": "Alice", "drinksTaken": 5, "drinksToGive": 1},
+            {"name": "Bob", "drinksTaken": 3, "drinksToGive": 0},
+        ]), None)
         store.deletePlayer("Alice")
         self.assertEqual(len(store.data["sessions"]), 1)
+        self.assertNotIn("Alice", [s["name"] for s in store.data["sessions"][0]["scores"]])
 
-    def testGetAllPlayerNamesIncludesSessionPlayers(self):
+    def testDeletePlayerRemovedFromGetAllPlayerNames(self):
         store = makeTempStore()
         store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
         store.deletePlayer("Alice")
-        self.assertIn("Alice", store.getAllPlayerNames())
+        self.assertNotIn("Alice", store.getAllPlayerNames())
 
     def testDeletePlayerNotFound(self):
         store = makeTempStore()

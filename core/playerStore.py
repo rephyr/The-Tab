@@ -107,10 +107,13 @@ class PlayerStore:
         return self.data.get("sessions", [])
 
     def deletePlayer(self, name):
-        """Remove a player entry by name. Returns True if found and deleted, False otherwise."""
+        """Remove a player and all their session scores. Returns True if found, False otherwise."""
         if name not in self.data["players"]:
             return False
         del self.data["players"][name]
+        for session in self.data.get("sessions", []):
+            session["scores"] = [s for s in session["scores"] if s["name"] != name]
+        self.data["sessions"] = [s for s in self.data["sessions"] if s["scores"]]
         self._save()
         return True
 
