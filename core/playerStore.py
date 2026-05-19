@@ -32,7 +32,7 @@ class PlayerStore:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
     def hook(self, event, log):
-        """GameLog callback — updates player totals and appends a session on GameEndEvent."""
+        """GameLog callback updates player totals and appends a session on GameEndEvent."""
         if not isinstance(event, GameEndEvent):
             return
 

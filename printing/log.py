@@ -39,73 +39,73 @@ class GameLog:
             "scores": [],
         }
 
-        current_phase_name = None
-        current_turn = None
-        in_board = False
-        player_hands = {}
+        currentPhaseName = None
+        currentTurn = None
+        inBoard = False
+        playerHands = {}
 
         for event in self.events:
             if isinstance(event, GameStartEvent):
                 result["players"] = event.players
                 result["timestamp"] = event.timestamp.strftime("%Y-%m-%d %H:%M")
-                player_hands = {name: [] for name in event.players}
+                playerHands = {name: [] for name in event.players}
 
             elif isinstance(event, PhaseEvent):
                 if event.player == "":
-                    in_board = True
-                    current_turn = None
+                    inBoard = True
+                    currentTurn = None
                 else:
-                    in_board = False
-                    if event.phase != current_phase_name:
-                        current_phase_name = event.phase
+                    inBoard = False
+                    if event.phase != currentPhaseName:
+                        currentPhaseName = event.phase
                         result["phases"].append({"name": event.phase, "turns": []})
 
-                    current_turn = {
+                    currentTurn = {
                         "player": event.player,
                         "guess": None,
                         "card": None,
                         "correct": None,
-                        "gave_to": None,
+                        "gaveTo": None,
                         "drinks": 0,
                         "note": None,
-                        "hand_before": list(player_hands.get(event.player, [])),
+                        "handBefore": list(playerHands.get(event.player, [])),
                     }
-                    result["phases"][-1]["turns"].append(current_turn)
+                    result["phases"][-1]["turns"].append(currentTurn)
 
             elif isinstance(event, GuessEvent):
-                if current_turn is not None:
-                    current_turn["guess"] = event.guess
-                    current_turn["card"] = event.card
-                    current_turn["correct"] = event.correct
-                    if event.card is not None and event.player in player_hands:
-                        player_hands[event.player].append(event.card)
+                if currentTurn is not None:
+                    currentTurn["guess"] = event.guess
+                    currentTurn["card"] = event.card
+                    currentTurn["correct"] = event.correct
+                    if event.card is not None and event.player in playerHands:
+                        playerHands[event.player].append(event.card)
 
             elif isinstance(event, DrinkEvent):
-                if in_board and result["board"]:
+                if inBoard and result["board"]:
                     result["board"][-1]["outcomes"].append({
                         "player": event.player,
                         "type": "drink",
                         "drinks": event.amount,
                     })
-                elif current_turn is not None:
-                    current_turn["drinks"] = event.amount
+                elif currentTurn is not None:
+                    currentTurn["drinks"] = event.amount
                     if event.reason != "wrong guess":
-                        current_turn["note"] = event.reason
+                        currentTurn["note"] = event.reason
 
             elif isinstance(event, GiveEvent):
-                if in_board and result["board"]:
+                if inBoard and result["board"]:
                     result["board"][-1]["outcomes"].append({
                         "giver": event.giver,
                         "receiver": event.receiver,
                         "type": "give",
                         "drinks": event.amount,
                     })
-                elif current_turn is not None:
-                    current_turn["gave_to"] = event.receiver
-                    current_turn["drinks"] = event.amount
+                elif currentTurn is not None:
+                    currentTurn["gaveTo"] = event.receiver
+                    currentTurn["drinks"] = event.amount
 
             elif isinstance(event, ShareEvent):
-                if in_board and result["board"]:
+                if inBoard and result["board"]:
                     result["board"][-1]["outcomes"].append({
                         "player1": event.player1,
                         "player2": event.player2,
@@ -132,6 +132,6 @@ class GameLog:
                     for s in event.scores
                 ]
 
-        result["hands"] = player_hands
+        result["hands"] = playerHands
 
         return result

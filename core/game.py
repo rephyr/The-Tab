@@ -22,8 +22,8 @@ class Game(ABC):
     def addPlayer(self, player: Player) -> None:
         self.players.append(player)
 
-    def removePlayer(self, player_id: int) -> None:
-        self.players = [p for p in self.players if p.id != player_id]
+    def removePlayer(self, playerId: int) -> None:
+        self.players = [p for p in self.players if p.id != playerId]
 
     def reset(self) -> None:
         for player in self.players:

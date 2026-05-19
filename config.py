@@ -10,5 +10,5 @@ class Config:
         with open(self.path, "r", encoding="utf-8") as file:
             return json.load(file)
 
-    def get_game_config(self, game_name: str):
-        return self.data.get(game_name, {})
+    def getGameConfig(self, gameName: str):
+        return self.data.get(gameName, {})

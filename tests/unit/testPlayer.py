@@ -13,40 +13,40 @@ class TestPlayer(unittest.TestCase):
     def setUp(self):
         self.player = makePlayer(1, "Testi Timo")
  
-    def test_getName(self):
+    def testGetName(self):
         self.assertEqual(self.player.getName(), "Testi Timo")
  
-    def test_getId(self):
+    def testGetId(self):
         self.assertEqual(self.player.getId(), 1)
  
-    def test_addDrinks(self):
+    def testAddDrinks(self):
         self.player.addDrinks(2)
         self.player.addDrinks(3)
         self.assertEqual(self.player.getDrinksTaken(), 5)
  
-    def test_addDrinksToGive(self):
+    def testAddDrinksToGive(self):
         self.player.addDrinksToGive(2)
         self.assertEqual(self.player.drinksToGive, 2)
  
-    def test_addCardToHand(self):
+    def testAddCardToHand(self):
         card = makeCard("A")
         self.player.addCardToHand(card)
         self.assertIn(card, self.player.getHand())
  
-    def test_clearHand(self):
+    def testClearHand(self):
         self.player.addCardToHand(makeCard("A"))
         self.player.clearHand()
         self.assertEqual(self.player.getHand(), [])
  
-    def test_hasRank_true(self):
+    def testHasRankTrue(self):
         self.player.addCardToHand(makeCard("A"))
         self.assertTrue(self.player.hasRank("A"))
  
-    def test_hasRank_false(self):
+    def testHasRankFalse(self):
         self.player.addCardToHand(makeCard("A"))
         self.assertFalse(self.player.hasRank("K"))
  
-    def test_setDrinksTaken(self):
+    def testSetDrinksTaken(self):
         self.player.addDrinks(5)
         self.player.setDrinksTaken(0)
         self.assertEqual(self.player.getDrinksTaken(), 0)

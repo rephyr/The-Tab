@@ -12,16 +12,16 @@ class MockPrinter:
     def cut(self): self.cuts += 1
 
 def makeTurn(player="Testi Matti", guess="Red", card="♥A", correct=True,
-             gave_to="Testi Timo", drinks=1, note=None, hand_before=None):
+             gaveTo="Testi Timo", drinks=1, note=None, handBefore=None):
     return {
         "player": player,
         "guess": guess,
         "card": card,
         "correct": correct,
-        "gave_to": gave_to,
+        "gaveTo": gaveTo,
         "drinks": drinks,
         "note": note,
-        "hand_before": hand_before or [],
+        "handBefore": handBefore or [],
     }
 
 class TestFormatTurn(unittest.TestCase):
@@ -43,30 +43,30 @@ class TestFormatTurn(unittest.TestCase):
 
     def testShowsGaveToOnCorrect(self):
         p = MockPrinter()
-        formatTurn("Red or Black", makeTurn(gave_to="Testi Timo", drinks=1), p)
+        formatTurn("Red or Black", makeTurn(gaveTo="Testi Timo", drinks=1), p)
         self.assertTrue(any("Testi Timo" in l for l in p.lines))
 
     def testShowsDrinksOnWrong(self):
         p = MockPrinter()
-        turn = makeTurn(gave_to=None, drinks=2, note=None)
+        turn = makeTurn(gaveTo=None, drinks=2, note=None)
         formatTurn("Red or Black", turn, p)
         self.assertTrue(any("2" in l for l in p.lines))
 
     def testShowsNoteWhenPresent(self):
         p = MockPrinter()
-        turn = makeTurn(gave_to=None, drinks=2, note="on the line")
+        turn = makeTurn(gaveTo=None, drinks=2, note="on the line")
         formatTurn("Red or Black", turn, p)
         self.assertTrue(any("on the line" in l for l in p.lines))
 
     def testHigherOrLowerShowsBothCards(self):
         p = MockPrinter()
-        turn = makeTurn(card="♥9", hand_before=["♥5"])
+        turn = makeTurn(card="♥9", handBefore=["♥5"])
         formatTurn("Higher or Lower", turn, p)
         self.assertTrue(any("♥5" in l and "♥9" in l for l in p.lines))
 
     def testInsideOrOutsideShowsHand(self):
         p = MockPrinter()
-        turn = makeTurn(hand_before=["♥3", "♥9"])
+        turn = makeTurn(handBefore=["♥3", "♥9"])
         formatTurn("Inside or Outside", turn, p)
         self.assertTrue(any("♥3" in l for l in p.lines))
 

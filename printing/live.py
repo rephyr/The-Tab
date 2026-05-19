@@ -12,31 +12,31 @@ class LivePrinter:
     """Reacts to game events and prints each receipt the moment it's ready."""
     def __init__(self, printer):
         self._printer = printer
-        self._in_board = False
-        self._board_card_count = 0
+        self._inBoard = False
+        self._boardCardCount = 0
 
     def hook(self, event, log):
         """Called by GameLog after every event. Decides what to print based on event type."""
         if isinstance(event, PhaseEvent) and event.player == "":
-            self._in_board = True
+            self._inBoard = True
             data = log.toDict()
             for player, cards in data["hands"].items():
                 self._printer.printWith(lambda p, pl=player, c=cards: formatHand(pl, c, p))
 
-        elif isinstance(event, (DrinkEvent, GiveEvent)) and not self._in_board:
+        elif isinstance(event, (DrinkEvent, GiveEvent)) and not self._inBoard:
             data = log.toDict()
-            last_phase = data["phases"][-1]
-            last_turn = last_phase["turns"][-1]
+            lastPhase = data["phases"][-1]
+            lastTurn = lastPhase["turns"][-1]
             self._printer.printWith(
-                lambda p, ph=last_phase["name"], t=last_turn: formatTurn(ph, t, p)
+                lambda p, ph=lastPhase["name"], t=lastTurn: formatTurn(ph, t, p)
             )
 
-        elif isinstance(event, BoardCardEvent) and self._in_board:
+        elif isinstance(event, BoardCardEvent) and self._inBoard:
             data = log.toDict()
-            if self._board_card_count > 0:
-                prev = data["board"][self._board_card_count - 1]
+            if self._boardCardCount > 0:
+                prev = data["board"][self._boardCardCount - 1]
                 self._printer.printWith(lambda p, c=prev: formatBoardCard(c, p))
-            self._board_card_count += 1
+            self._boardCardCount += 1
 
         elif isinstance(event, GameEndEvent):
             data = log.toDict()

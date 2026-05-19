@@ -14,11 +14,11 @@ def makeLog():
     return log
 
 
-def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gave_to="Testi Timo", drinks=1):
+def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gaveTo="Testi Timo", drinks=1):
     log.add(PhaseEvent(phase, player))
     log.add(GuessEvent(player, phase, guess, card, correct))
-    if gave_to:
-        log.add(GiveEvent(player, gave_to, drinks))
+    if gaveTo:
+        log.add(GiveEvent(player, gaveTo, drinks))
     else:
         log.add(DrinkEvent(player, drinks, "wrong guess"))
 
@@ -29,7 +29,7 @@ class TestLivePrinterPhase(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Testi Matti", correct=False, gave_to=None, drinks=1)
+        addPhaseTurn(log, "Red or Black", "Testi Matti", correct=False, gaveTo=None, drinks=1)
 
         printer.printWith.assert_called_once()
 
@@ -38,7 +38,7 @@ class TestLivePrinterPhase(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Testi Matti", correct=True, gave_to="Testi Timo", drinks=1)
+        addPhaseTurn(log, "Red or Black", "Testi Matti", correct=True, gaveTo="Testi Timo", drinks=1)
 
         printer.printWith.assert_called_once()
 
@@ -47,8 +47,8 @@ class TestLivePrinterPhase(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Testi Matti", gave_to="Testi Timo")
-        addPhaseTurn(log, "Red or Black", "Testi Timo", gave_to="Testi Matti")
+        addPhaseTurn(log, "Red or Black", "Testi Matti", gaveTo="Testi Timo")
+        addPhaseTurn(log, "Red or Black", "Testi Timo", gaveTo="Testi Matti")
 
         self.assertEqual(printer.printWith.call_count, 2)
 
@@ -59,8 +59,8 @@ class TestLivePrinterHands(unittest.TestCase):
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        addPhaseTurn(log, "Red or Black", "Testi Matti", gave_to="Testi Timo")
-        addPhaseTurn(log, "Red or Black", "Testi Timo", gave_to="Testi Matti")
+        addPhaseTurn(log, "Red or Black", "Testi Matti", gaveTo="Testi Timo")
+        addPhaseTurn(log, "Red or Black", "Testi Timo", gaveTo="Testi Matti")
         log.add(PhaseEvent("Board", ""))
 
         # 2 turn receipts + 2 hand receipts

@@ -4,29 +4,29 @@ p.set(), p.textln(), and p.text(). formatReceipt() runs the full game through al
 """
 
 
-def formatTurn(phase_name: str, turn: dict, p) -> None:
+def formatTurn(phaseName: str, turn: dict, p) -> None:
     """Print one player's turn receipt for a phase."""
     p.textln("=" * 24)
     p.set(align="center", bold=True)
-    p.textln(phase_name.upper())
+    p.textln(phaseName.upper())
     p.set(align="left", bold=False)
     p.textln("-" * 24)
     p.textln(f"Pelaaja : {turn['player']}")
-    if phase_name == "Inside or Outside" and turn.get("hand_before"):
-        hand = turn["hand_before"]
+    if phaseName == "Inside or Outside" and turn.get("handBefore"):
+        hand = turn["handBefore"]
         p.textln(f"Kädessä : {' | '.join(hand)}")
     if turn["guess"]:
         p.textln(f"Arvaus  : {turn['guess']}")
     if turn["card"]:
-        if phase_name == "Higher or Lower" and turn.get("hand_before"):
-            display = f"{turn['hand_before'][-1]}  {turn['card']}"
+        if phaseName == "Higher or Lower" and turn.get("handBefore"):
+            display = f"{turn['handBefore'][-1]}  {turn['card']}"
         else:
             display = turn["card"]
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
         p.textln(display)
         p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
-    if turn["gave_to"]:
-        p.textln(f"Oikein! {turn['gave_to']} juo {turn['drinks']}.")
+    if turn["gaveTo"]:
+        p.textln(f"Oikein! {turn['gaveTo']} juo {turn['drinks']}.")
     elif turn["drinks"] > 0:
         note = f" ({turn['note']})" if turn["note"] else ""
         p.textln(f"Väärin! Juo {turn['drinks']}{note}.")
