@@ -12,13 +12,13 @@ def formatTurn(phaseName: str, turn: dict, p) -> None:
     p.set(align="left", bold=False)
     p.textln("-" * 24)
     p.textln(f"Pelaaja : {turn['player']}")
-    if phaseName == "Inside or Outside" and turn.get("handBefore"):
+    if phaseName == "Välistä vai ulkoa?" and turn.get("handBefore"):
         hand = turn["handBefore"]
         p.textln(f"Kädessä : {' | '.join(hand)}")
     if turn["guess"]:
         p.textln(f"Arvaus  : {turn['guess']}")
     if turn["card"]:
-        if phaseName == "Higher or Lower" and turn.get("handBefore"):
+        if phaseName == "Isompi vai pienempi?" and turn.get("handBefore"):
             display = f"{turn['handBefore'][-1]}  {turn['card']}"
         else:
             display = turn["card"]
@@ -52,27 +52,27 @@ def formatBoardCard(card: dict, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
     p.textln(card["card"])
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
-    p.textln(f"{card['action'].upper()} - {card['drinks']} drinks")
+    p.textln(f"{card['action'].upper()} {card['drinks']}")
     if not card["matched"]:
-        p.textln("No match")
+        p.textln("Ei osumia")
     else:
         for outcome in card["outcomes"]:
             if outcome["type"] == "drink":
-                p.textln(f"{outcome['player']} drinks {outcome['drinks']}")
+                p.textln(f"{outcome['player']} juo {outcome['drinks']}")
             elif outcome["type"] == "give":
-                p.textln(f"{outcome['giver']} -> {outcome['receiver']} drinks {outcome['drinks']}")
+                p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
             elif outcome["type"] == "share":
-                p.textln(f"{outcome['player1']} & {outcome['player2']} share {outcome['drinks']}")
+                p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
 
 
 def formatTally(scores: list, p) -> None:
     """Print the final drink tally for all players."""
     p.set(align="center", bold=True)
-    p.textln("FINAL TALLY")
+    p.textln("LOPPUSALDO")
     p.set(align="left", bold=False)
     p.textln("=" * 24)
     for score in scores:
-        p.textln(f"{score['name']}: drank {score['drank']} | gave {score['gave']}")
+        p.textln(f"{score['name']}: joi {score['drank']} | antoi {score['gave']}")
     p.textln("=" * 24)
 
 

@@ -49,26 +49,26 @@ class TestFormatTurn(unittest.TestCase):
 
     def testShowsDrinksOnWrong(self):
         p = MockPrinter()
-        turn = makeTurn(gaveTo=None, drinks=2, note=None)
+        turn = makeTurn(gaveTo=None, drinks=2, note=None, correct=False)
         formatTurn("Red or Black", turn, p)
         self.assertTrue(any("2" in l for l in p.lines))
 
     def testShowsNoteWhenPresent(self):
         p = MockPrinter()
-        turn = makeTurn(gaveTo=None, drinks=2, note="on the line")
+        turn = makeTurn(gaveTo=None, drinks=2, note="on the line", correct=None)
         formatTurn("Red or Black", turn, p)
         self.assertTrue(any("on the line" in l for l in p.lines))
 
     def testHigherOrLowerShowsBothCards(self):
         p = MockPrinter()
         turn = makeTurn(card="♥9", handBefore=["♥5"])
-        formatTurn("Higher or Lower", turn, p)
+        formatTurn("Isompi vai pienempi?", turn, p)
         self.assertTrue(any("♥5" in l and "♥9" in l for l in p.lines))
 
     def testInsideOrOutsideShowsHand(self):
         p = MockPrinter()
         turn = makeTurn(handBefore=["♥3", "♥9"])
-        formatTurn("Inside or Outside", turn, p)
+        formatTurn("Välistä vai ulkoa?", turn, p)
         self.assertTrue(any("♥3" in l for l in p.lines))
 
     def testNoCutInsideTurn(self):
@@ -103,7 +103,7 @@ class TestFormatBoardCard(unittest.TestCase):
     def testShowsNoMatchWhenEmpty(self):
         p = MockPrinter()
         formatBoardCard({"card": "♥A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
-        self.assertTrue(any("No match" in l for l in p.lines))
+        self.assertTrue(any("Ei osumia" in l for l in p.lines))
 
     def testShowsDrinkOutcome(self):
         p = MockPrinter()

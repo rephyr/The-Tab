@@ -49,42 +49,42 @@ class Buja(Game):
         """Run a full game: all 4 phases for every player, then the board."""
         self.emit(GameStartEvent([p.getName() for p in self.players]))
 
-        print("Red or Black?")
+        print("Mikä maa?")
         for player in self.players:
-            print(f"\n{player.getName()}'s turn")
-            self.emit(PhaseEvent("Red or Black", player.getName()))
+            print(f"\n{player.getName()}n vuoro")
+            self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._redOrBlack(player)
 
-        print("\nHigher or Lower\n")
+        print("\nIsompi vai pienempi?\n")
         for player in self.players:
-            print(f"\n{player.getName()}'s turn")
-            self.emit(PhaseEvent("Higher or Lower", player.getName()))
+            print(f"\n{player.getName()}n vuoro")
+            self.emit(PhaseEvent("Isompi vai pienempi?", player.getName()))
             self._higherOrLower(player)
 
-        print("\nInside or Outside\n")
+        print("\nVälistä vai ulkoa?\n")
         for player in self.players:
-            print(f"\n{player.getName()}'s turn")
-            self.emit(PhaseEvent("Inside or Outside", player.getName()))
+            print(f"\n{player.getName()}n vuoro")
+            self.emit(PhaseEvent("Välistä vai ulkoa?", player.getName()))
             self._insideOrOutside(player)
 
-        print("\nWhich suit?\n")
+        print("\nMikä maa?\n")
         for player in self.players:
-            print(f"\n{player.getName()}'s turn")
-            self.emit(PhaseEvent("Suit", player.getName()))
+            print(f"\n{player.getName()}n vuoro")
+            self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._suit(player)
 
-        print("\nHands for each player:\n")
+        print("\nKädet:\n")
         for player in self.players:
             handStr = ", ".join(str(c) for c in player.getHand())
             print(f"{player.getName()}: {handStr}")
 
-        print("\nNext the board phase\n")
-        self.emit(PhaseEvent("Board", ""))
+        print("\nSeuraavana lauta!\n")
+        self.emit(PhaseEvent("Lauta", ""))
         self._board()
 
-        print("\nDrink tally:\n")
+        print("\nRyyppytaulu:\n")
         for player in self.players:
-            print(f"{player.getName()}: drank {player.getDrinksTaken()} | gave out {player.drinksToGive}")
+            print(f"{player.getName()}: joi {player.getDrinksTaken()} | antoi {player.drinksToGive}")
 
         self.emit(GameEndEvent([
             {"name": p.getName(), "drinksTaken": p.getDrinksTaken(), "drinksToGive": p.drinksToGive}
@@ -96,23 +96,23 @@ class Buja(Game):
 
         guess = ""
         while guess not in ("r", "b"):
-            guess = self.inputFunc("Red or Black? (r/b) ")
+            guess = self.inputFunc("Punainen (r) vai musta (b)? ")
 
         card = self._draw(player)
-        print(f"Card: {card}")
+        print(f"Kortti: {card}")
 
         correct = (guess == "r" and card.isRed()) or (guess == "b" and card.isBlack())
-        self.emit(GuessEvent(player.getName(), "Red or Black", "Red" if guess == "r" else "Black", str(card), correct))
+        self.emit(GuessEvent(player.getName(), "Mikä maa?", "Punainen" if guess == "r" else "Musta", str(card), correct))
 
         if correct:
-            print("Correct!")
+            print("Oikein!")
             target = self._chooseTarget(player)
-            print(f"{target.getName()} drinks {amount}")
+            print(f"{target.getName()} juo {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
             self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
-            print(f"Wrong! You drink {amount}")
+            print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
             self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
@@ -120,35 +120,35 @@ class Buja(Game):
         amount = self._getConfig("drinkAmount", 1)
 
         lastCard = player.getHand()[-1]
-        print(f"Your last card: {lastCard}")
+        print(f"Viime kortti: {lastCard}")
 
         guess = ""
         while guess not in ("h", "l"):
-            guess = self.inputFunc("Higher or Lower? (h/l) ")
+            guess = self.inputFunc("Isompi (h) vai pienempi (l)? ")
 
         card = self._draw(player)
-        print(f"Drawn card: {card}")
+        print(f"Kortti: {card}")
 
         if card.value() == lastCard.value():
-            print("Same value! Drink double")
+            print("Sama arvo! Juo tupla")
             player.addDrinks(amount * 2)
-            self.emit(GuessEvent(player.getName(), "Higher or Lower", None, str(card), None))
-            self.emit(DrinkEvent(player.getName(), amount * 2, "same value"))
+            self.emit(GuessEvent(player.getName(), "Isompi vai pienempi?", None, str(card), None))
+            self.emit(DrinkEvent(player.getName(), amount * 2, "sama arvo"))
             return
 
         correct = (guess == "h" and card.value() > lastCard.value()) or \
                   (guess == "l" and card.value() < lastCard.value())
-        self.emit(GuessEvent(player.getName(), "Higher or Lower", "Higher" if guess == "h" else "Lower", str(card), correct))
+        self.emit(GuessEvent(player.getName(), "Isompi vai pienempi?", "Isompi" if guess == "h" else "Pienempi", str(card), correct))
 
         if correct:
-            print("Correct!")
+            print("Oikein!")
             target = self._chooseTarget(player)
-            print(f"{target.getName()} drinks {amount}")
+            print(f"{target.getName()} juo {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
             self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
-            print(f"Wrong! You drink {amount}")
+            print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
             self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
@@ -157,43 +157,43 @@ class Buja(Game):
 
         hand = player.getHand()
 
-        print(f"\n{player.getName()}'s cards:")
+        print(f"\n{player.getName()}n kortit:")
         print(", ".join(str(c) for c in hand))
 
         low = min(hand, key=lambda c: c.value())
         high = max(hand, key=lambda c: c.value())
 
-        print(f"Range: {low} - {high}")
+        print(f"Väli: {low} - {high}")
 
         guess = ""
         while guess not in ("i", "o"):
-            guess = self.inputFunc("Inside or Outside? (i/o) ")
+            guess = self.inputFunc("Välistä (i) vai ulkoa (o)? ")
 
         card = self._draw(player)
-        print(f"Card: {card}")
+        print(f"Kortti: {card}")
 
         value = card.value()
 
         if value == low.value() or value == high.value():
-            print(f"On the line! Drink {amount * 2}")
+            print(f"Rajoilla! Juo {amount * 2}")
             player.addDrinks(amount * 2)
-            self.emit(GuessEvent(player.getName(), "Inside or Outside", None, str(card), None))
-            self.emit(DrinkEvent(player.getName(), amount * 2, "on the line"))
+            self.emit(GuessEvent(player.getName(), "Välistä vai ulkoa?", None, str(card), None))
+            self.emit(DrinkEvent(player.getName(), amount * 2, "rajoilla"))
             return
 
         correct = (guess == "i" and low.value() < value < high.value()) or \
                   (guess == "o" and (value < low.value() or value > high.value()))
-        self.emit(GuessEvent(player.getName(), "Inside or Outside", "Inside" if guess == "i" else "Outside", str(card), correct))
+        self.emit(GuessEvent(player.getName(), "Välistä vai ulkoa?", "Välistä" if guess == "i" else "Ulkoa", str(card), correct))
 
         if correct:
-            print("Correct!")
+            print("Oikein!")
             target = self._chooseTarget(player)
-            print(f"{target.getName()} drinks {amount}")
+            print(f"{target.getName()} juo {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
             self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
-            print(f"Wrong! You drink {amount}")
+            print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
             self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
@@ -206,28 +206,29 @@ class Buja(Game):
             "c": "clubs",
             "s": "spades"
         }
+        suitFi = {"hearts": "Hertta", "diamonds": "Ruutu", "clubs": "Risti", "spades": "Pata"}
 
         guess = ""
         while guess not in suitMap:
-            guess = self.inputFunc("Guess suit (h/d/c/s): ")
+            guess = self.inputFunc("Mikä maa? (h=hertta, d=ruutu, c=risti, s=pata): ")
 
         card = self._draw(player)
-        print(f"Card: {card}")
+        print(f"Kortti: {card}")
 
         guessedSuit = suitMap[guess]
         actualSuit = card.suit.lower()
         correct = guessedSuit == actualSuit
-        self.emit(GuessEvent(player.getName(), "Suit", guessedSuit.capitalize(), str(card), correct))
+        self.emit(GuessEvent(player.getName(), "Mikä maa?", suitFi.get(guessedSuit, guessedSuit.capitalize()), str(card), correct))
 
         if correct:
-            print("Correct!")
+            print("Oikein!")
             target = self._chooseTarget(player)
-            print(f"{target.getName()} drinks {amount}")
+            print(f"{target.getName()} juo {amount}")
             target.addDrinks(amount)
             player.addDrinksToGive(amount)
             self.emit(GiveEvent(player.getName(), target.getName(), amount))
         else:
-            print(f"Wrong! You drink {amount}")
+            print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
             self.emit(DrinkEvent(player.getName(), amount, "wrong guess"))
 
@@ -236,7 +237,7 @@ class Buja(Game):
         startDrinks = self._getConfig("boardStartDrinks", 2)
         increment = self._getConfig("boardIncrement", 2)
 
-        actions = ["drink", "give", "share"]
+        actions = ["juo", "jaa", "kippistä"]
 
         board = []
         for _ in range(boardLength):
@@ -248,52 +249,52 @@ class Buja(Game):
         finalDrinks = lastRowDrinks * 2
 
         if self._getConfig("debug", False):
-            print("\n=== THE BOARD (DEBUG PREVIEW) ===\n")
+            print("\n=== LAUTA (ESIKATSELU) ===\n")
             for rowIndex, row in enumerate(board):
                 drinks = startDrinks + rowIndex * increment
                 rowPreview = []
                 for cardIndex, card in enumerate(row):
                     action = actions[cardIndex % len(actions)]
                     rowPreview.append(f"{card} ({action.upper()})")
-                print(f"Row {rowIndex + 1} | {drinks} drinks | " + " | ".join(rowPreview))
-            print(f"Final  | {finalDrinks} drinks | {finalCard} (SHARE)")
+                print(f"Rivi {rowIndex + 1} | {drinks} ryyppyä | " + " | ".join(rowPreview))
+            print(f"Loppu  | {finalDrinks} ryyppyä | {finalCard} (KIPPISTÄ)")
 
-        print("\n=== BOARD PHASE START ===\n")
+        print("\n=== LAUTA ALKAA ===\n")
 
         for rowIndex, row in enumerate(board):
             drinks = startDrinks + rowIndex * increment
 
-            print(f"\nRow {rowIndex + 1} | {drinks} drinks")
+            print(f"\nRivi {rowIndex + 1} | {drinks} ryyppyä")
 
             for cardIndex, card in enumerate(row):
                 action = actions[cardIndex % len(actions)]
 
-                input(f"\nPress Enter to reveal ({card} - {action.upper()})")
+                input(f"\nPaina Enter paljastaaksesi ({card} - {action.upper()})")
 
-                print(f"Card: {card} | Action: {action.upper()}")
+                print(f"Kortti: {card} | Toiminto: {action.upper()}")
 
                 matchedPlayers = [p for p in self.players if p.hasRank(card.rank)]
                 self.emit(BoardCardEvent(str(card), action, drinks, [p.getName() for p in matchedPlayers]))
 
                 if not matchedPlayers:
-                    print("Nobody matched this card.")
+                    print("Ei osumia.")
                 else:
                     for player in matchedPlayers:
-                        if action == "drink":
-                            print(f"{player.getName()} drinks {drinks}")
+                        if action == "juo":
+                            print(f"{player.getName()} juo {drinks}")
                             player.addDrinks(drinks)
-                            self.emit(DrinkEvent(player.getName(), drinks, "board"))
+                            self.emit(DrinkEvent(player.getName(), drinks, "lauta"))
 
-                        elif action == "give":
+                        elif action == "jaa":
                             target = self._chooseTarget(player)
-                            print(f"{target.getName()} gets {drinks}")
+                            print(f"{target.getName()} saa {drinks}")
                             target.addDrinks(drinks)
                             player.addDrinksToGive(drinks)
                             self.emit(GiveEvent(player.getName(), target.getName(), drinks))
 
-                        elif action == "share":
+                        elif action == "kippistä":
                             target = self._chooseTarget(player)
-                            print(f"{player.getName()} and {target.getName()} share {drinks}")
+                            print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
                             player.addDrinks(drinks)
                             target.addDrinks(drinks)
                             player.addDrinksToGive(drinks)
@@ -301,19 +302,19 @@ class Buja(Game):
 
                 self.emit(BoardCardDoneEvent())
 
-        print(f"\n=== FINAL CARD | {finalDrinks} drinks | SHARE ===")
-        input(f"\nPress Enter to reveal")
-        print(f"Card: {finalCard} | Action: SHARE")
+        print(f"\n=== LOPPU | {finalDrinks} ryyppyä | KIPPISTÄ ===")
+        input(f"\nPaina Enter paljastaaksesi")
+        print(f"Kortti: {finalCard} | Toiminto: KIPPISTÄ")
 
         matchedPlayers = [p for p in self.players if p.hasRank(finalCard.rank)]
-        self.emit(BoardCardEvent(str(finalCard), "share", finalDrinks, [p.getName() for p in matchedPlayers]))
+        self.emit(BoardCardEvent(str(finalCard), "kippistä", finalDrinks, [p.getName() for p in matchedPlayers]))
 
         if not matchedPlayers:
-            print("Nobody matched this card.")
+            print("Ei osumia.")
         else:
             for player in matchedPlayers:
                 target = self._chooseTarget(player)
-                print(f"{player.getName()} and {target.getName()} share {finalDrinks}")
+                print(f"{player.getName()} ja {target.getName()} kippistää {finalDrinks}")
                 player.addDrinks(finalDrinks)
                 target.addDrinks(finalDrinks)
                 player.addDrinksToGive(finalDrinks)
@@ -321,17 +322,17 @@ class Buja(Game):
 
         self.emit(BoardCardDoneEvent())
 
-        print("\n=== BOARD END ===\n")
+        print("\n=== LAUTA LOPPU ===\n")
 
     def _chooseTarget(self, player: Player) -> Player:
         others = self._listPlayers(player)
 
-        print("\nAvailable players:")
+        print("\nPelaajat:")
         for p in others:
             print(f"- {p.getName()}")
 
         while True:
-            name = self.inputFunc("Target player: ").strip()
+            name = self.inputFunc("Kenelle? ").strip()
 
             target = next(
                 (p for p in others if p.getName().lower() == name.lower()),
@@ -341,7 +342,7 @@ class Buja(Game):
             if target:
                 return target
 
-            print("Invalid name, try again")
+            print("Tuntematon pelaaja, yritä uudelleen")
 
     def _draw(self, player: Player):
         card = self.deck.drawCard()
