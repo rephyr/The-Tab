@@ -74,8 +74,8 @@ TASKS = [
         "drinkType": "special",
     },
     {
-        "title": "Saanto",
-        "description": "Tee saanto joka patee pelin loppuun. Saannon rikkoja juo.",
+        "title": "Säänto",
+        "description": "Tee säänto joka pätee pelin loppuun. Säännon rikkoja juo.",
         "players": 1,
         "drinks": None,
         "drinkType": "special",
