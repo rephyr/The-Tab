@@ -3,6 +3,9 @@
     "connection": "win32raw",
     "printerName": "CK710 Printer"
   },
+  "taskgame": {
+    "deckSize": 4
+  },
   "buja": {
     "boardLength": 3,
     "boardStartDrinks": 2,
