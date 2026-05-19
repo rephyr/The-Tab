@@ -4,11 +4,12 @@
 #   players     -- how many players are picked: 1, 2, N, or "all"
 #                  1 targets the drawing player themselves
 #   drinks      -- fixed drink amount (int), or None if outcome is open-ended
-#   drinkType   -- "take"    drawer takes drinks
-#                  "give"    drawer gives drinks to a chosen player
-#                  "social"  outcome determined in play, user logs drinks manually
-#                  "link"    creates a persistent link between players, no immediate drinks
-#                  "special" no drink tracking (ongoing effects)
+#   drinkType   -- "take"     drawer takes drinks
+#                  "give"     drawer gives drinks to a chosen player
+#                  "social"   outcome determined in play, user logs drinks manually
+#                  "link"     creates a persistent link between players, no immediate drinks
+#                  "special"  no drink tracking (ongoing effects)
+#                  "roulette" sequential pulls, 1/playercount hit chance, stops on first hit
 TASKS = [
     {
         "title": "Juo 3",
@@ -114,5 +115,12 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
+    },
+    {
+        "title": "Venäläinen ruletti",
+        "description": "Jokainen vetää liipaisinta vuorollaan. Osuma: juo 10. Todennäköisyys 1/pelaajamäärä.",
+        "players": "all",
+        "drinks": 10,
+        "drinkType": "roulette",
     },
 ]

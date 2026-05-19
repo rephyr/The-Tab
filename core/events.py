@@ -66,6 +66,13 @@ class BoardCardEvent:
     matched: list
 
 @dataclass
+class RouletteResultEvent:
+    player: str
+    hit: bool
+    drinks: int
+
+
+@dataclass
 class TaskDrawEvent:
     drawer: str
     title: str

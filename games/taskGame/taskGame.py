@@ -3,7 +3,7 @@ TaskGame: a turn-based drinking game where each turn a random task is drawn.
 Tasks can target a single player, multiple random players, or everyone.
 """
 from core.game import Game
-from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent
+from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent
 from dataclasses import dataclass, field
 from games.taskGame.tasks import TASKS
 import random
@@ -159,6 +159,16 @@ class TaskGame(Game):
                         self._assignDrinks(player, int(val))
                     else:
                         print(f"  Player '{name}' not found, skipping.")
+
+        elif drinkType == "roulette":
+            bulletIndex = random.randint(0, len(self.players) - 1)
+            for i, p in enumerate(self.players):
+                input(f"{p.getName()} vetää liipaisinta... (Enter)")
+                hit = (i == bulletIndex)
+                self.emit(RouletteResultEvent(player=p.getName(), hit=hit, drinks=drinks))
+                if hit:
+                    self._assignDrinks(p, drinks)
+                    break
 
         elif drinkType == "link":
             if not targets:

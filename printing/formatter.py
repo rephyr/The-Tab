@@ -74,6 +74,28 @@ def formatTally(scores: list, p) -> None:
     p.textln("=" * 24)
 
 
+def formatRouletteResult(event, p) -> None:
+    """Print a single player's roulette pull result."""
+    p.set(align="center", bold=True)
+    p.textln("VENÄLÄINEN RULETTI")
+    p.set(align="left", bold=False)
+    p.textln("=" * 24)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(event.player.upper())
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+    if event.hit:
+        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+        p.textln("OSUMA!")
+        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+        p.textln(f"Juo {event.drinks}!")
+    else:
+        p.set(align="center", bold=True, double_width=True, double_height=True)
+        p.textln("OHAI")
+        p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+
+
 def formatTaskDraw(event, p) -> None:
     """Print a single TaskGame task receipt."""
     p.set(align="center", bold=True, double_width=True, double_height=True)
