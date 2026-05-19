@@ -38,5 +38,3 @@ def formatReceipt(data: dict, p) -> None:
     for score in data["scores"]:
         p.textln(f"{score['name']}: drank {score['drank']} | gave {score['gave']}")
     p.textln("=" * 24)
-    p.set(align="center")
-    p.textln("drink responsibly")

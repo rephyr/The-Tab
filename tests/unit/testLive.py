@@ -69,17 +69,30 @@ class TestLivePrinterHands(unittest.TestCase):
 
 class TestLivePrinterBoard(unittest.TestCase):
 
-    def testPrintsBoardCardWhenNextCardArrives(self):
+    def testPrintsNoMatchCardImmediately(self):
         printer = MagicMock()
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        log.add(PhaseEvent("Board", ""))   # prints 2 hands (Testi Matti + Testi Timo)
-        log.add(BoardCardEvent("♥A", "drink", 2, []))
-        log.add(BoardCardEvent("♦K", "give", 2, []))  # prints previous card
+        log.add(PhaseEvent("Board", ""))
+        log.add(BoardCardEvent("♥A", "drink", 2, []))   # no match -> prints immediately
+        log.add(BoardCardEvent("♦K", "give", 2, []))    # no match -> prints immediately, prev already printed
 
-        # 2 hands + 1 board card
-        self.assertEqual(printer.printWith.call_count, 3)
+        # 2 hands + 2 no-match board cards
+        self.assertEqual(printer.printWith.call_count, 4)
+
+    def testMatchedCardPrintsWhenNextArrives(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer).hook)
+
+        log.add(PhaseEvent("Board", ""))
+        log.add(BoardCardEvent("♥A", "drink", 2, ["Testi Matti"]))  # matched, waits for next
+        log.add(DrinkEvent("Testi Matti", 2, "board"))
+        log.add(BoardCardEvent("♦K", "give", 2, []))  # triggers print of ♥A, prints ♦K immediately
+
+        # 2 hands + ♥A (triggered by ♦K) + ♦K (no match, immediate)
+        self.assertEqual(printer.printWith.call_count, 4)
 
     def testPrintsLastBoardCardAndTallyAtGameEnd(self):
         printer = MagicMock()
@@ -121,13 +134,13 @@ class TestLivePrinterTaskGameEnd(unittest.TestCase):
         # Only 1 printWith call (the receipt), not 2 (board card + tally)
         self.assertEqual(printer.printWith.call_count, 1)
 
-    def testBujaEndStillUsesTally(self):
+    def testBujaEndUsesReceipt(self):
         printer = MagicMock()
         log = makeLog()
         log.on(LivePrinter(printer, gameTitle="Buja").hook)
         log.add(PhaseEvent("Board", ""))
         log.add(GameEndEvent(scores=[{"name": "Teppo", "drinksTaken": 3, "drinksToGive": 1}]))
-        # 2 hands + 1 tally
+        # 2 hands + 1 consolidated receipt
         self.assertEqual(printer.printWith.call_count, 3)
 
 
