@@ -205,6 +205,43 @@ def deduplicateName(name, existingNames):
     return f"{name} ({counter})"
 
 
+def showPrintTest(config, debug):
+    """Sub-menu for printing test receipts with constant data to preview formatting."""
+    from printing.testData import printTestReceipts
+    printerConfig = config.data.get("printer", {})
+    printer = ReceiptPrinter(printerConfig, debug=debug)
+
+    options = [
+        ("1", "Turn receipts (all 4 phases)", ["turns"]),
+        ("2", "Player hands",                 ["hands"]),
+        ("3", "Board cards",                  ["board"]),
+        ("4", "Final tally",                  ["tally"]),
+        ("5", "All of the above",             None),
+    ]
+
+    optionMap = {key: parts for key, _, parts in options}
+
+    try:
+        while True:
+            print("\nPrint test receipts:")
+            for key, label, _ in options:
+                print(f"{key}. {label}")
+            print("6. Back")
+
+            choice = input("\nChoice: ").strip()
+
+            if choice == "6":
+                break
+            elif choice in optionMap:
+                printTestReceipts(printer, optionMap[choice])
+            else:
+                print("Invalid choice.")
+    except KeyboardInterrupt:
+        print()
+    finally:
+        printer.close()
+
+
 def runCli(adminMode=False, debug=False):
     """Main CLI loop. Shows a menu, runs games, and handles data management.
 
@@ -230,6 +267,8 @@ def runCli(adminMode=False, debug=False):
             print("\nL - Leaderboard")
             if adminMode:
                 print("M - Manage data")
+            if debug:
+                print("P - Print test")
             print('\n(type "quit" to exit)')
 
             userInput = input("\nChoose: ").strip()
@@ -243,6 +282,10 @@ def runCli(adminMode=False, debug=False):
 
             if userInput.lower() == "m" and adminMode:
                 manageData(store)
+                continue
+
+            if userInput.lower() == "p" and debug:
+                showPrintTest(config, debug)
                 continue
 
             gameClass = None

@@ -5,9 +5,9 @@ from core.events import GameEndEvent
 from games.taskGame.taskGame import TaskGame
 
 DUMMY_TASKS = [
-    {"title": "Test Task", "description": "Do something.", "players": 1},
-    {"title": "Pair Task", "description": "Do something together.", "players": 2},
-    {"title": "All Task", "description": "Everyone does something.", "players": "all"},
+    {"title": "Test Task", "description": "Do something.", "players": 1, "drinks": None, "drinkType": "special"},
+    {"title": "Pair Task", "description": "Do something together.", "players": 2, "drinks": None, "drinkType": "special"},
+    {"title": "All Task", "description": "Everyone does something.", "players": "all", "drinks": None, "drinkType": "special"},
 ]
 
 
