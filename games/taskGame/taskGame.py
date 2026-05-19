@@ -27,8 +27,13 @@ class TaskGame(Game):
     activeHuoras: list = field(default_factory=list)  # [[master, huora]]
 
     def _buildPool(self) -> list:
-        """Build a shuffled deck with each task repeated according to its count."""
-        deck = [task for task in TASKS for _ in range(task.get("count", 1))]
+        """Build a shuffled deck with each task repeated according to its rarity and config."""
+        commonCount = self.config.get("commonCount", 4)
+        specialCount = self.config.get("specialCount", 2)
+        deck = []
+        for task in TASKS:
+            count = specialCount if task.get("rarity") == "special" else commonCount
+            deck.extend([task] * count)
         random.shuffle(deck)
         return deck
 

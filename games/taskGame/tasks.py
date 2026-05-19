@@ -10,7 +10,8 @@
 #                  "link"     creates a persistent link between players, no immediate drinks
 #                  "special"  no drink tracking (ongoing effects)
 #                  "roulette" sequential pulls, guaranteed one hit, stops on first hit
-#   count       -- how many copies go into the deck (higher = more common)
+#   rarity      -- "common"  appears commonCount times per deck (set in config)
+#                  "special" appears specialCount times per deck (set in config)
 TASKS = [
     {
         "title": "Juo 3",
@@ -18,7 +19,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "take",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Jaa 3",
@@ -26,7 +27,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "give",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Juo 3,6,9...",
@@ -34,7 +35,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "take",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Kuolema",
@@ -42,7 +43,7 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
-        "count": 2,
+        "rarity": "special",
     },
     {
         "title": "Luuppi",
@@ -50,7 +51,7 @@ TASKS = [
         "players": "all",
         "drinks": 3,
         "drinkType": "social",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Riimi",
@@ -58,7 +59,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "social",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Vesiputous",
@@ -66,7 +67,7 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Kategoria",
@@ -74,7 +75,7 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "social",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Kysymysmestari",
@@ -82,7 +83,7 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "special",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Säänto",
@@ -90,7 +91,7 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "special",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Tauko",
@@ -98,7 +99,7 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "special",
-        "count": 3,
+        "rarity": "special",
     },
     {
         "title": "Huora",
@@ -106,7 +107,7 @@ TASKS = [
         "players": 2,
         "drinks": None,
         "drinkType": "link",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Kivi-paperi-sakset",
@@ -114,7 +115,7 @@ TASKS = [
         "players": 2,
         "drinks": 4,
         "drinkType": "social",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Pari",
@@ -122,7 +123,7 @@ TASKS = [
         "players": 2,
         "drinks": None,
         "drinkType": "link",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Tarina",
@@ -130,7 +131,7 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
-        "count": 4,
+        "rarity": "common",
     },
     {
         "title": "Venäläinen ruletti",
@@ -138,6 +139,6 @@ TASKS = [
         "players": "all",
         "drinks": 10,
         "drinkType": "roulette",
-        "count": 2,
+        "rarity": "special",
     },
 ]
