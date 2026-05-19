@@ -9,7 +9,8 @@
 #                  "social"   outcome determined in play, user logs drinks manually
 #                  "link"     creates a persistent link between players, no immediate drinks
 #                  "special"  no drink tracking (ongoing effects)
-#                  "roulette" sequential pulls, 1/playercount hit chance, stops on first hit
+#                  "roulette" sequential pulls, guaranteed one hit, stops on first hit
+#   count       -- how many copies go into the deck (higher = more common)
 TASKS = [
     {
         "title": "Juo 3",
@@ -17,6 +18,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "take",
+        "count": 4,
     },
     {
         "title": "Jaa 3",
@@ -24,6 +26,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "give",
+        "count": 4,
     },
     {
         "title": "Juo 3,6,9...",
@@ -31,6 +34,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "take",
+        "count": 4,
     },
     {
         "title": "Kuolema",
@@ -38,6 +42,7 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
+        "count": 2,
     },
     {
         "title": "Luuppi",
@@ -45,6 +50,7 @@ TASKS = [
         "players": "all",
         "drinks": 3,
         "drinkType": "social",
+        "count": 4,
     },
     {
         "title": "Riimi",
@@ -52,6 +58,7 @@ TASKS = [
         "players": 1,
         "drinks": 3,
         "drinkType": "social",
+        "count": 4,
     },
     {
         "title": "Vesiputous",
@@ -59,6 +66,7 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
+        "count": 4,
     },
     {
         "title": "Kategoria",
@@ -66,6 +74,7 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "social",
+        "count": 4,
     },
     {
         "title": "Kysymysmestari",
@@ -73,13 +82,15 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "special",
+        "count": 4,
     },
     {
         "title": "Säänto",
-        "description": "Tee säänto joka pätee pelin loppuun. Säännon rikkoja juo.",
+        "description": "Tee säänto joka pätee pelin loppuun. Säännön rikkoja juo.",
         "players": 1,
         "drinks": None,
         "drinkType": "special",
+        "count": 4,
     },
     {
         "title": "Tauko",
@@ -87,6 +98,7 @@ TASKS = [
         "players": 1,
         "drinks": None,
         "drinkType": "special",
+        "count": 3,
     },
     {
         "title": "Huora",
@@ -94,6 +106,7 @@ TASKS = [
         "players": 2,
         "drinks": None,
         "drinkType": "link",
+        "count": 4,
     },
     {
         "title": "Kivi-paperi-sakset",
@@ -101,6 +114,7 @@ TASKS = [
         "players": 2,
         "drinks": 4,
         "drinkType": "social",
+        "count": 4,
     },
     {
         "title": "Pari",
@@ -108,6 +122,7 @@ TASKS = [
         "players": 2,
         "drinks": None,
         "drinkType": "link",
+        "count": 4,
     },
     {
         "title": "Tarina",
@@ -115,6 +130,7 @@ TASKS = [
         "players": "all",
         "drinks": None,
         "drinkType": "social",
+        "count": 4,
     },
     {
         "title": "Venäläinen ruletti",
@@ -122,5 +138,6 @@ TASKS = [
         "players": "all",
         "drinks": 10,
         "drinkType": "roulette",
+        "count": 2,
     },
 ]

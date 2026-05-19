@@ -26,11 +26,17 @@ class TaskGame(Game):
     activePairs: list = field(default_factory=list)   # [[player1, player2]]
     activeHuoras: list = field(default_factory=list)  # [[master, huora]]
 
+    def _buildPool(self) -> list:
+        """Build a shuffled deck with each task repeated according to its count."""
+        deck = [task for task in TASKS for _ in range(task.get("count", 1))]
+        random.shuffle(deck)
+        return deck
+
     def playRound(self) -> None:
         """Run a full game: players take turns drawing tasks until someone quits."""
         self.emit(GameStartEvent([p.getName() for p in self.players]))
 
-        taskPool = list(TASKS)
+        taskPool = self._buildPool()
 
         if not taskPool:
             print("No tasks defined.")
@@ -43,9 +49,10 @@ class TaskGame(Game):
                 input(f"\n{player.getName()}'s turn -- press Enter to draw a task")
 
                 if not taskPool:
-                    taskPool = list(TASKS)
+                    running = False
+                    break
 
-                task = random.choice(taskPool)
+                task = taskPool.pop()
 
                 targets = self._resolveTargets(task["players"], player)
                 targetNames = ", ".join(p.getName() for p in targets)
@@ -72,6 +79,13 @@ class TaskGame(Game):
             {"name": p.getName(), "drinksTaken": p.getDrinksTaken(), "drinksToGive": p.drinksToGive}
             for p in self.players
         ]))
+
+        print("\n" + "=" * 24)
+        print("FINAL TALLY")
+        print("=" * 24)
+        for p in self.players:
+            print(f"{p.getName()}: drank {p.getDrinksTaken()} | gave {p.drinksToGive}")
+        print("=" * 24)
 
     def _resolveTargets(self, playerCount, drawer):
         """Return the list of players targeted by a task."""
@@ -162,9 +176,11 @@ class TaskGame(Game):
 
         elif drinkType == "roulette":
             bulletIndex = random.randint(0, len(self.players) - 1)
+            print(f"\n1 luoti, {len(self.players)} pelaajaa")
             for i, p in enumerate(self.players):
-                input(f"{p.getName()} vetää liipaisinta... (Enter)")
+                input(f"  {p.getName()} -- paina Enter")
                 hit = (i == bulletIndex)
+                print(f"  >>> OSUMA! {p.getName()} juo {drinks}!" if hit else "  Ohi!")
                 self.emit(RouletteResultEvent(player=p.getName(), hit=hit, drinks=drinks))
                 if hit:
                     self._assignDrinks(p, drinks)
