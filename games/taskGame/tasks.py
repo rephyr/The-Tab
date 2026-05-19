@@ -54,7 +54,7 @@ TASKS = [
     },
     {
         "title": "Vesiputous",
-        "description": "Kaikki alkavat juomaan yhtaikaa. Kukaan ei saa lopettaa ennen kuin oikealla puolella oleva lopettaa.",
+        "description": "Kaikki alkavat juomaan yhtäikaa. Kukaan ei saa lopettaa ennen kuin oikealla puolella oleva lopettaa.",
         "players": "all",
         "drinks": None,
         "drinkType": "social",
