@@ -192,7 +192,7 @@ def configureGame(gameTitle, configData):
     return overrides
 
 
-def _deduplicateName(name, existingNames):
+def deduplicateName(name, existingNames):
     """Return a unique version of name by appending (2), (3), etc. if needed."""
     if name not in existingNames:
         return name
@@ -268,7 +268,7 @@ def runCli(adminMode=False, debug=False):
             name = input(f"Player {playerId} name: ").strip()
             if name == "":
                 break
-            uniqueName = _deduplicateName(name, existingNames)
+            uniqueName = deduplicateName(name, existingNames)
             if uniqueName != name:
                 print(f"  Name already taken, using '{uniqueName}'")
             existingNames.add(uniqueName)
