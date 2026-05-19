@@ -247,19 +247,16 @@ class Buja(Game):
         lastRowDrinks = startDrinks + (boardLength - 1) * increment
         finalDrinks = lastRowDrinks * 2
 
-        print("\n=== THE BOARD (DEBUG PREVIEW) ===\n")
-
-        for rowIndex, row in enumerate(board):
-            drinks = startDrinks + rowIndex * increment
-
-            rowPreview = []
-            for cardIndex, card in enumerate(row):
-                action = actions[cardIndex % len(actions)]
-                rowPreview.append(f"{card} ({action.upper()})")
-
-            print(f"Row {rowIndex + 1} | {drinks} drinks | " + " | ".join(rowPreview))
-
-        print(f"Final  | {finalDrinks} drinks | {finalCard} (SHARE)")
+        if self._getConfig("debug", False):
+            print("\n=== THE BOARD (DEBUG PREVIEW) ===\n")
+            for rowIndex, row in enumerate(board):
+                drinks = startDrinks + rowIndex * increment
+                rowPreview = []
+                for cardIndex, card in enumerate(row):
+                    action = actions[cardIndex % len(actions)]
+                    rowPreview.append(f"{card} ({action.upper()})")
+                print(f"Row {rowIndex + 1} | {drinks} drinks | " + " | ".join(rowPreview))
+            print(f"Final  | {finalDrinks} drinks | {finalCard} (SHARE)")
 
         print("\n=== BOARD PHASE START ===\n")
 

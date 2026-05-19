@@ -66,9 +66,27 @@ class PlayerStore:
         self._save()
 
     def getLeaderboard(self):
-        """Return all players sorted by total drinks taken, descending."""
+        """Return all players sorted by total drinks taken, descending.
+
+        Players with a stored entry use their accumulated stats. Players who
+        appear only in session history have their stats calculated from sessions.
+        """
+        result = {name: dict(stats) for name, stats in self.data["players"].items()}
+
+        for session in self.data.get("sessions", []):
+            for score in session["scores"]:
+                name = score["name"]
+                if name not in result:
+                    result[name] = {"gamesPlayed": 0, "totalDrinksTaken": 0, "totalDrinksGiven": 0}
+                    for s in self.data["sessions"]:
+                        for sc in s["scores"]:
+                            if sc["name"] == name:
+                                result[name]["gamesPlayed"] += 1
+                                result[name]["totalDrinksTaken"] += sc["drinksTaken"]
+                                result[name]["totalDrinksGiven"] += sc.get("drinksGiven", 0)
+
         return sorted(
-            [{"name": name, **stats} for name, stats in self.data["players"].items()],
+            [{"name": name, **stats} for name, stats in result.items()],
             key=lambda p: p["totalDrinksTaken"],
             reverse=True,
         )
@@ -78,12 +96,20 @@ class PlayerStore:
         return self.data.get("sessions", [])
 
     def deletePlayer(self, name):
-        """Remove a player by name. Returns True if found and deleted, False otherwise."""
-        if name in self.data["players"]:
-            del self.data["players"][name]
-            self._save()
-            return True
-        return False
+        """Remove a player entry by name. Returns True if found and deleted, False otherwise."""
+        if name not in self.data["players"]:
+            return False
+        del self.data["players"][name]
+        self._save()
+        return True
+
+    def getAllPlayerNames(self):
+        """Return all unique player names from both the players dict and session history."""
+        names = set(self.data["players"].keys())
+        for session in self.data.get("sessions", []):
+            for score in session["scores"]:
+                names.add(score["name"])
+        return sorted(names)
 
     def deleteSession(self, index):
         """Remove a session by its list index. Returns True if valid, False otherwise."""

@@ -2,5 +2,6 @@ import sys
 from cli import runCli
 
 if __name__ == "__main__":
-    adminMode = len(sys.argv) > 1 and sys.argv[1] == "admin"
-    runCli(adminMode=adminMode)
+    adminMode = "admin" in sys.argv
+    debug = "debug" in sys.argv
+    runCli(adminMode=adminMode, debug=debug)

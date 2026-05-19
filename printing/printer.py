@@ -21,9 +21,14 @@ except ImportError:
 
 class ReceiptPrinter:
     """Connects to a printer backend and exposes printWith() for sending receipts."""
-    def __init__(self, config: dict = None):
+    def __init__(self, config: dict = None, debug: bool = False):
         self.config = config or {}
+        self.debug = debug
         self._p = None
+
+    def _fallback(self):
+        """Return StdoutPrinter in debug mode, NullPrinter otherwise."""
+        return StdoutPrinter() if self.debug else NullPrinter()
 
     def _connect(self):
         conn = self.config.get("connection", "stdout")
@@ -35,7 +40,7 @@ class ReceiptPrinter:
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
             except Exception:
-                self._p = StdoutPrinter()
+                self._p = self._fallback()
 
         elif conn == "usb":
             if not ESCPOS_AVAILABLE:
@@ -56,7 +61,7 @@ class ReceiptPrinter:
             self._p.open()
 
         else:
-            self._p = StdoutPrinter()
+            self._p = self._fallback()
 
     def printWith(self, fn) -> None:
         """Call fn(p) to write content, then cut the paper. Keeps the connection open."""
@@ -76,6 +81,16 @@ class ReceiptPrinter:
         formatter(data, self._p)
         self._p.cut()
         self._p.close()
+
+
+class NullPrinter:
+    """Silently discards all output. Used in normal mode to suppress terminal receipt output."""
+    def set(self, **_): pass
+    def open(self): pass
+    def textln(self, text=""): pass
+    def text(self, text=""): pass
+    def cut(self): pass
+    def close(self): pass
 
 
 class StdoutPrinter:

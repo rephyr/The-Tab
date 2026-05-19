@@ -95,6 +95,18 @@ class TestPlayerStoreDelete(unittest.TestCase):
         self.assertTrue(result)
         self.assertNotIn("Alice", store.data["players"])
 
+    def testDeletePlayerKeepsSessions(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
+        store.deletePlayer("Alice")
+        self.assertEqual(len(store.data["sessions"]), 1)
+
+    def testGetAllPlayerNamesIncludesSessionPlayers(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
+        store.deletePlayer("Alice")
+        self.assertIn("Alice", store.getAllPlayerNames())
+
     def testDeletePlayerNotFound(self):
         store = makeTempStore()
         result = store.deletePlayer("Nobody")
@@ -135,6 +147,28 @@ class TestPlayerStoreLeaderboard(unittest.TestCase):
     def testGetLeaderboardEmpty(self):
         store = makeTempStore()
         self.assertEqual(store.getLeaderboard(), [])
+
+    def testGetLeaderboardIncludesSessionOnlyPlayers(self):
+        initial = {
+            "players": {},
+            "sessions": [
+                {
+                    "id": "2026-05-19T14:32:00",
+                    "game": "Buja",
+                    "timestamp": "2026-05-19 14:32",
+                    "scores": [
+                        {"name": "Testi Timo", "drinksTaken": 7, "drinksGiven": 2},
+                        {"name": "Testi Teppo", "drinksTaken": 3, "drinksGiven": 1},
+                    ],
+                }
+            ],
+        }
+        store = makeTempStore(initialData=initial)
+        board = store.getLeaderboard()
+        self.assertEqual(len(board), 2)
+        self.assertEqual(board[0]["name"], "Testi Timo")
+        self.assertEqual(board[0]["totalDrinksTaken"], 7)
+        self.assertEqual(board[1]["name"], "Testi Teppo")
 
 
 if __name__ == "__main__":

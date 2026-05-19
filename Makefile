@@ -5,6 +5,9 @@ run:
 run-admin:
 	python main.py admin
 
+run-debug:
+	python main.py debug
+
 test:
 	python -m unittest discover tests
 

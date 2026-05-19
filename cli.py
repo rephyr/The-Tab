@@ -109,6 +109,14 @@ def manageData(store):
             showSession(store)
 
         elif choice == "2":
+            names = store.getAllPlayerNames()
+            if not names:
+                print("No players found.")
+                continue
+            print()
+            for name in names:
+                print(f"  {name}")
+            print()
             name = input("Player name to delete: ").strip()
             if not name:
                 continue
@@ -194,7 +202,7 @@ def _deduplicateName(name, existingNames):
     return f"{name} ({counter})"
 
 
-def runCli(adminMode=False):
+def runCli(adminMode=False, debug=False):
     """Main CLI loop. Shows a menu, runs games, and handles data management.
 
     adminMode enables the manage data option for deleting players and sessions.
@@ -209,6 +217,8 @@ def runCli(adminMode=False):
     store = PlayerStore()
 
     modeLabel = " [ADMIN]" if adminMode else ""
+    if debug:
+        modeLabel += " [DEBUG]"
     while True:
         print(f"\nAvailable games{modeLabel}:\n")
         for i, gameClass in enumerate(gamesList):
@@ -270,6 +280,7 @@ def runCli(adminMode=False):
             continue
 
         gameConfig = configureGame(gameClass.gameTitle, config.data)
+        gameConfig["debug"] = debug
 
         if hasattr(gameClass, "cardsNeeded"):
             boardLength = gameConfig.get("boardLength", 3)
@@ -295,7 +306,7 @@ def runCli(adminMode=False):
         printerConfig = config.data.get("printer", {})
         log = GameLog()
         store.gameTitle = gameClass.gameTitle
-        log.on(LivePrinter(ReceiptPrinter(printerConfig)).hook)
+        log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug)).hook)
         log.on(store.hook)
         game = gameClass(players=players, log=log, config=gameConfig)
 
