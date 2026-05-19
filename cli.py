@@ -313,7 +313,7 @@ def runCli(adminMode=False, debug=False):
             playerId = 1
 
             while True:
-                name = input(f"Player {playerId} name: ").strip()
+                name = input(f"Player {playerId} name: ").strip().title()
                 if name == "":
                     break
                 uniqueName = deduplicateName(name, existingNames)
