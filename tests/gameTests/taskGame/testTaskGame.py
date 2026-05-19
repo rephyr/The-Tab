@@ -245,6 +245,36 @@ class TestRoulette(unittest.TestCase):
         self.assertEqual(mockInput.call_count, 2)
 
 
+class TestDoubleNext(unittest.TestCase):
+    def testTuplaSetsFlagAndClearsOnNextCard(self):
+        game = TaskGame(players=makePlayers("Teppo"))
+        game._handlePostTask(makeTask("special", title="Tupla"), [game.players[0]], game.players[0])
+        self.assertTrue(game.doubleNext)
+        with patch("builtins.input", return_value=""):
+            game._handlePostTask(makeTask("take", drinks=3), [game.players[0]], game.players[0])
+        self.assertFalse(game.doubleNext)
+
+    def testTuplaDoublesDrinks(self):
+        game = TaskGame(players=makePlayers("Teppo"))
+        game.doubleNext = True
+        with patch("builtins.input", return_value=""):
+            game._handlePostTask(makeTask("take", drinks=3), [game.players[0]], game.players[0])
+        self.assertEqual(game.players[0].getDrinksTaken(), 6)
+
+    def testTuplaConsumedOnSpecialCard(self):
+        game = TaskGame(players=makePlayers("Teppo"))
+        game.doubleNext = True
+        game._handlePostTask(makeTask("special", title="Säänto"), [game.players[0]], game.players[0])
+        self.assertFalse(game.doubleNext)
+
+    def testTuplaDoesNotDoubleNoneDrinks(self):
+        game = TaskGame(players=makePlayers("Teppo", "Matti"))
+        game.doubleNext = True
+        with patch("builtins.input", return_value=""):
+            game._handlePostTask(makeTask("social", drinks=None), list(game.players), game.players[0])
+        self.assertFalse(game.doubleNext)
+
+
 class TestDeckCommand(unittest.TestCase):
     def testDeckCommandShowsCount(self):
         from printing.log import GameLog

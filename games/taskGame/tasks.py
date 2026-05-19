@@ -157,4 +157,12 @@ TASKS = [
         "drinkType": "special",
         "rarity": "special",
     },
+    {
+        "title": "Tupla",
+        "description": "Seuraavan kortin juomat tuplataan.",
+        "players": 1,
+        "drinks": None,
+        "drinkType": "special",
+        "rarity": "special",
+    },
 ]

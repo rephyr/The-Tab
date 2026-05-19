@@ -26,6 +26,7 @@ class TaskGame(Game):
     activePairs: list = field(default_factory=list)   # [[player1, player2]]
     activeHuoras: list = field(default_factory=list)  # [[master, huora]]
     immunePlayers: list = field(default_factory=list) # players with one pending immunity
+    doubleNext: bool = False
 
     def _buildPool(self) -> list:
         """Build a shuffled deck with each task repeated according to its rarity and config."""
@@ -147,6 +148,8 @@ class TaskGame(Game):
             parts.append(f"{huora.getName()} -> {master.getName()} (huora)")
         for p in self.immunePlayers:
             parts.append(f"{p.getName()} (immuuni)")
+        if self.doubleNext:
+            parts.append("TUPLA aktiivinen")
         if parts:
             print("Active links: " + " | ".join(parts))
 
@@ -154,6 +157,12 @@ class TaskGame(Game):
         """Handle drink tracking and link updates after a task is shown."""
         drinkType = task.get("drinkType", "social")
         drinks = task.get("drinks")
+
+        if self.doubleNext:
+            self.doubleNext = False
+            if drinks is not None:
+                drinks = drinks * 2
+                print(f"  TUPLA! Juomat tuplattu -> {drinks}")
 
         if drinkType == "take":
             raw = input(f"\nConfirm {drinks} drinks for {drawer.getName()}? (Enter = yes, or type amount): ").strip()
@@ -208,6 +217,9 @@ class TaskGame(Game):
             if task["title"] == "Immunitetti":
                 self.immunePlayers.append(drawer)
                 print(f"\n{drawer.getName()} on immuuni seuraavalle pakolliselle juomiselle.")
+            elif task["title"] == "Tupla":
+                self.doubleNext = True
+                print("\nSeuraavan kortin juomat tuplataan!")
 
         elif drinkType == "link":
             if not targets:
