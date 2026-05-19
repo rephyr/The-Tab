@@ -96,19 +96,16 @@ class PlayerStore:
         return self.data.get("sessions", [])
 
     def deletePlayer(self, name):
-        """Remove a player entry by name and all their session scores. Returns True if found and deleted, False otherwise."""
-        found = False
-        if name in self.data["players"]:
-            del self.data["players"][name]
-            found = True
-        for session in self.data.get("sessions", []):
-            before = len(session["scores"])
-            session["scores"] = [s for s in session["scores"] if s["name"] != name]
-            if len(session["scores"]) < before:
-                found = True
-        if found:
-            self._save()
-        return found
+        """Remove a player entry by name. Returns True if found and deleted, False otherwise."""
+        if name not in self.data["players"]:
+            return False
+        del self.data["players"][name]
+        self._save()
+        return True
+
+    def getRegisteredPlayerNames(self):
+        """Return names of players with a stats entry (excludes session-only players)."""
+        return sorted(self.data["players"].keys())
 
     def getAllPlayerNames(self):
         """Return all unique player names from both the players dict and session history."""

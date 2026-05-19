@@ -96,68 +96,71 @@ def showSession(store):
 
 def manageData(store):
     """Sub-menu for viewing, deleting players or sessions."""
-    while True:
-        print("\nManage data:")
-        print("1. View sessions")
-        print("2. Delete a player")
-        print("3. Delete a session")
-        print("4. Back")
+    try:
+        while True:
+            print("\nManage data:")
+            print("1. View sessions")
+            print("2. Delete a player")
+            print("3. Delete a session")
+            print("4. Back")
 
-        choice = input("\nChoice: ").strip()
+            choice = input("\nChoice: ").strip()
 
-        if choice == "1":
-            showSession(store)
+            if choice == "1":
+                showSession(store)
 
-        elif choice == "2":
-            names = store.getAllPlayerNames()
-            if not names:
-                print("No players found.")
-                continue
-            print()
-            for name in names:
-                print(f"  {name}")
-            print()
-            name = input("Player name to delete: ").strip()
-            if not name:
-                continue
-            confirm = input(f"Delete '{name}' and all their stats? (y/n): ").strip().lower()
-            if confirm != "y":
-                print("Cancelled.")
-                continue
-            if store.deletePlayer(name):
-                print(f"Deleted player '{name}'.")
-            else:
-                print(f"Player '{name}' not found.")
+            elif choice == "2":
+                names = store.getAllPlayerNames()
+                if not names:
+                    print("No players found.")
+                    continue
+                print()
+                for name in names:
+                    print(f"  {name}")
+                print()
+                name = input("Player name to delete: ").strip()
+                if not name:
+                    continue
+                confirm = input(f"Delete '{name}' and all their stats? (y/n): ").strip().lower()
+                if confirm != "y":
+                    print("Cancelled.")
+                    continue
+                if store.deletePlayer(name):
+                    print(f"Deleted player '{name}'.")
+                else:
+                    print(f"Player '{name}' only exists in session history and cannot be deleted.")
 
-        elif choice == "3":
-            sessions = store.getSessions()
-            if not sessions:
-                print("No sessions to delete.")
-                continue
+            elif choice == "3":
+                sessions = store.getSessions()
+                if not sessions:
+                    print("No sessions to delete.")
+                    continue
 
-            print()
-            _printSessionList(sessions)
+                print()
+                _printSessionList(sessions)
 
-            raw = input("\nSession number to delete (or Enter to cancel): ").strip()
-            if not raw:
-                continue
-            if not raw.isdigit() or not (1 <= int(raw) <= len(sessions)):
-                print("Invalid number.")
-                continue
-            index = int(raw) - 1
-            s = sessions[index]
-            players = ", ".join(sc["name"] for sc in s["scores"])
-            confirm = input(f"Delete session [{s['timestamp']}] {s['game']} — {players}? (y/n): ").strip().lower()
-            if confirm != "y":
-                print("Cancelled.")
-                continue
-            if store.deleteSession(index):
-                print("Session deleted.")
-            else:
-                print("Invalid number.")
+                raw = input("\nSession number to delete (or Enter to cancel): ").strip()
+                if not raw:
+                    continue
+                if not raw.isdigit() or not (1 <= int(raw) <= len(sessions)):
+                    print("Invalid number.")
+                    continue
+                index = int(raw) - 1
+                s = sessions[index]
+                players = ", ".join(sc["name"] for sc in s["scores"])
+                confirm = input(f"Delete session [{s['timestamp']}] {s['game']} — {players}? (y/n): ").strip().lower()
+                if confirm != "y":
+                    print("Cancelled.")
+                    continue
+                if store.deleteSession(index):
+                    print("Session deleted.")
+                else:
+                    print("Invalid number.")
 
-        elif choice == "4":
-            break
+            elif choice == "4":
+                break
+    except KeyboardInterrupt:
+        print()
 
 
 def configureGame(gameTitle, configData):
@@ -219,99 +222,102 @@ def runCli(adminMode=False, debug=False):
     modeLabel = " [ADMIN]" if adminMode else ""
     if debug:
         modeLabel += " [DEBUG]"
-    while True:
-        print(f"\nAvailable games{modeLabel}:\n")
-        for i, gameClass in enumerate(gamesList):
-            print(f"{i + 1}. {gameClass.gameTitle}")
-        print("\nL - Leaderboard")
-        if adminMode:
-            print("M - Manage data")
-        print('\n(type "quit" to exit)')
-
-        userInput = input("\nChoose: ").strip()
-
-        if userInput.lower() == "quit":
-            break
-
-        if userInput.lower() == "l":
-            showLeaderboard(store)
-            continue
-
-        if userInput.lower() == "m" and adminMode:
-            manageData(store)
-            continue
-
-        gameClass = None
-
-        if userInput.isdigit():
-            index = int(userInput) - 1
-            if 0 <= index < len(gamesList):
-                gameClass = gamesList[index]
-
-        if gameClass is None:
-            for g in gamesList:
-                if g.gameTitle.lower() == userInput.lower():
-                    gameClass = g
-                    break
-
-        if gameClass is None:
-            print("Invalid selection.")
-            continue
-
-        players = []
-        existingNames = set()
-
-        print("\nEnter players (press Enter to start):")
-        playerId = 1
-
+    try:
         while True:
-            name = input(f"Player {playerId} name: ").strip()
-            if name == "":
+            print(f"\nAvailable games{modeLabel}:\n")
+            for i, gameClass in enumerate(gamesList):
+                print(f"{i + 1}. {gameClass.gameTitle}")
+            print("\nL - Leaderboard")
+            if adminMode:
+                print("M - Manage data")
+            print('\n(type "quit" to exit)')
+
+            userInput = input("\nChoose: ").strip()
+
+            if userInput.lower() == "quit":
                 break
-            uniqueName = deduplicateName(name, existingNames)
-            if uniqueName != name:
-                print(f"  Name already taken, using '{uniqueName}'")
-            existingNames.add(uniqueName)
-            players.append(Player(playerId, uniqueName))
-            playerId += 1
 
-        if not players:
-            print("No players added.")
-            continue
+            if userInput.lower() == "l":
+                showLeaderboard(store)
+                continue
 
-        gameConfig = configureGame(gameClass.gameTitle, config.data)
-        gameConfig["debug"] = debug
+            if userInput.lower() == "m" and adminMode:
+                manageData(store)
+                continue
 
-        if hasattr(gameClass, "cardsNeeded"):
-            boardLength = gameConfig.get("boardLength", 3)
-            needed = gameClass.cardsNeeded(len(players), boardLength)
+            gameClass = None
+
+            if userInput.isdigit():
+                index = int(userInput) - 1
+                if 0 <= index < len(gamesList):
+                    gameClass = gamesList[index]
+
+            if gameClass is None:
+                for g in gamesList:
+                    if g.gameTitle.lower() == userInput.lower():
+                        gameClass = g
+                        break
+
+            if gameClass is None:
+                print("Invalid selection.")
+                continue
+
+            players = []
+            existingNames = set()
+
+            print("\nEnter players (press Enter to start):")
+            playerId = 1
+
             while True:
-                deckCount = gameConfig.get("deckCount", 1)
-                available = 52 * deckCount
-                if needed <= available:
-                    print(f"\nDeck check: {needed} cards needed, {available} available ({deckCount} deck(s)). OK.")
+                name = input(f"Player {playerId} name: ").strip()
+                if name == "":
                     break
-                recommended = -(-needed // 52)
-                print(f"\nDeck check: {needed} cards needed for {len(players)} players, "
-                      f"but only {available} available ({deckCount} deck(s)).")
-                print(f"Recommended: {recommended} deck(s).")
-                choice = input("Set number of decks or press Enter to proceed anyway: ").strip()
-                if not choice:
-                    break
-                if choice.isdigit() and int(choice) > 0:
-                    gameConfig["deckCount"] = int(choice)
-                else:
-                    print("Invalid number.")
+                uniqueName = deduplicateName(name, existingNames)
+                if uniqueName != name:
+                    print(f"  Name already taken, using '{uniqueName}'")
+                existingNames.add(uniqueName)
+                players.append(Player(playerId, uniqueName))
+                playerId += 1
 
-        printerConfig = config.data.get("printer", {})
-        log = GameLog()
-        store.gameTitle = gameClass.gameTitle
-        log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug)).hook)
-        log.on(store.hook)
-        game = gameClass(players=players, log=log, config=gameConfig)
+            if not players:
+                print("No players added.")
+                continue
 
-        print(f"\nStarting {game.gameTitle}...\n")
+            gameConfig = configureGame(gameClass.gameTitle, config.data)
+            gameConfig["debug"] = debug
 
-        game.playRound()
+            if hasattr(gameClass, "cardsNeeded"):
+                boardLength = gameConfig.get("boardLength", 3)
+                needed = gameClass.cardsNeeded(len(players), boardLength)
+                while True:
+                    deckCount = gameConfig.get("deckCount", 1)
+                    available = 52 * deckCount
+                    if needed <= available:
+                        print(f"\nDeck check: {needed} cards needed, {available} available ({deckCount} deck(s)). OK.")
+                        break
+                    recommended = -(-needed // 52)
+                    print(f"\nDeck check: {needed} cards needed for {len(players)} players, "
+                          f"but only {available} available ({deckCount} deck(s)).")
+                    print(f"Recommended: {recommended} deck(s).")
+                    choice = input("Set number of decks or press Enter to proceed anyway: ").strip()
+                    if not choice:
+                        break
+                    if choice.isdigit() and int(choice) > 0:
+                        gameConfig["deckCount"] = int(choice)
+                    else:
+                        print("Invalid number.")
 
-        showLeaderboard(store)
+            printerConfig = config.data.get("printer", {})
+            log = GameLog()
+            store.gameTitle = gameClass.gameTitle
+            log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug)).hook)
+            log.on(store.hook)
+            game = gameClass(players=players, log=log, config=gameConfig)
+
+            print(f"\nStarting {game.gameTitle}...\n")
+
+            game.playRound()
+
+            showLeaderboard(store)
+    except KeyboardInterrupt:
+        print()
