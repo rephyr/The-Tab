@@ -6,12 +6,14 @@ Register it with: log.on(LivePrinter(printer).hook)
 """
 from core.events import DrinkEvent, GiveEvent, PhaseEvent, BoardCardEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw, formatRouletteResult
+from printing.receipts.taskGame import formatReceipt as formatTaskGameReceipt
 
 
 class LivePrinter:
     """Reacts to game events and prints each receipt the moment it's ready."""
-    def __init__(self, printer):
+    def __init__(self, printer, gameTitle=""):
         self._printer = printer
+        self._gameTitle = gameTitle
         self._inBoard = False
         self._boardCardCount = 0
 
@@ -46,8 +48,11 @@ class LivePrinter:
 
         elif isinstance(event, GameEndEvent):
             data = log.toDict()
-            if data["board"]:
-                last = data["board"][-1]
-                self._printer.printWith(lambda p, c=last: formatBoardCard(c, p))
-            self._printer.printWith(lambda p, s=data["scores"]: formatTally(s, p))
+            if self._gameTitle == "TaskGame":
+                self._printer.printWith(lambda p, d=data: formatTaskGameReceipt(d, p))
+            else:
+                if data["board"]:
+                    last = data["board"][-1]
+                    self._printer.printWith(lambda p, c=last: formatBoardCard(c, p))
+                self._printer.printWith(lambda p, s=data["scores"]: formatTally(s, p))
             self._printer.close()

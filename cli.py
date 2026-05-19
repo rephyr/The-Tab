@@ -354,7 +354,7 @@ def runCli(adminMode=False, debug=False):
             printerConfig = config.data.get("printer", {})
             log = GameLog()
             store.gameTitle = gameClass.gameTitle
-            log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug)).hook)
+            log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug), gameTitle=gameClass.gameTitle).hook)
             log.on(store.hook)
             game = gameClass(players=players, log=log, config=gameConfig)
 

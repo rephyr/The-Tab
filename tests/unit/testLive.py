@@ -104,6 +104,33 @@ class TestLivePrinterBoard(unittest.TestCase):
         printer.close.assert_called_once()
 
 
+class TestLivePrinterTaskGameEnd(unittest.TestCase):
+
+    def testPrintsTaskGameReceiptOnGameEnd(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer, gameTitle="TaskGame").hook)
+        log.add(GameEndEvent(scores=[{"name": "Teppo", "drinksTaken": 3, "drinksToGive": 1}]))
+        printer.printWith.assert_called_once()
+
+    def testTaskGameEndDoesNotPrintBoardCard(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer, gameTitle="TaskGame").hook)
+        log.add(GameEndEvent(scores=[]))
+        # Only 1 printWith call (the receipt), not 2 (board card + tally)
+        self.assertEqual(printer.printWith.call_count, 1)
+
+    def testBujaEndStillUsesTally(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer, gameTitle="Buja").hook)
+        log.add(PhaseEvent("Board", ""))
+        log.add(GameEndEvent(scores=[{"name": "Teppo", "drinksTaken": 3, "drinksToGive": 1}]))
+        # 2 hands + 1 tally
+        self.assertEqual(printer.printWith.call_count, 3)
+
+
 class TestLivePrinterTaskGame(unittest.TestCase):
 
     def testPrintsOnTaskDraw(self):
