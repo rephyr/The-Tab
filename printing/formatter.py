@@ -74,6 +74,17 @@ def formatTally(scores: list, p) -> None:
     p.textln("=" * 24)
 
 
+def formatTaskDraw(event, p) -> None:
+    """Print a single TaskGame task receipt."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(event.title.upper())
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+    p.textln("Players: " + ", ".join(event.targets))
+    p.textln(event.description)
+    p.textln("=" * 24)
+
+
 def formatReceipt(data: dict, p) -> None:
     """Print the full game receipt: all turns, hands, board cards, and tally."""
     for phase in data["phases"]:

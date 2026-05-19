@@ -4,8 +4,8 @@ rather than printing everything at the end.
 
 Register it with: log.on(LivePrinter(printer).hook)
 """
-from core.events import DrinkEvent, GiveEvent, PhaseEvent, BoardCardEvent, GameEndEvent
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally
+from core.events import DrinkEvent, GiveEvent, PhaseEvent, BoardCardEvent, GameEndEvent, TaskDrawEvent
+from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
 
 
 class LivePrinter:
@@ -37,6 +37,9 @@ class LivePrinter:
                 prev = data["board"][self._boardCardCount - 1]
                 self._printer.printWith(lambda p, c=prev: formatBoardCard(c, p))
             self._boardCardCount += 1
+
+        elif isinstance(event, TaskDrawEvent):
+            self._printer.printWith(lambda p, e=event: formatTaskDraw(e, p))
 
         elif isinstance(event, GameEndEvent):
             data = log.toDict()

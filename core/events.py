@@ -66,6 +66,14 @@ class BoardCardEvent:
     matched: list
 
 @dataclass
+class TaskDrawEvent:
+    drawer: str
+    title: str
+    description: str
+    targets: list
+
+
+@dataclass
 class GameEndEvent:
     scores: list
     timestamp: datetime = field(default_factory=datetime.now)
