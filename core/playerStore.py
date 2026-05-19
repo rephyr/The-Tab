@@ -20,11 +20,14 @@ class PlayerStore:
         self.data = self._load()
 
     def _load(self):
-        """Read the store file, or return an empty structure if it does not exist."""
+        """Read the store file, or return an empty structure if it does not exist or is invalid."""
         if not self.path.exists():
             return {"players": {}, "sessions": []}
-        with open(self.path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(self.path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            return {"players": {}, "sessions": []}
 
     def _save(self):
         """Write current data back to the store file."""
