@@ -216,7 +216,8 @@ def showPrintTest(config, debug):
         ("2", "Player hands",                 ["hands"]),
         ("3", "Board cards",                  ["board"]),
         ("4", "Final tally",                  ["tally"]),
-        ("5", "All of the above",             None),
+        ("5", "TaskGame receipts",            ["tasks"]),
+        ("6", "All of the above",             None),
     ]
 
     optionMap = {key: parts for key, _, parts in options}
@@ -226,11 +227,11 @@ def showPrintTest(config, debug):
             print("\nPrint test receipts:")
             for key, label, _ in options:
                 print(f"{key}. {label}")
-            print("6. Back")
+            print("7. Back")
 
             choice = input("\nChoice: ").strip()
 
-            if choice == "6":
+            if choice == "7":
                 break
             elif choice in optionMap:
                 printTestReceipts(printer, optionMap[choice])

@@ -2,11 +2,9 @@
 Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally
+from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
+from core.events import TaskDrawEvent
 
-# --- Turn receipts (one per phase) ---
-# Each entry: (phaseName, turn dict)
-# turn keys: player, guess, card, correct, gaveTo, drinks, note, handBefore
 TEST_PHASES = [
     ("Red or Black", {
         "player": "Testi Tatti",
@@ -50,15 +48,11 @@ TEST_PHASES = [
     }),
 ]
 
-# --- Player hands ---
-# Each entry: (playerName, list of card strings)
 TEST_HANDS = [
     ("Testi Tatti", ["♥7", "♠J", "♦8", "♣K"]),
     ("Testi Matti", ["♥Q", "♣5", "♠A", "♦3"]),
 ]
 
-# --- Board cards ---
-# Covers all outcome types: no match, drink, give, share
 TEST_BOARD_CARDS = [
     {
         "card": "♦Q",
@@ -96,10 +90,16 @@ TEST_BOARD_CARDS = [
     },
 ]
 
-# --- Final tally ---
 TEST_SCORES = [
     {"name": "Testi Tatti", "drank": 8, "gave": 5},
     {"name": "Testi Matti", "drank": 12, "gave": 3},
+]
+
+TEST_TASK_DRAWS = [
+    TaskDrawEvent(drawer="Testi Tatti", title="Juo 3",      description="Juo 3.",                                                                                              targets=["Testi Tatti"]),
+    TaskDrawEvent(drawer="Testi Tatti", title="Jaa 3",      description="Jaa 3 juomaa.",                                                                                       targets=["Testi Tatti"]),
+    TaskDrawEvent(drawer="Testi Tatti", title="Pari",       description="Teette parin. Aina kun toinen juo, toinen juo myös. Kestää kunnes seuraava parikortti nostetaan.",     targets=["Testi Tatti", "Testi Matti"]),
+    TaskDrawEvent(drawer="Testi Tatti", title="Vesiputous", description="Kaikki alkavat juomaan yhtäikaa. Kukaan ei saa lopettaa ennen kuin oikealla puolella oleva lopettaa.", targets=["Testi Tatti", "Testi Matti"]),
 ]
 
 
@@ -110,7 +110,7 @@ def printTestReceipts(printer, parts=None) -> None:
     Pass None to print all.
     """
     if parts is None:
-        parts = ["turns", "hands", "board", "tally"]
+        parts = ["turns", "hands", "board", "tally", "tasks"]
 
     if "turns" in parts:
         for phaseName, turn in TEST_PHASES:
@@ -126,3 +126,7 @@ def printTestReceipts(printer, parts=None) -> None:
 
     if "tally" in parts:
         printer.printWith(lambda p: formatTally(TEST_SCORES, p))
+
+    if "tasks" in parts:
+        for event in TEST_TASK_DRAWS:
+            printer.printWith(lambda p, e=event: formatTaskDraw(e, p))
