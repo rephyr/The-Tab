@@ -4,6 +4,7 @@ from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
     DrinkEvent, GiveEvent, ShareEvent,
     BoardCardEvent, GameEndEvent,
+    TaskDrawEvent, RouletteResultEvent,
 )
 from printing.log import GameLog
 from printing.live import LivePrinter
@@ -101,6 +102,31 @@ class TestLivePrinterBoard(unittest.TestCase):
         log.add(GameEndEvent([]))
 
         printer.close.assert_called_once()
+
+
+class TestLivePrinterTaskGame(unittest.TestCase):
+
+    def testPrintsOnTaskDraw(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer).hook)
+        log.add(TaskDrawEvent(drawer="Teppo", title="Luuppi", description="Huuda luuppi.", targets=["Teppo"]))
+        printer.printWith.assert_called_once()
+
+    def testPrintsOnRouletteResult(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer).hook)
+        log.add(RouletteResultEvent(player="Teppo", hit=True, drinks=10))
+        printer.printWith.assert_called_once()
+
+    def testPrintsPerRouletteResult(self):
+        printer = MagicMock()
+        log = makeLog()
+        log.on(LivePrinter(printer).hook)
+        log.add(RouletteResultEvent(player="Teppo", hit=False, drinks=10))
+        log.add(RouletteResultEvent(player="Matti", hit=True, drinks=10))
+        self.assertEqual(printer.printWith.call_count, 2)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import unittest
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt
+from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatTaskDraw, formatRouletteResult
+from core.events import TaskDrawEvent, RouletteResultEvent
 
 class MockPrinter:
     def __init__(self):
@@ -177,6 +178,52 @@ class TestFormatReceipt(unittest.TestCase):
         data = {"phases": [], "hands": {}, "board": [card, card], "scores": []}
         formatReceipt(data, p)
         self.assertEqual(p.cuts, 2)
+
+class TestFormatTaskDraw(unittest.TestCase):
+
+    def testShowsTitle(self):
+        p = MockPrinter()
+        formatTaskDraw(TaskDrawEvent(drawer="Teppo", title="Luuppi", description="Huuda luuppi.", targets=["Teppo"]), p)
+        self.assertTrue(any("LUUPPI" in l for l in p.lines))
+
+    def testShowsAllTargets(self):
+        p = MockPrinter()
+        formatTaskDraw(TaskDrawEvent(drawer="Teppo", title="Pari", description="...", targets=["Teppo", "Matti"]), p)
+        self.assertTrue(any("Teppo" in l and "Matti" in l for l in p.lines))
+
+    def testShowsDescription(self):
+        p = MockPrinter()
+        formatTaskDraw(TaskDrawEvent(drawer="Teppo", title="X", description="Do something.", targets=["Teppo"]), p)
+        self.assertTrue(any("Do something." in l for l in p.lines))
+
+
+class TestFormatRouletteResult(unittest.TestCase):
+
+    def testShowsPlayerName(self):
+        p = MockPrinter()
+        formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
+        self.assertTrue(any("TEPPO" in l for l in p.lines))
+
+    def testShowsOsumaOnHit(self):
+        p = MockPrinter()
+        formatRouletteResult(RouletteResultEvent(player="Teppo", hit=True, drinks=10), p)
+        self.assertTrue(any("OSUMA!" in l for l in p.lines))
+
+    def testShowsDrinksOnHit(self):
+        p = MockPrinter()
+        formatRouletteResult(RouletteResultEvent(player="Teppo", hit=True, drinks=10), p)
+        self.assertTrue(any("10" in l for l in p.lines))
+
+    def testShowsOhaiOnMiss(self):
+        p = MockPrinter()
+        formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
+        self.assertTrue(any("OHAI" in l for l in p.lines))
+
+    def testNoOsumaOnMiss(self):
+        p = MockPrinter()
+        formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
+        self.assertFalse(any("OSUMA!" in l for l in p.lines))
+
 
 if __name__ == "__main__":
     unittest.main()
