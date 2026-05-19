@@ -93,7 +93,7 @@ def formatRouletteResult(event, p) -> None:
         p.textln(f"Juo {event.drinks}!")
     else:
         p.set(align="center", bold=True, double_width=True, double_height=True)
-        p.textln("OHAI")
+        p.textln("OHI!")
         p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * 24)
 

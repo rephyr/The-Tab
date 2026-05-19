@@ -214,10 +214,10 @@ class TestFormatRouletteResult(unittest.TestCase):
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=True, drinks=10), p)
         self.assertTrue(any("10" in l for l in p.lines))
 
-    def testShowsOhaiOnMiss(self):
+    def testShowsOhiOnMiss(self):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
-        self.assertTrue(any("OHAI" in l for l in p.lines))
+        self.assertTrue(any("OHI!" in l for l in p.lines))
 
     def testNoOsumaOnMiss(self):
         p = MockPrinter()
