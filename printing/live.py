@@ -4,7 +4,7 @@ rather than printing everything at the end.
 
 Register it with: log.on(LivePrinter(printer).hook)
 """
-from core.events import DrinkEvent, GiveEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent
+from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw, formatRouletteResult
 from printing.receipts.taskGame import formatReceipt as formatTaskGameReceipt
 from printing.receipts.buja import formatReceipt as formatBujaReceipt
@@ -18,6 +18,7 @@ class LivePrinter:
         self._inBoard = False
         self._boardCardCount = 0
         self._printedBoardCards = set()
+        self._turnPrinted = False
 
     def hook(self, event, log):
         """Called by GameLog after every event. Decides what to print based on event type."""
@@ -27,7 +28,19 @@ class LivePrinter:
             for player, cards in data["hands"].items():
                 self._printer.printWith(lambda p, pl=player, c=cards: formatHand(pl, c, p))
 
-        elif isinstance(event, (DrinkEvent, GiveEvent)) and not self._inBoard:
+        elif isinstance(event, PhaseEvent) and not self._inBoard:
+            self._turnPrinted = False
+
+        elif isinstance(event, GuessEvent) and not self._inBoard and event.correct is True:
+            data = log.toDict()
+            lastPhase = data["phases"][-1]
+            lastTurn = lastPhase["turns"][-1]
+            self._printer.printWith(
+                lambda p, ph=lastPhase["name"], t=lastTurn: formatTurn(ph, t, p)
+            )
+            self._turnPrinted = True
+
+        elif isinstance(event, (DrinkEvent, GiveEvent)) and not self._inBoard and not self._turnPrinted:
             data = log.toDict()
             lastPhase = data["phases"][-1]
             lastTurn = lastPhase["turns"][-1]

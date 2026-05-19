@@ -27,6 +27,8 @@ def formatTurn(phaseName: str, turn: dict, p) -> None:
         p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     if turn["gaveTo"]:
         p.textln(f"Oikein! {turn['gaveTo']} juo {turn['drinks']}.")
+    elif turn.get("correct") is True:
+        p.textln("Oikein!")
     elif turn["drinks"] > 0:
         note = f" ({turn['note']})" if turn["note"] else ""
         p.textln(f"Väärin! Juo {turn['drinks']}{note}.")

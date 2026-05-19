@@ -83,7 +83,7 @@ class TaskDrawEvent:
     description: str
     targets: list
 
-
+21
 @dataclass
 class GameEndEvent:
     scores: list
