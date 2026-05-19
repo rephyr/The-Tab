@@ -66,6 +66,25 @@ class BoardCardEvent:
     matched: list
 
 @dataclass
+class BoardCardDoneEvent:
+    pass
+
+@dataclass
+class RouletteResultEvent:
+    player: str
+    hit: bool
+    drinks: int
+
+
+@dataclass
+class TaskDrawEvent:
+    drawer: str
+    title: str
+    description: str
+    targets: list
+
+21
+@dataclass
 class GameEndEvent:
     scores: list
     timestamp: datetime = field(default_factory=datetime.now)

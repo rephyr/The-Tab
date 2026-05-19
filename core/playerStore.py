@@ -20,11 +20,22 @@ class PlayerStore:
         self.data = self._load()
 
     def _load(self):
-        """Read the store file, or return an empty structure if it does not exist."""
+        """Read the store file, or return an empty structure if it does not exist or is invalid."""
         if not self.path.exists():
             return {"players": {}, "sessions": []}
-        with open(self.path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(self.path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            return {"players": {}, "sessions": []}
+
+    def _resolvePlayerKey(self, name: str) -> str:
+        """Return the existing key that matches name case-insensitively, or title-cased name."""
+        lower = name.strip().lower()
+        for key in self.data["players"]:
+            if key.lower() == lower:
+                return key
+        return name.strip().title()
 
     def _save(self):
         """Write current data back to the store file."""
@@ -37,7 +48,7 @@ class PlayerStore:
             return
 
         for score in event.scores:
-            name = score["name"]
+            name = self._resolvePlayerKey(score["name"])
             if name not in self.data["players"]:
                 self.data["players"][name] = {
                     "gamesPlayed": 0,
@@ -55,7 +66,7 @@ class PlayerStore:
             "timestamp": event.timestamp.strftime("%Y-%m-%d %H:%M"),
             "scores": [
                 {
-                    "name": s["name"],
+                    "name": self._resolvePlayerKey(s["name"]),
                     "drinksTaken": s["drinksTaken"],
                     "drinksGiven": s["drinksToGive"],
                 }
@@ -96,10 +107,13 @@ class PlayerStore:
         return self.data.get("sessions", [])
 
     def deletePlayer(self, name):
-        """Remove a player entry by name. Returns True if found and deleted, False otherwise."""
+        """Remove a player and all their session scores. Returns True if found, False otherwise."""
         if name not in self.data["players"]:
             return False
         del self.data["players"][name]
+        for session in self.data.get("sessions", []):
+            session["scores"] = [s for s in session["scores"] if s["name"] != name]
+        self.data["sessions"] = [s for s in self.data["sessions"] if s["scores"]]
         self._save()
         return True
 

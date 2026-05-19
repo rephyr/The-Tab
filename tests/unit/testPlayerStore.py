@@ -95,17 +95,27 @@ class TestPlayerStoreDelete(unittest.TestCase):
         self.assertTrue(result)
         self.assertNotIn("Alice", store.data["players"])
 
-    def testDeletePlayerKeepsSessions(self):
+    def testDeletePlayerRemovesTheirSessionScores(self):
         store = makeTempStore()
         store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
+        store.deletePlayer("Alice")
+        self.assertEqual(len(store.data["sessions"]), 0)
+
+    def testDeletePlayerKeepsSessionsWithOtherPlayers(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([
+            {"name": "Alice", "drinksTaken": 5, "drinksToGive": 1},
+            {"name": "Bob", "drinksTaken": 3, "drinksToGive": 0},
+        ]), None)
         store.deletePlayer("Alice")
         self.assertEqual(len(store.data["sessions"]), 1)
+        self.assertNotIn("Alice", [s["name"] for s in store.data["sessions"][0]["scores"]])
 
-    def testGetAllPlayerNamesIncludesSessionPlayers(self):
+    def testDeletePlayerRemovedFromGetAllPlayerNames(self):
         store = makeTempStore()
         store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
         store.deletePlayer("Alice")
-        self.assertIn("Alice", store.getAllPlayerNames())
+        self.assertNotIn("Alice", store.getAllPlayerNames())
 
     def testDeletePlayerNotFound(self):
         store = makeTempStore()
@@ -169,6 +179,28 @@ class TestPlayerStoreLeaderboard(unittest.TestCase):
         self.assertEqual(board[0]["name"], "Testi Timo")
         self.assertEqual(board[0]["totalDrinksTaken"], 7)
         self.assertEqual(board[1]["name"], "Testi Teppo")
+
+
+class TestPlayerStoreNameNormalization(unittest.TestCase):
+    def testCaseInsensitiveLookupMergesStats(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "Emi", "drinksTaken": 5, "drinksToGive": 1}]), None)
+        store.hook(makeEndEvent([{"name": "emi", "drinksTaken": 3, "drinksToGive": 2}]), None)
+        board = store.getLeaderboard()
+        self.assertEqual(len(board), 1)
+        self.assertEqual(board[0]["totalDrinksTaken"], 8)
+
+    def testNewNameStoredAsTitleCase(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "jemi", "drinksTaken": 4, "drinksToGive": 0}]), None)
+        self.assertIn("Jemi", store.data["players"])
+
+    def testExistingCasingPreserved(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "Emi", "drinksTaken": 3, "drinksToGive": 0}]), None)
+        store.hook(makeEndEvent([{"name": "EMI", "drinksTaken": 2, "drinksToGive": 0}]), None)
+        self.assertIn("Emi", store.data["players"])
+        self.assertNotIn("EMI", store.data["players"])
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ def manageData(store):
                 showSession(store)
 
             elif choice == "2":
-                names = store.getAllPlayerNames()
+                names = store.getRegisteredPlayerNames()
                 if not names:
                     print("No players found.")
                     continue
@@ -205,6 +205,44 @@ def deduplicateName(name, existingNames):
     return f"{name} ({counter})"
 
 
+def showPrintTest(config, debug):
+    """Sub-menu for printing test receipts with constant data to preview formatting."""
+    from printing.testData import printTestReceipts
+    printerConfig = config.data.get("printer", {})
+    printer = ReceiptPrinter(printerConfig, debug=debug)
+
+    options = [
+        ("1", "Turn receipts (all 4 phases)", ["turns"]),
+        ("2", "Player hands",                 ["hands"]),
+        ("3", "Board cards",                  ["board"]),
+        ("4", "Final tally",                  ["tally"]),
+        ("5", "TaskGame receipts",            ["tasks"]),
+        ("6", "All of the above",             None),
+    ]
+
+    optionMap = {key: parts for key, _, parts in options}
+
+    try:
+        while True:
+            print("\nPrint test receipts:")
+            for key, label, _ in options:
+                print(f"{key}. {label}")
+            print("7. Back")
+
+            choice = input("\nChoice: ").strip()
+
+            if choice == "7":
+                break
+            elif choice in optionMap:
+                printTestReceipts(printer, optionMap[choice])
+            else:
+                print("Invalid choice.")
+    except KeyboardInterrupt:
+        print()
+    finally:
+        printer.close()
+
+
 def runCli(adminMode=False, debug=False):
     """Main CLI loop. Shows a menu, runs games, and handles data management.
 
@@ -230,6 +268,8 @@ def runCli(adminMode=False, debug=False):
             print("\nL - Leaderboard")
             if adminMode:
                 print("M - Manage data")
+            if debug:
+                print("P - Print test")
             print('\n(type "quit" to exit)')
 
             userInput = input("\nChoose: ").strip()
@@ -243,6 +283,10 @@ def runCli(adminMode=False, debug=False):
 
             if userInput.lower() == "m" and adminMode:
                 manageData(store)
+                continue
+
+            if userInput.lower() == "p" and debug:
+                showPrintTest(config, debug)
                 continue
 
             gameClass = None
@@ -269,7 +313,7 @@ def runCli(adminMode=False, debug=False):
             playerId = 1
 
             while True:
-                name = input(f"Player {playerId} name: ").strip()
+                name = input(f"Player {playerId} name: ").strip().title()
                 if name == "":
                     break
                 uniqueName = deduplicateName(name, existingNames)
@@ -310,7 +354,7 @@ def runCli(adminMode=False, debug=False):
             printerConfig = config.data.get("printer", {})
             log = GameLog()
             store.gameTitle = gameClass.gameTitle
-            log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug)).hook)
+            log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug), gameTitle=gameClass.gameTitle).hook)
             log.on(store.hook)
             game = gameClass(players=players, log=log, config=gameConfig)
 
