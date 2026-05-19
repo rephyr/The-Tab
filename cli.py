@@ -110,7 +110,7 @@ def manageData(store):
                 showSession(store)
 
             elif choice == "2":
-                names = store.getAllPlayerNames()
+                names = store.getRegisteredPlayerNames()
                 if not names:
                     print("No players found.")
                     continue
