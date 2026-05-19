@@ -171,6 +171,14 @@ class TestPlayerLinks(unittest.TestCase):
         self.assertEqual(huora.getDrinksTaken(), 3)
         self.assertEqual(master.getDrinksTaken(), 0)
 
+    def testHuoraDuplicateRejected(self):
+        game = TaskGame(players=makePlayers("Master", "Huora"))
+        master, huora = game.players
+        task = makeTask("link", title="Huora", players=2)
+        game._handlePostTask(task, [huora], master)
+        game._handlePostTask(task, [huora], master)
+        self.assertEqual(len(game.activeHuoras), 1)
+
     def testMultipleHuorasStack(self):
         game = TaskGame(players=makePlayers("Master", "H1", "H2"))
         master, h1, h2 = game.players
@@ -235,6 +243,40 @@ class TestRoulette(unittest.TestCase):
             with patch("builtins.input", side_effect=["", ""]) as mockInput:
                 game._handlePostTask(task, list(game.players), game.players[0])
         self.assertEqual(mockInput.call_count, 2)
+
+
+class TestDeckCommand(unittest.TestCase):
+    def testDeckCommandShowsCount(self):
+        from printing.log import GameLog
+        game = TaskGame(players=makePlayers("A"), log=GameLog(), config={"commonCount": 1, "specialCount": 1})
+        with patch("games.taskGame.taskGame.TASKS", [makeTask("special", title="X", rarity="common")]):
+            with patch("builtins.input", side_effect=["d", "", "", ""]):
+                with patch("builtins.print") as mockPrint:
+                    game.playRound()
+        printed = [str(c) for c in mockPrint.call_args_list]
+        self.assertTrue(any("Cards left" in c for c in printed))
+
+    def testDeckCommandDoesNotDraw(self):
+        from printing.log import GameLog
+        from core.events import TaskDrawEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A"), log=log, config={"commonCount": 1, "specialCount": 1})
+        with patch("games.taskGame.taskGame.TASKS", [makeTask("special", title="X", rarity="common")]):
+            with patch("builtins.input", side_effect=["d", "", "", ""]):
+                game.playRound()
+        self.assertEqual(len([e for e in log.events if isinstance(e, TaskDrawEvent)]), 1)
+
+    def testDeckCommandShowsTotalAndRemaining(self):
+        tasks = [makeTask("special", title="X", rarity="common")]
+        game = TaskGame(players=makePlayers("A"), config={"commonCount": 3, "specialCount": 1})
+        with patch("games.taskGame.taskGame.TASKS", tasks):
+            with patch("builtins.input", side_effect=["d", "", "", "d", "", "", "d", "", "", "d", "", ""]):
+                with patch("builtins.print") as mockPrint:
+                    game.playRound()
+        printed = " ".join(str(c) for c in mockPrint.call_args_list)
+        self.assertIn("3/3", printed)
+        self.assertIn("2/3", printed)
+        self.assertIn("1/3", printed)
 
 
 class TestBuildPool(unittest.TestCase):
