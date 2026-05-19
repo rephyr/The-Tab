@@ -141,4 +141,20 @@ TASKS = [
         "drinkType": "roulette",
         "rarity": "special",
     },
+    {
+        "title": "Jakokortti",
+        "description": "Jaa 10 juomaa miten haluat muiden pelaajien kesken.",
+        "players": 1,
+        "drinks": 10,
+        "drinkType": "social",
+        "rarity": "special",
+    },
+    {
+        "title": "Immunitetti",
+        "description": "Seuraavalla kerralla kun sinun pitäisi juoda, et juo. Muista tämä kortti.",
+        "players": 1,
+        "drinks": None,
+        "drinkType": "special",
+        "rarity": "special",
+    },
 ]

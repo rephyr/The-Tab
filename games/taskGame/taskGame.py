@@ -25,6 +25,7 @@ class TaskGame(Game):
     config: dict = field(default_factory=dict)
     activePairs: list = field(default_factory=list)   # [[player1, player2]]
     activeHuoras: list = field(default_factory=list)  # [[master, huora]]
+    immunePlayers: list = field(default_factory=list) # players with one pending immunity
 
     def _buildPool(self) -> list:
         """Build a shuffled deck with each task repeated according to its rarity and config."""
@@ -107,6 +108,10 @@ class TaskGame(Game):
 
     def _assignDrinks(self, player, amount: int) -> None:
         """Add drinks to a player and propagate one hop through active links."""
+        if player in self.immunePlayers:
+            self.immunePlayers.remove(player)
+            print(f"  {player.getName()} käytti immuniteetin! (ei juo)")
+            return
         player.addDrinks(amount)
         for p1, p2 in self.activePairs:
             if player == p1:
@@ -134,6 +139,8 @@ class TaskGame(Game):
             parts.append(f"{p1.getName()} ↔ {p2.getName()} (pari)")
         for master, huora in self.activeHuoras:
             parts.append(f"{huora.getName()} → {master.getName()} (huora)")
+        for p in self.immunePlayers:
+            parts.append(f"{p.getName()} (immuuni)")
         if parts:
             print("Active links: " + " | ".join(parts))
 
@@ -190,6 +197,11 @@ class TaskGame(Game):
                 if hit:
                     self._assignDrinks(p, drinks)
                     break
+
+        elif drinkType == "special":
+            if task["title"] == "Immunitetti":
+                self.immunePlayers.append(drawer)
+                print(f"\n{drawer.getName()} on immuuni seuraavalle pakolliselle juomiselle.")
 
         elif drinkType == "link":
             if not targets:
