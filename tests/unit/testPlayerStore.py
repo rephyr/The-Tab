@@ -171,5 +171,27 @@ class TestPlayerStoreLeaderboard(unittest.TestCase):
         self.assertEqual(board[1]["name"], "Testi Teppo")
 
 
+class TestPlayerStoreNameNormalization(unittest.TestCase):
+    def testCaseInsensitiveLookupMergesStats(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "Emi", "drinksTaken": 5, "drinksToGive": 1}]), None)
+        store.hook(makeEndEvent([{"name": "emi", "drinksTaken": 3, "drinksToGive": 2}]), None)
+        board = store.getLeaderboard()
+        self.assertEqual(len(board), 1)
+        self.assertEqual(board[0]["totalDrinksTaken"], 8)
+
+    def testNewNameStoredAsTitleCase(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "jemi", "drinksTaken": 4, "drinksToGive": 0}]), None)
+        self.assertIn("Jemi", store.data["players"])
+
+    def testExistingCasingPreserved(self):
+        store = makeTempStore()
+        store.hook(makeEndEvent([{"name": "Emi", "drinksTaken": 3, "drinksToGive": 0}]), None)
+        store.hook(makeEndEvent([{"name": "EMI", "drinksTaken": 2, "drinksToGive": 0}]), None)
+        self.assertIn("Emi", store.data["players"])
+        self.assertNotIn("EMI", store.data["players"])
+
+
 if __name__ == "__main__":
     unittest.main()

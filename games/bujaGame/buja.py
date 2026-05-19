@@ -8,7 +8,7 @@ from core.player import Player
 from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
     DrinkEvent, GiveEvent, ShareEvent,
-    BoardCardEvent, GameEndEvent,
+    BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
 )
 from dataclasses import dataclass, field
 
@@ -277,28 +277,29 @@ class Buja(Game):
 
                 if not matchedPlayers:
                     print("Nobody matched this card.")
-                    continue
+                else:
+                    for player in matchedPlayers:
+                        if action == "drink":
+                            print(f"{player.getName()} drinks {drinks}")
+                            player.addDrinks(drinks)
+                            self.emit(DrinkEvent(player.getName(), drinks, "board"))
 
-                for player in matchedPlayers:
-                    if action == "drink":
-                        print(f"{player.getName()} drinks {drinks}")
-                        player.addDrinks(drinks)
-                        self.emit(DrinkEvent(player.getName(), drinks, "board"))
+                        elif action == "give":
+                            target = self._chooseTarget(player)
+                            print(f"{target.getName()} gets {drinks}")
+                            target.addDrinks(drinks)
+                            player.addDrinksToGive(drinks)
+                            self.emit(GiveEvent(player.getName(), target.getName(), drinks))
 
-                    elif action == "give":
-                        target = self._chooseTarget(player)
-                        print(f"{target.getName()} gets {drinks}")
-                        target.addDrinks(drinks)
-                        player.addDrinksToGive(drinks)
-                        self.emit(GiveEvent(player.getName(), target.getName(), drinks))
+                        elif action == "share":
+                            target = self._chooseTarget(player)
+                            print(f"{player.getName()} and {target.getName()} share {drinks}")
+                            player.addDrinks(drinks)
+                            target.addDrinks(drinks)
+                            player.addDrinksToGive(drinks)
+                            self.emit(ShareEvent(player.getName(), target.getName(), drinks))
 
-                    elif action == "share":
-                        target = self._chooseTarget(player)
-                        print(f"{player.getName()} and {target.getName()} share {drinks}")
-                        player.addDrinks(drinks)
-                        target.addDrinks(drinks)
-                        player.addDrinksToGive(drinks)
-                        self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+                self.emit(BoardCardDoneEvent())
 
         print(f"\n=== FINAL CARD | {finalDrinks} drinks | SHARE ===")
         input(f"\nPress Enter to reveal")
@@ -317,6 +318,8 @@ class Buja(Game):
                 target.addDrinks(finalDrinks)
                 player.addDrinksToGive(finalDrinks)
                 self.emit(ShareEvent(player.getName(), target.getName(), finalDrinks))
+
+        self.emit(BoardCardDoneEvent())
 
         print("\n=== BOARD END ===\n")
 

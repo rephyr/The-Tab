@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
     DrinkEvent, GiveEvent, ShareEvent,
-    BoardCardEvent, GameEndEvent,
+    BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
     TaskDrawEvent, RouletteResultEvent,
 )
 from printing.log import GameLog
@@ -75,32 +75,33 @@ class TestLivePrinterBoard(unittest.TestCase):
         log.on(LivePrinter(printer).hook)
 
         log.add(PhaseEvent("Board", ""))
-        log.add(BoardCardEvent("♥A", "drink", 2, []))   # no match -> prints immediately
-        log.add(BoardCardEvent("♦K", "give", 2, []))    # no match -> prints immediately, prev already printed
+        log.add(BoardCardEvent("♥A", "drink", 2, []))
+        log.add(BoardCardDoneEvent())
 
-        # 2 hands + 2 no-match board cards
-        self.assertEqual(printer.printWith.call_count, 4)
+        # 2 hands + 1 board card
+        self.assertEqual(printer.printWith.call_count, 3)
 
-    def testMatchedCardPrintsWhenNextArrives(self):
+    def testMatchedCardPrintsAfterOutcomes(self):
         printer = MagicMock()
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
         log.add(PhaseEvent("Board", ""))
-        log.add(BoardCardEvent("♥A", "drink", 2, ["Testi Matti"]))  # matched, waits for next
+        log.add(BoardCardEvent("♥A", "drink", 2, ["Testi Matti"]))
         log.add(DrinkEvent("Testi Matti", 2, "board"))
-        log.add(BoardCardEvent("♦K", "give", 2, []))  # triggers print of ♥A, prints ♦K immediately
+        log.add(BoardCardDoneEvent())
 
-        # 2 hands + ♥A (triggered by ♦K) + ♦K (no match, immediate)
-        self.assertEqual(printer.printWith.call_count, 4)
+        # 2 hands + 1 board card (with outcomes)
+        self.assertEqual(printer.printWith.call_count, 3)
 
     def testPrintsLastBoardCardAndTallyAtGameEnd(self):
         printer = MagicMock()
         log = makeLog()
         log.on(LivePrinter(printer).hook)
 
-        log.add(PhaseEvent("Board", ""))   # prints 2 hands (Testi Matti + Testi Timo)
+        log.add(PhaseEvent("Board", ""))
         log.add(BoardCardEvent("♥A", "drink", 2, []))
+        log.add(BoardCardDoneEvent())
         log.add(GameEndEvent([{"name": "Testi Matti", "drinksTaken": 1, "drinksToGive": 0}]))
 
         # 2 hands + 1 board card + 1 tally

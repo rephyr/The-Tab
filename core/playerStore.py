@@ -29,6 +29,14 @@ class PlayerStore:
         except (json.JSONDecodeError, ValueError):
             return {"players": {}, "sessions": []}
 
+    def _resolvePlayerKey(self, name: str) -> str:
+        """Return the existing key that matches name case-insensitively, or title-cased name."""
+        lower = name.strip().lower()
+        for key in self.data["players"]:
+            if key.lower() == lower:
+                return key
+        return name.strip().title()
+
     def _save(self):
         """Write current data back to the store file."""
         with open(self.path, "w", encoding="utf-8") as f:
@@ -40,7 +48,7 @@ class PlayerStore:
             return
 
         for score in event.scores:
-            name = score["name"]
+            name = self._resolvePlayerKey(score["name"])
             if name not in self.data["players"]:
                 self.data["players"][name] = {
                     "gamesPlayed": 0,
@@ -58,7 +66,7 @@ class PlayerStore:
             "timestamp": event.timestamp.strftime("%Y-%m-%d %H:%M"),
             "scores": [
                 {
-                    "name": s["name"],
+                    "name": self._resolvePlayerKey(s["name"]),
                     "drinksTaken": s["drinksTaken"],
                     "drinksGiven": s["drinksToGive"],
                 }

@@ -66,6 +66,10 @@ class BoardCardEvent:
     matched: list
 
 @dataclass
+class BoardCardDoneEvent:
+    pass
+
+@dataclass
 class RouletteResultEvent:
     player: str
     hit: bool
