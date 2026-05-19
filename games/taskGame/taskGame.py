@@ -136,9 +136,9 @@ class TaskGame(Game):
         """Print active pair and huora links if any exist."""
         parts = []
         for p1, p2 in self.activePairs:
-            parts.append(f"{p1.getName()} ↔ {p2.getName()} (pari)")
+            parts.append(f"{p1.getName()} <-> {p2.getName()} (pari)")
         for master, huora in self.activeHuoras:
-            parts.append(f"{huora.getName()} → {master.getName()} (huora)")
+            parts.append(f"{huora.getName()} -> {master.getName()} (huora)")
         for p in self.immunePlayers:
             parts.append(f"{p.getName()} (immuuni)")
         if parts:
@@ -210,7 +210,7 @@ class TaskGame(Game):
             if task["title"] == "Pari":
                 self.activePairs.clear()
                 self.activePairs.append([drawer, target])
-                print(f"\nNew pair: {drawer.getName()} ↔ {target.getName()} (replaces any previous pair)")
+                print(f"\nNew pair: {drawer.getName()} <-> {target.getName()} (replaces any previous pair)")
             elif task["title"] == "Huora":
                 self.activeHuoras.append([drawer, target])
                 print(f"\nNew huora: {target.getName()} drinks whenever {drawer.getName()} drinks")
