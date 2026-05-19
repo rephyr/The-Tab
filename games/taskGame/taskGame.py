@@ -43,6 +43,7 @@ class TaskGame(Game):
         self.emit(GameStartEvent([p.getName() for p in self.players]))
 
         taskPool = self._buildPool()
+        deckTotal = len(taskPool)
 
         if not taskPool:
             print("No tasks defined.")
@@ -52,7 +53,12 @@ class TaskGame(Game):
         while running:
             for player in self.players:
                 self._showLinks()
-                input(f"\n{player.getName()}'s turn -- press Enter to draw a task")
+                while True:
+                    cmd = input(f"\n{player.getName()}'s turn -- press Enter to draw (d = deck): ").strip().lower()
+                    if cmd == "d":
+                        print(f"Cards left: {len(taskPool)}/{deckTotal}")
+                    else:
+                        break
 
                 if not taskPool:
                     running = False
@@ -212,5 +218,8 @@ class TaskGame(Game):
                 self.activePairs.append([drawer, target])
                 print(f"\nNew pair: {drawer.getName()} <-> {target.getName()} (replaces any previous pair)")
             elif task["title"] == "Huora":
-                self.activeHuoras.append([drawer, target])
-                print(f"\nNew huora: {target.getName()} drinks whenever {drawer.getName()} drinks")
+                if [drawer, target] in self.activeHuoras:
+                    print(f"\n{target.getName()} is already {drawer.getName()}'s huora.")
+                else:
+                    self.activeHuoras.append([drawer, target])
+                    print(f"\nNew huora: {target.getName()} drinks whenever {drawer.getName()} drinks")
