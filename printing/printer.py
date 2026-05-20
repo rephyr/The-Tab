@@ -64,11 +64,16 @@ class ReceiptPrinter:
             self._p = self._fallback()
 
     def printWith(self, fn) -> None:
-        """Call fn(p) to write content, then cut the paper. Keeps the connection open."""
+        """Call fn(p) to write content, then cut the paper."""
         if self._p is None:
             self._connect()
         fn(self._p)
         self._p.cut()
+        # win32raw batches everything into one spooler job until close() is called,
+        # so close after each receipt to make it print immediately.
+        if self.config.get("connection") == "win32raw":
+            self._p.close()
+            self._p = None
 
     def close(self) -> None:
         if self._p is not None:
