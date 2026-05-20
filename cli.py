@@ -163,36 +163,92 @@ def manageData(store):
         print()
 
 
-def configureGame(gameTitle, configData):
-    """Show current game settings and let the user override values for this session.
-
-    Returns a dict of overrides (may be empty). Does not write to config.json.
-    """
-    defaults = configData.get(gameTitle.lower(), {})
-
-    if not defaults:
+def _editSettings(gameTitle, config, saveImmediately=False):
+    """Numbered settings editor. saveImmediately writes to config.json on each change.
+    Returns a dict of the (possibly modified) settings."""
+    key = gameTitle.lower()
+    gameConfig = config.data.get(key, {})
+    if not gameConfig:
         return {}
 
-    print(f"\nGame settings ({gameTitle}):")
-    for key, value in defaults.items():
-        print(f"  {key} = {value}")
-
-    overrides = dict(defaults)
+    current = dict(gameConfig)
+    items = list(current.items())
 
     while True:
-        key = input("\nChange a setting? (enter name or press Enter to skip): ").strip()
-        if not key:
-            break
-        if key not in defaults:
-            print(f"Unknown setting '{key}'.")
-            continue
-        raw = input(f"New value for {key}: ").strip()
-        try:
-            overrides[key] = type(defaults[key])(raw)
-        except (ValueError, TypeError):
-            print("Invalid value, keeping original.")
+        print(f"\n{gameTitle} settings:")
+        for i, (k, v) in enumerate(items):
+            print(f"  {i + 1}. {k:<20} = {v}")
+        if not saveImmediately:
+            print(f"  {len(items) + 1}. Save as defaults")
+        prompt = "\nSetting number (or Enter to go back): " if saveImmediately else "\nSetting number (or Enter to start): "
 
-    return overrides
+        raw = input(prompt).strip()
+        if not raw:
+            break
+        if not raw.isdigit():
+            print("Invalid choice.")
+            continue
+
+        idx = int(raw) - 1
+
+        if not saveImmediately and idx == len(items):
+            config.data[key] = dict(current)
+            config.save()
+            print("Saved as defaults.")
+            break
+
+        if 0 <= idx < len(items):
+            k, v = items[idx]
+            newRaw = input(f"  {k} (current: {v}): ").strip()
+            if not newRaw:
+                continue
+            try:
+                newVal = type(v)(newRaw)
+                current[k] = newVal
+                items[idx] = (k, newVal)
+                if saveImmediately:
+                    config.data[key] = dict(current)
+                    config.save()
+                    print(f"  Saved.")
+            except (ValueError, TypeError):
+                print("  Invalid value.")
+        else:
+            print("Invalid choice.")
+
+    return dict(current)
+
+
+def configureGame(gameTitle, config):
+    """Show numbered settings before a game. Returns overrides for this session only."""
+    if not config.data.get(gameTitle.lower()):
+        return {}
+    return _editSettings(gameTitle, config, saveImmediately=False)
+
+
+def manageConfig(config, gamesList):
+    """Permanent config editor — changes are written to config.json immediately."""
+    configurable = [g for g in gamesList if config.data.get(g.gameTitle.lower())]
+    if not configurable:
+        print("No configurable games.")
+        return
+
+    try:
+        while True:
+            print("\nConfig:")
+            for i, g in enumerate(configurable):
+                print(f"  {i + 1}. {g.gameTitle}")
+            print(f"  {len(configurable) + 1}. Back")
+
+            raw = input("\nChoose: ").strip()
+            if not raw.isdigit():
+                continue
+            idx = int(raw) - 1
+            if idx == len(configurable):
+                break
+            if 0 <= idx < len(configurable):
+                _editSettings(configurable[idx].gameTitle, config, saveImmediately=True)
+    except KeyboardInterrupt:
+        print()
 
 
 def deduplicateName(name, existingNames):
@@ -266,6 +322,7 @@ def runCli(adminMode=False, debug=False):
             for i, gameClass in enumerate(gamesList):
                 print(f"{i + 1}. {gameClass.gameTitle}")
             print("\nL - Leaderboard")
+            print("C - Config")
             if adminMode:
                 print("M - Manage data")
             if debug:
@@ -279,6 +336,10 @@ def runCli(adminMode=False, debug=False):
 
             if userInput.lower() == "l":
                 showLeaderboard(store)
+                continue
+
+            if userInput.lower() == "c":
+                manageConfig(config, gamesList)
                 continue
 
             if userInput.lower() == "m" and adminMode:
@@ -327,7 +388,7 @@ def runCli(adminMode=False, debug=False):
                 print("No players added.")
                 continue
 
-            gameConfig = configureGame(gameClass.gameTitle, config.data)
+            gameConfig = configureGame(gameClass.gameTitle, config)
             gameConfig["debug"] = debug
 
             if hasattr(gameClass, "cardsNeeded"):
