@@ -358,16 +358,3 @@ class Buja(Game):
 
     def _getConfig(self, key, default):
         return self.config.get(key, default)
-
-    def _handleGive(self, player: Player, drinks: int) -> None:
-        target = self._chooseTarget(player)
-        print(f"{target.getName()} saa {drinks}")
-        target.addDrinks(drinks)
-        player.addDrinksToGive(drinks)
-
-    def _handleShare(self, player: Player, drinks: int) -> None:
-        target = self._chooseTarget(player)
-        print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
-        player.addDrinks(drinks)
-        target.addDrinks(drinks)
-        player.addDrinksToGive(drinks)
