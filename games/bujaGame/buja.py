@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 def defaultInput(prompt: str) -> str:
     answer = input(prompt).strip().lower()
     if answer == "q":
-        print("Quitting...")
+        print("Lopetetaan...")
         exit()
     return answer
 
@@ -27,7 +27,6 @@ class Buja(Game):
     The Buja drinking game. Players go through Red/Black, Higher/Lower,
     Inside/Outside, and Suit phases, then a shared board phase.
     """
-    name: str = "Buja instance"
     gameTitle: str = "Buja"
 
     config: dict = field(default_factory=dict)
@@ -362,13 +361,13 @@ class Buja(Game):
 
     def _handleGive(self, player: Player, drinks: int) -> None:
         target = self._chooseTarget(player)
-        print(f"{target.getName()} gets {drinks}")
+        print(f"{target.getName()} saa {drinks}")
         target.addDrinks(drinks)
         player.addDrinksToGive(drinks)
 
     def _handleShare(self, player: Player, drinks: int) -> None:
         target = self._chooseTarget(player)
-        print(f"{player.getName()} and {target.getName()} share {drinks}")
+        print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
         player.addDrinks(drinks)
         target.addDrinks(drinks)
         player.addDrinksToGive(drinks)

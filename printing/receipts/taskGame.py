@@ -8,10 +8,10 @@ def formatReceipt(data: dict, p) -> None:
     p.textln("=" * 24)
 
     p.set(align="center", bold=True)
-    p.textln("FINAL TALLY")
+    p.textln("LOPPUSALDO")
     p.set(align="left", bold=False)
     p.textln("=" * 24)
     for score in data["scores"]:
-        p.textln(f"{score['name']}: drank {score['drank']} | gave {score['gave']}")
+        p.textln(f"{score['name']}: joi {score['drank']} | antoi {score['gave']}")
     p.textln("=" * 24)
     p.set(align="center")

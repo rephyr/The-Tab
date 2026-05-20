@@ -40,72 +40,23 @@ def listGames():
     return gameClasses
 
 
-def _printBoard(title, rows):
-    """Print a ranked leaderboard table. rows: list of {name, taken, given, games}."""
-    if not rows:
-        print(f"\nEi dataa: {title}\n")
-        input("Press Enter to continue...")
-        return
-    print(f"\n--- {title} ---\n")
-    print(f"{'#':<4} {'Name':<20} {'Taken':>6} {'Given':>6} {'Games':>6}")
-    print("-" * 46)
-    for i, p in enumerate(rows):
-        games = p.get("games", "-")
-        print(f"{i + 1:<4} {p['name']:<20} {p['taken']:>6} {p['given']:>6} {str(games):>6}")
-    print()
-    input("Press Enter to continue...")
-
-
 def showLeaderboard(store):
-    """Sub-menu: all-time / today / session leaderboard."""
-    from datetime import date as Date
-    try:
-        while True:
-            print("\nLeaderboard:")
-            print("  1. All-time")
-            print("  2. Tänään")
-            print("  3. Sessio")
-            print("  4. Takaisin")
+    """Print the all-time leaderboard ranked by drinks taken."""
+    board = store.getLeaderboard()
 
-            choice = input("\nValinta: ").strip()
+    if not board:
+        print("\nEi dataa vielä.\n")
+        input("Paina Enter jatkaaksesi...")
+        return
 
-            if choice == "1":
-                board = store.getLeaderboard()
-                rows = [{"name": p["name"], "taken": p["totalDrinksTaken"],
-                         "given": p["totalDrinksGiven"], "games": p["gamesPlayed"]}
-                        for p in board]
-                _printBoard("All-time", rows)
+    print("\n--- Tulostaulukko ---\n")
+    print(f"{'#':<4} {'Nimi':<20} {'Joi':>6} {'Antoi':>6} {'Pelit':>6}")
+    print("-" * 46)
+    for i, p in enumerate(board):
+        print(f"{i + 1:<4} {p['name']:<20} {p['totalDrinksTaken']:>6} {p['totalDrinksGiven']:>6} {p['gamesPlayed']:>6}")
 
-            elif choice == "2":
-                today = Date.today().isoformat()
-                board = store.getDailyLeaderboard(today)
-                rows = [{"name": p["name"], "taken": p["totalDrinksTaken"],
-                         "given": p["totalDrinksGiven"], "games": p["gamesPlayed"]}
-                        for p in board]
-                _printBoard(f"Tänään ({today})", rows)
-
-            elif choice == "3":
-                sessions = store.getSessions()
-                if not sessions:
-                    print("\nEi sessioita.")
-                    input("Press Enter to continue...")
-                    continue
-                print("\n--- Sessiot ---\n")
-                _printSessionList(sessions)
-                raw = input("\nSession numero (tai Enter peruuttaa): ").strip()
-                if not raw or not raw.isdigit() or not (1 <= int(raw) <= len(sessions)):
-                    continue
-                s = sessions[int(raw) - 1]
-                scored = sorted(s["scores"], key=lambda sc: sc["drinksTaken"], reverse=True)
-                rows = [{"name": sc["name"], "taken": sc["drinksTaken"],
-                         "given": sc.get("drinksGiven", 0)}
-                        for sc in scored]
-                _printBoard(f"{s['game']} — {s['timestamp']}", rows)
-
-            elif choice == "4":
-                break
-    except KeyboardInterrupt:
-        print()
+    print()
+    input("Paina Enter jatkaaksesi...")
 
 
 def _printSessionList(sessions):
@@ -119,38 +70,41 @@ def showSession(store):
     """List sessions and display full details for a chosen one."""
     sessions = store.getSessions()
     if not sessions:
-        print("\nNo sessions recorded yet.")
-        input("Press Enter to continue...")
+        print("\nEi sessioita tallennettu.")
+        input("Paina Enter jatkaaksesi...")
         return
 
-    print("\n--- Sessions ---\n")
+    print("\n--- Sessiot ---\n")
     _printSessionList(sessions)
 
-    raw = input("\nSession number to view (or Enter to cancel): ").strip()
+    raw = input("\nKatsottavan session numero (tai Enter peruuttaaksesi): ").strip()
     if not raw:
         return
     if not raw.isdigit() or not (1 <= int(raw) <= len(sessions)):
-        print("Invalid number.")
+        print("Virheellinen numero.")
         return
 
     s = sessions[int(raw) - 1]
-    scored = sorted(s["scores"], key=lambda sc: sc["drinksTaken"], reverse=True)
-    rows = [{"name": sc["name"], "taken": sc["drinksTaken"], "given": sc.get("drinksGiven", 0)}
-            for sc in scored]
-    _printBoard(f"{s['game']} — {s['timestamp']}", rows)
+    print(f"\n[{s['timestamp']}] {s['game']}\n")
+    print(f"{'Nimi':<20} {'Joi':>6} {'Antoi':>6}")
+    print("-" * 35)
+    for sc in s["scores"]:
+        print(f"{sc['name']:<20} {sc['drinksTaken']:>6} {sc['drinksGiven']:>6}")
+    print()
+    input("Paina Enter jatkaaksesi...")
 
 
 def manageData(store):
     """Sub-menu for viewing, deleting players or sessions."""
     try:
         while True:
-            print("\nManage data:")
-            print("1. View sessions")
-            print("2. Delete a player")
-            print("3. Delete a session")
-            print("4. Back")
+            print("\nHallitse dataa:")
+            print("1. Katso sessiot")
+            print("2. Poista pelaaja")
+            print("3. Poista sessio")
+            print("4. Takaisin")
 
-            choice = input("\nChoice: ").strip()
+            choice = input("\nValinta: ").strip()
 
             if choice == "1":
                 showSession(store)
@@ -158,50 +112,50 @@ def manageData(store):
             elif choice == "2":
                 names = store.getRegisteredPlayerNames()
                 if not names:
-                    print("No players found.")
+                    print("Pelaajia ei löydy.")
                     continue
                 print()
                 for name in names:
                     print(f"  {name}")
                 print()
-                name = input("Player name to delete: ").strip()
+                name = input("Poistettavan pelaajan nimi: ").strip()
                 if not name:
                     continue
-                confirm = input(f"Delete '{name}' and all their stats? (y/n): ").strip().lower()
-                if confirm != "y":
-                    print("Cancelled.")
+                confirm = input(f"Poista '{name}' ja kaikki tilastot? (k/e): ").strip().lower()
+                if confirm != "k":
+                    print("Peruutettu.")
                     continue
                 if store.deletePlayer(name):
-                    print(f"Deleted player '{name}'.")
+                    print(f"Pelaaja '{name}' poistettu.")
                 else:
-                    print(f"Player '{name}' only exists in session history and cannot be deleted.")
+                    print(f"Pelaaja '{name}' löytyy vain sessiohistoriassa eikä sitä voi poistaa.")
 
             elif choice == "3":
                 sessions = store.getSessions()
                 if not sessions:
-                    print("No sessions to delete.")
+                    print("Ei sessioita poistettavaksi.")
                     continue
 
                 print()
                 _printSessionList(sessions)
 
-                raw = input("\nSession number to delete (or Enter to cancel): ").strip()
+                raw = input("\nPoistettavan session numero (tai Enter peruuttaaksesi): ").strip()
                 if not raw:
                     continue
                 if not raw.isdigit() or not (1 <= int(raw) <= len(sessions)):
-                    print("Invalid number.")
+                    print("Virheellinen numero.")
                     continue
                 index = int(raw) - 1
                 s = sessions[index]
                 players = ", ".join(sc["name"] for sc in s["scores"])
-                confirm = input(f"Delete session [{s['timestamp']}] {s['game']} — {players}? (y/n): ").strip().lower()
-                if confirm != "y":
-                    print("Cancelled.")
+                confirm = input(f"Poista sessio [{s['timestamp']}] {s['game']} — {players}? (k/e): ").strip().lower()
+                if confirm != "k":
+                    print("Peruutettu.")
                     continue
                 if store.deleteSession(index):
-                    print("Session deleted.")
+                    print("Sessio poistettu.")
                 else:
-                    print("Invalid number.")
+                    print("Virheellinen numero.")
 
             elif choice == "4":
                 break
@@ -209,92 +163,36 @@ def manageData(store):
         print()
 
 
-def _editSettings(gameTitle, config, saveImmediately=False):
-    """Numbered settings editor. saveImmediately writes to config.json on each change.
-    Returns a dict of the (possibly modified) settings."""
-    key = gameTitle.lower()
-    gameConfig = config.data.get(key, {})
-    if not gameConfig:
+def configureGame(gameTitle, configData):
+    """Show current game settings and let the user override values for this session.
+
+    Returns a dict of overrides (may be empty). Does not write to config.json.
+    """
+    defaults = configData.get(gameTitle.lower(), {})
+
+    if not defaults:
         return {}
 
-    current = dict(gameConfig)
-    items = list(current.items())
+    print(f"\nPeliasetukset ({gameTitle}):")
+    for key, value in defaults.items():
+        print(f"  {key} = {value}")
+
+    overrides = dict(defaults)
 
     while True:
-        print(f"\n{gameTitle} settings:")
-        for i, (k, v) in enumerate(items):
-            print(f"  {i + 1}. {k:<20} = {v}")
-        if not saveImmediately:
-            print(f"  {len(items) + 1}. Save as defaults")
-        prompt = "\nSetting number (or Enter to go back): " if saveImmediately else "\nSetting number (or Enter to start): "
-
-        raw = input(prompt).strip()
-        if not raw:
+        key = input("\nMuuta asetus? (kirjoita nimi tai paina Enter ohittaaksesi): ").strip()
+        if not key:
             break
-        if not raw.isdigit():
-            print("Invalid choice.")
+        if key not in defaults:
+            print(f"Tuntematon asetus '{key}'.")
             continue
+        raw = input(f"Uusi arvo asetukselle {key}: ").strip()
+        try:
+            overrides[key] = type(defaults[key])(raw)
+        except (ValueError, TypeError):
+            print("Virheellinen arvo, pidetään alkuperäinen.")
 
-        idx = int(raw) - 1
-
-        if not saveImmediately and idx == len(items):
-            config.data[key] = dict(current)
-            config.save()
-            print("Saved as defaults.")
-            break
-
-        if 0 <= idx < len(items):
-            k, v = items[idx]
-            newRaw = input(f"  {k} (current: {v}): ").strip()
-            if not newRaw:
-                continue
-            try:
-                newVal = type(v)(newRaw)
-                current[k] = newVal
-                items[idx] = (k, newVal)
-                if saveImmediately:
-                    config.data[key] = dict(current)
-                    config.save()
-                    print(f"  Saved.")
-            except (ValueError, TypeError):
-                print("  Invalid value.")
-        else:
-            print("Invalid choice.")
-
-    return dict(current)
-
-
-def configureGame(gameTitle, config):
-    """Show numbered settings before a game. Returns overrides for this session only."""
-    if not config.data.get(gameTitle.lower()):
-        return {}
-    return _editSettings(gameTitle, config, saveImmediately=False)
-
-
-def manageConfig(config, gamesList):
-    """Permanent config editor — changes are written to config.json immediately."""
-    configurable = [g for g in gamesList if config.data.get(g.gameTitle.lower())]
-    if not configurable:
-        print("No configurable games.")
-        return
-
-    try:
-        while True:
-            print("\nConfig:")
-            for i, g in enumerate(configurable):
-                print(f"  {i + 1}. {g.gameTitle}")
-            print(f"  {len(configurable) + 1}. Back")
-
-            raw = input("\nChoose: ").strip()
-            if not raw.isdigit():
-                continue
-            idx = int(raw) - 1
-            if idx == len(configurable):
-                break
-            if 0 <= idx < len(configurable):
-                _editSettings(configurable[idx].gameTitle, config, saveImmediately=True)
-    except KeyboardInterrupt:
-        print()
+    return overrides
 
 
 def deduplicateName(name, existingNames):
@@ -314,31 +212,31 @@ def showPrintTest(config, debug):
     printer = ReceiptPrinter(printerConfig, debug=debug)
 
     options = [
-        ("1", "Turn receipts (all 4 phases)", ["turns"]),
-        ("2", "Player hands",                 ["hands"]),
-        ("3", "Board cards",                  ["board"]),
-        ("4", "Final tally",                  ["tally"]),
-        ("5", "TaskGame receipts",            ["tasks"]),
-        ("6", "All of the above",             None),
+        ("1", "Vuorokuitit (kaikki 4 vaihetta)", ["turns"]),
+        ("2", "Pelaajien kädet",                 ["hands"]),
+        ("3", "Lautakortit",                     ["board"]),
+        ("4", "Loppulasku",                      ["tally"]),
+        ("5", "TaskGame-kuitit",                 ["tasks"]),
+        ("6", "Kaikki yllä",                     None),
     ]
 
     optionMap = {key: parts for key, _, parts in options}
 
     try:
         while True:
-            print("\nPrint test receipts:")
+            print("\nTulosta testikuitit:")
             for key, label, _ in options:
                 print(f"{key}. {label}")
-            print("7. Back")
+            print("7. Takaisin")
 
-            choice = input("\nChoice: ").strip()
+            choice = input("\nValinta: ").strip()
 
             if choice == "7":
                 break
             elif choice in optionMap:
                 printTestReceipts(printer, optionMap[choice])
             else:
-                print("Invalid choice.")
+                print("Virheellinen valinta.")
     except KeyboardInterrupt:
         print()
     finally:
@@ -353,7 +251,7 @@ def runCli(adminMode=False, debug=False):
     gamesList = listGames()
 
     if not gamesList:
-        print("No games found.")
+        print("Pelejä ei löydy.")
         return
 
     config = Config()
@@ -364,28 +262,23 @@ def runCli(adminMode=False, debug=False):
         modeLabel += " [DEBUG]"
     try:
         while True:
-            print(f"\nAvailable games{modeLabel}:\n")
+            print(f"\nPelit{modeLabel}:\n")
             for i, gameClass in enumerate(gamesList):
                 print(f"{i + 1}. {gameClass.gameTitle}")
-            print("\nL - Leaderboard")
-            print("C - Config")
+            print("\nL - Tulostaulukko")
             if adminMode:
-                print("M - Manage data")
+                print("M - Hallitse dataa")
             if debug:
-                print("P - Print test")
-            print('\n(type "quit" to exit)')
+                print("P - Tulosta testi")
+            print('\n(kirjoita "lopeta" poistuaksesi)')
 
-            userInput = input("\nChoose: ").strip()
+            userInput = input("\nValinta: ").strip()
 
-            if userInput.lower() == "quit":
+            if userInput.lower() == "lopeta":
                 break
 
             if userInput.lower() == "l":
                 showLeaderboard(store)
-                continue
-
-            if userInput.lower() == "c":
-                manageConfig(config, gamesList)
                 continue
 
             if userInput.lower() == "m" and adminMode:
@@ -410,31 +303,31 @@ def runCli(adminMode=False, debug=False):
                         break
 
             if gameClass is None:
-                print("Invalid selection.")
+                print("Virheellinen valinta.")
                 continue
 
             players = []
             existingNames = set()
 
-            print("\nEnter players (press Enter to start):")
+            print("\nSyötä pelaajat (paina Enter aloittaaksesi):")
             playerId = 1
 
             while True:
-                name = input(f"Player {playerId} name: ").strip().title()
+                name = input(f"Pelaaja {playerId} nimi: ").strip().title()
                 if name == "":
                     break
                 uniqueName = deduplicateName(name, existingNames)
                 if uniqueName != name:
-                    print(f"  Name already taken, using '{uniqueName}'")
+                    print(f"  Nimi on jo käytössä, käytetään '{uniqueName}'")
                 existingNames.add(uniqueName)
                 players.append(Player(playerId, uniqueName))
                 playerId += 1
 
             if not players:
-                print("No players added.")
+                print("Ei pelaajia lisätty.")
                 continue
 
-            gameConfig = configureGame(gameClass.gameTitle, config)
+            gameConfig = configureGame(gameClass.gameTitle, config.data)
             gameConfig["debug"] = debug
 
             if hasattr(gameClass, "cardsNeeded"):
@@ -444,19 +337,19 @@ def runCli(adminMode=False, debug=False):
                     deckCount = gameConfig.get("deckCount", 1)
                     available = 52 * deckCount
                     if needed <= available:
-                        print(f"\nDeck check: {needed} cards needed, {available} available ({deckCount} deck(s)). OK.")
+                        print(f"\nPakkakiintiö: tarvitaan {needed} korttia, saatavilla {available} ({deckCount} pakka(a)). OK.")
                         break
                     recommended = -(-needed // 52)
-                    print(f"\nDeck check: {needed} cards needed for {len(players)} players, "
-                          f"but only {available} available ({deckCount} deck(s)).")
-                    print(f"Recommended: {recommended} deck(s).")
-                    choice = input("Set number of decks or press Enter to proceed anyway: ").strip()
+                    print(f"\nPakkakiintiö: tarvitaan {needed} korttia {len(players)} pelaajalle, "
+                          f"saatavilla vain {available} ({deckCount} pakka(a)).")
+                    print(f"Suositellaan: {recommended} pakka(a).")
+                    choice = input("Aseta pakkojen määrä tai paina Enter jatkaaksesi: ").strip()
                     if not choice:
                         break
                     if choice.isdigit() and int(choice) > 0:
                         gameConfig["deckCount"] = int(choice)
                     else:
-                        print("Invalid number.")
+                        print("Virheellinen numero.")
 
             printerConfig = config.data.get("printer", {})
             log = GameLog()
@@ -465,7 +358,7 @@ def runCli(adminMode=False, debug=False):
             log.on(store.hook)
             game = gameClass(players=players, log=log, config=gameConfig)
 
-            print(f"\nStarting {game.gameTitle}...\n")
+            print(f"\nAloitetaan {game.gameTitle}...\n")
 
             game.playRound()
 

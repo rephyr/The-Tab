@@ -104,7 +104,7 @@ def formatTaskDraw(event, p) -> None:
     p.textln(event.title.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * 24)
-    p.textln("Players: " + ", ".join(event.targets))
+    p.textln("Pelaajat: " + ", ".join(event.targets))
     p.textln(event.description)
     p.textln("=" * 24)
 
