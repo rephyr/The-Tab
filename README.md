@@ -66,7 +66,7 @@ A card guessing game. Players go through four phases:
 
 Then everyone plays a shared board phase where cards are revealed one by one. Each card has an action (drink, give, or share). Players who have a matching rank in hand must perform the action. The final card is always share and worth double the last row.
 
-Settings for this game can be adjusted before each game from the CLI without editung the config file.
+Settings for this game can be adjusted before each game from the CLI without editing the config file.
 
 ### TaskGame
 
