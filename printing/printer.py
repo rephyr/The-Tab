@@ -167,6 +167,7 @@ class CardAwareWrapper:
             if cards:
                 img = _buildCardRowImage(cards, self._config, self._style.get("invert", False))
                 if img is not None:
+                    self._p.set(invert=False)
                     self._p.image(img)
                     return
         self._p.textln(text)

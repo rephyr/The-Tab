@@ -100,7 +100,7 @@ def _buildCardRowImage(cards, config, invert=False):
         cardImgs = []
         for rank, suit in cards:
             ci = _cropCard(buildCardImage(rank, suit, cfg))
-            if (suit in _INVERTED_SUITS) ^ invert:
+            if invert or (suit in _INVERTED_SUITS):
                 ci = ImageOps.invert(ci)
             cardImgs.append(ci)
     except Exception:
@@ -184,6 +184,12 @@ class ImagePrinter:
                 if cards is not None:
                     rowImg = _buildCardRowImage(cards, self._config, style.get("invert", False))
                     if rowImg is not None:
+                        scale = float(self._config.get("imageCardScale", 1.0))
+                        if scale != 1.0:
+                            rowImg = rowImg.resize(
+                                (int(rowImg.width * scale), int(rowImg.height * scale)),
+                                Image.LANCZOS,
+                            )
                         items.append(("cards", rowImg, style))
                         continue
                     text = "  ".join(f"{s}{r}" for r, s in cards)
@@ -229,7 +235,14 @@ class ImagePrinter:
         align = style.get("align", "left")
         invert = style.get("invert", False)
 
-        tw = d.textlength(str(text), font=f)
+        text = str(text)
+        if text and len(set(text)) == 1:
+            charW = d.textlength(text[0], font=f)
+            if charW > 0:
+                count = int((self.width - _MARGIN * 2) / charW)
+                text = text[0] * count
+
+        tw = d.textlength(text, font=f)
         if align == "center":
             x = max(_MARGIN, (self.width - tw) / 2)
         elif align == "right":

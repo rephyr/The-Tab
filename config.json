@@ -10,7 +10,8 @@
     "rankFont": "fonts/JqkasWild-w1YD6.ttf",
     "suitFont": "fonts/timesbd.ttf",
     "rankFontSize": "80",
-    "suitFontSize": "90"
+    "suitFontSize": "90",
+    "imageCardScale": 0.8
   },
   "taskgame": {
     "commonCount": 4,
