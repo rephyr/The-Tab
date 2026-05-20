@@ -23,8 +23,7 @@ _CARD_GAP = 8
 
 _SUIT_MAP = {"♥": "Hearts", "♦": "Diamonds", "♣": "Clubs", "♠": "Spades"}
 _VALID_RANKS = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"}
-_INVERTED_SUITS = {"♣", "♠"}
-
+_INVERTED_SUITS = {"♥", "♦"}
 
 def _loadFont(path, size=_FONT_SIZE):
     if path:
