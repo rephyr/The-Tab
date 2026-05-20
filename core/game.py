@@ -9,7 +9,6 @@ from .player import Player
 @dataclass
 class Game(ABC):
     """Abstract base for a game. Subclasses must implement playRound()."""
-    name: str = ""
     gameTitle: str = ""
     players: List[Player] = field(default_factory=list)
     log: Optional[object] = field(default=None)
@@ -24,10 +23,6 @@ class Game(ABC):
 
     def removePlayer(self, playerId: int) -> None:
         self.players = [p for p in self.players if p.id != playerId]
-
-    def reset(self) -> None:
-        for player in self.players:
-            player.setDrinksTaken(0)
 
     def getPlayerNames(self) -> List[str]:
         return [player.name for player in self.players]
