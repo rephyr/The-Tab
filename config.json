@@ -1,7 +1,13 @@
 {
   "printer": {
     "connection": "win32raw",
-    "printerName": "CK710 Printer"
+    "printerName": "CK710 Printer",
+    "widthImage": 576,
+    "heightImage": 120,
+    "rankFont": "",
+    "suitFont": "",
+    "rankFontSize": "",
+    "suitFontSize": ""
   },
   "taskgame": {
     "deckSize": 4
