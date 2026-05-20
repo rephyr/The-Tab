@@ -3,13 +3,15 @@ ImagePrinter renders receipts as JPG images for visual formatting preview.
 Each cut() call saves a numbered receipt image to the output directory.
 
 Config keys used (shared with cardImage):
-    widthImage   (int): Receipt width in pixels.
-    heightImage  (int): Card image height in pixels.
-    rankFont     (str): Path to rank .ttf font.
-    suitFont     (str): Path to suit .ttf font.
-    rankFontSize (int): Rank font size in points.
-    suitFontSize (int): Suit font size in points.
-    outputDir    (str): Folder to save images (default: "output").
+    widthImage      (int): Receipt width in pixels.
+    heightImage     (int): Card image height in pixels.
+    rankFont        (str): Path to rank .ttf font.
+    suitFont        (str): Path to suit .ttf font.
+    rankFontSize    (int): Rank font size in points.
+    suitFontSize    (int): Suit font size in points.
+    receiptFont     (str): Path to receipt text .ttf font.
+    receiptFontBold (str): Path to bold receipt text .ttf font.
+    outputDir       (str): Folder to save images (default: "output").
 """
 import os
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -18,27 +20,16 @@ _FONT_SIZE = 18
 _MARGIN = 6
 _CARD_GAP = 8
 
-_FONT_PATHS = [
-    "C:/Windows/Fonts/cour.ttf",
-    "C:/Windows/Fonts/consola.ttf",
-    "C:/Windows/Fonts/lucon.ttf",
-]
-_FONT_PATHS_BOLD = [
-    "C:/Windows/Fonts/courbd.ttf",
-    "C:/Windows/Fonts/consolab.ttf",
-]
-
 _SUIT_MAP = {"♥": "Hearts", "♦": "Diamonds", "♣": "Clubs", "♠": "Spades"}
 _VALID_RANKS = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"}
 
 
-def _loadFont(bold=False, size=_FONT_SIZE):
-    paths = _FONT_PATHS_BOLD if bold else _FONT_PATHS
-    for path in paths:
+def _loadFont(path, size=_FONT_SIZE):
+    if path:
         try:
             return ImageFont.truetype(path, size)
         except Exception:
-            continue
+            pass
     return ImageFont.load_default()
 
 
@@ -127,10 +118,12 @@ class ImagePrinter:
         self.width = int(config.get("widthImage", 576))
         self._config = config
         self.output_dir = output_dir
-        self._font = _loadFont(bold=False)
-        self._font_bold = _loadFont(bold=True)
-        self._font_2x = _loadFont(bold=False, size=_FONT_SIZE * 2)
-        self._font_2x_bold = _loadFont(bold=True, size=_FONT_SIZE * 2)
+        fp = config.get("receiptFont", "")
+        fb = config.get("receiptFontBold", "") or fp
+        self._font = _loadFont(fp)
+        self._font_bold = _loadFont(fb)
+        self._font_2x = _loadFont(fp, size=_FONT_SIZE * 2)
+        self._font_2x_bold = _loadFont(fb, size=_FONT_SIZE * 2)
         self._receipt_num = 0
         self._lines = []
         self._pending = ""
