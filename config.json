@@ -1,7 +1,7 @@
 {
   "printer": {
-    "connection": "win32raw",
-    "printerName": "CK710 Printer",
+    "connection": "",
+    "printerName": "",
     "widthImage": 576,
     "heightImage": 120,
     "rankFont": "fonts/JqkasWild.tt",
