@@ -33,11 +33,3 @@ def buildCardImage(rank: str, suit: str, config: dict) -> Image.Image:
     d.text((x, 24), rank, font=fontRank, fill="black")
     d.text((x + rw, 10), suit, font=fontSuit, fill="black")
     return img  
-
-
-
-
-
-
-
-
