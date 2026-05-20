@@ -40,23 +40,72 @@ def listGames():
     return gameClasses
 
 
-def showLeaderboard(store):
-    """Print the all-time leaderboard ranked by drinks taken."""
-    board = store.getLeaderboard()
-
-    if not board:
-        print("\nNo data yet.\n")
+def _printBoard(title, rows):
+    """Print a ranked leaderboard table. rows: list of {name, taken, given, games}."""
+    if not rows:
+        print(f"\nEi dataa: {title}\n")
         input("Press Enter to continue...")
         return
-
-    print("\n--- Leaderboard ---\n")
+    print(f"\n--- {title} ---\n")
     print(f"{'#':<4} {'Name':<20} {'Taken':>6} {'Given':>6} {'Games':>6}")
     print("-" * 46)
-    for i, p in enumerate(board):
-        print(f"{i + 1:<4} {p['name']:<20} {p['totalDrinksTaken']:>6} {p['totalDrinksGiven']:>6} {p['gamesPlayed']:>6}")
-
+    for i, p in enumerate(rows):
+        games = p.get("games", "-")
+        print(f"{i + 1:<4} {p['name']:<20} {p['taken']:>6} {p['given']:>6} {str(games):>6}")
     print()
     input("Press Enter to continue...")
+
+
+def showLeaderboard(store):
+    """Sub-menu: all-time / today / session leaderboard."""
+    from datetime import date as Date
+    try:
+        while True:
+            print("\nLeaderboard:")
+            print("  1. All-time")
+            print("  2. Tänään")
+            print("  3. Sessio")
+            print("  4. Takaisin")
+
+            choice = input("\nValinta: ").strip()
+
+            if choice == "1":
+                board = store.getLeaderboard()
+                rows = [{"name": p["name"], "taken": p["totalDrinksTaken"],
+                         "given": p["totalDrinksGiven"], "games": p["gamesPlayed"]}
+                        for p in board]
+                _printBoard("All-time", rows)
+
+            elif choice == "2":
+                today = Date.today().isoformat()
+                board = store.getDailyLeaderboard(today)
+                rows = [{"name": p["name"], "taken": p["totalDrinksTaken"],
+                         "given": p["totalDrinksGiven"], "games": p["gamesPlayed"]}
+                        for p in board]
+                _printBoard(f"Tänään ({today})", rows)
+
+            elif choice == "3":
+                sessions = store.getSessions()
+                if not sessions:
+                    print("\nEi sessioita.")
+                    input("Press Enter to continue...")
+                    continue
+                print("\n--- Sessiot ---\n")
+                _printSessionList(sessions)
+                raw = input("\nSession numero (tai Enter peruuttaa): ").strip()
+                if not raw or not raw.isdigit() or not (1 <= int(raw) <= len(sessions)):
+                    continue
+                s = sessions[int(raw) - 1]
+                scored = sorted(s["scores"], key=lambda sc: sc["drinksTaken"], reverse=True)
+                rows = [{"name": sc["name"], "taken": sc["drinksTaken"],
+                         "given": sc.get("drinksGiven", 0)}
+                        for sc in scored]
+                _printBoard(f"{s['game']} — {s['timestamp']}", rows)
+
+            elif choice == "4":
+                break
+    except KeyboardInterrupt:
+        print()
 
 
 def _printSessionList(sessions):
@@ -85,13 +134,10 @@ def showSession(store):
         return
 
     s = sessions[int(raw) - 1]
-    print(f"\n[{s['timestamp']}] {s['game']}\n")
-    print(f"{'Name':<20} {'Taken':>6} {'Given':>6}")
-    print("-" * 35)
-    for sc in s["scores"]:
-        print(f"{sc['name']:<20} {sc['drinksTaken']:>6} {sc['drinksGiven']:>6}")
-    print()
-    input("Press Enter to continue...")
+    scored = sorted(s["scores"], key=lambda sc: sc["drinksTaken"], reverse=True)
+    rows = [{"name": sc["name"], "taken": sc["drinksTaken"], "given": sc.get("drinksGiven", 0)}
+            for sc in scored]
+    _printBoard(f"{s['game']} — {s['timestamp']}", rows)
 
 
 def manageData(store):

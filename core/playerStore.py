@@ -106,6 +106,25 @@ class PlayerStore:
         """Return the full list of stored game sessions."""
         return self.data.get("sessions", [])
 
+    def getDailyLeaderboard(self, date: str):
+        """Return leaderboard aggregated from sessions on the given date (YYYY-MM-DD)."""
+        result = {}
+        for session in self.data.get("sessions", []):
+            if not session["timestamp"].startswith(date):
+                continue
+            for score in session["scores"]:
+                name = score["name"]
+                if name not in result:
+                    result[name] = {"gamesPlayed": 0, "totalDrinksTaken": 0, "totalDrinksGiven": 0}
+                result[name]["gamesPlayed"] += 1
+                result[name]["totalDrinksTaken"] += score["drinksTaken"]
+                result[name]["totalDrinksGiven"] += score.get("drinksGiven", 0)
+        return sorted(
+            [{"name": name, **stats} for name, stats in result.items()],
+            key=lambda p: p["totalDrinksTaken"],
+            reverse=True,
+        )
+
     def deletePlayer(self, name):
         """Remove a player and all their session scores. Returns True if found, False otherwise."""
         if name not in self.data["players"]:
