@@ -31,7 +31,7 @@ class TestTaskGameRuns(unittest.TestCase):
         with patch("games.taskGame.taskGame.TASKS", []):
             with patch("builtins.print") as mockPrint:
                 game.playRound()
-                mockPrint.assert_any_call("No tasks defined.")
+                mockPrint.assert_any_call("Ei tehtäviä määritelty.")
 
     def testGameEndEventFired(self):
         from printing.log import GameLog
@@ -284,7 +284,7 @@ class TestDeckCommand(unittest.TestCase):
                 with patch("builtins.print") as mockPrint:
                     game.playRound()
         printed = [str(c) for c in mockPrint.call_args_list]
-        self.assertTrue(any("Cards left" in c for c in printed))
+        self.assertTrue(any("Kortteja jäljellä" in c for c in printed))
 
     def testDeckCommandDoesNotDraw(self):
         from printing.log import GameLog
