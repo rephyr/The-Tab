@@ -4,10 +4,10 @@
     "printerName": "CK710 Printer",
     "widthImage": 576,
     "heightImage": 120,
-    "rankFont": "",
-    "suitFont": "",
-    "rankFontSize": "",
-    "suitFontSize": ""
+    "rankFont": "fonts/JqkasWild.tt",
+    "suitFont": "fonts/timesbd.ttf",
+    "rankFontSize": "80",
+    "suitFontSize": "90"
   },
   "taskgame": {
     "commonCount": 4,
