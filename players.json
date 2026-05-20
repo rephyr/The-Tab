@@ -1,0 +1,33 @@
+{
+  "players": {
+    "Emi": {
+      "gamesPlayed": 1,
+      "totalDrinksTaken": 0,
+      "totalDrinksGiven": 0
+    },
+    "Jemi": {
+      "gamesPlayed": 1,
+      "totalDrinksTaken": 0,
+      "totalDrinksGiven": 0
+    }
+  },
+  "sessions": [
+    {
+      "id": "2026-05-20T20:46:10",
+      "game": "TaskGame",
+      "timestamp": "2026-05-20 20:46",
+      "scores": [
+        {
+          "name": "Emi",
+          "drinksTaken": 0,
+          "drinksGiven": 0
+        },
+        {
+          "name": "Jemi",
+          "drinksTaken": 0,
+          "drinksGiven": 0
+        }
+      ]
+    }
+  ]
+}

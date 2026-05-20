@@ -60,6 +60,11 @@ class ReceiptPrinter:
             self._p = FilePrinter(self.config.get("path", "receipt.txt"))
             self._p.open()
 
+        elif conn == "image":
+            from printing.imagePrinter import ImagePrinter
+            output_dir = self.config.get("outputDir", "output")
+            self._p = ImagePrinter(self.config, output_dir=output_dir)
+
         else:
             self._p = self._fallback()
 

@@ -1,10 +1,11 @@
 {
   "printer": {
-    "connection": "",
+    "connection": "image",
     "printerName": "",
+    "outputDir": "output",
     "widthImage": 576,
     "heightImage": 120,
-    "rankFont": "fonts/JqkasWild.tt",
+    "rankFont": "fonts/JqkasWild-w1YD6.ttf",
     "suitFont": "fonts/timesbd.ttf",
     "rankFontSize": "80",
     "suitFontSize": "90"
