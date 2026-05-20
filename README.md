@@ -1,4 +1,4 @@
-# kuittipeli
+# The-Tab
 
 A CLI card drinking game that uses a receipt printer to play.
 
