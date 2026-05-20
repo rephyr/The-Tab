@@ -1,7 +1,8 @@
 {
   "printer": {
-    "connection": "image",
+    "connection": "win32raw",
     "printerName": "",
+    "saveImages": true,
     "outputDir": "output",
     "widthImage": 576,
     "heightImage": 120,

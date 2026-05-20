@@ -25,6 +25,10 @@ class ReceiptPrinter:
         self.config = config or {}
         self.debug = debug
         self._p = None
+        self._ip = None
+        if self.config.get("saveImages"):
+            from printing.imagePrinter import ImagePrinter
+            self._ip = ImagePrinter(self.config, output_dir=self.config.get("outputDir", "output"))
 
     def _fallback(self):
         """Return StdoutPrinter in debug mode, NullPrinter otherwise."""
@@ -79,11 +83,17 @@ class ReceiptPrinter:
         if self.config.get("connection") == "win32raw":
             self._p.close()
             self._p = None
+        if self._ip is not None:
+            fn(self._ip)
+            self._ip.cut()
 
     def close(self) -> None:
         if self._p is not None:
             self._p.close()
             self._p = None
+        if self._ip is not None:
+            self._ip.close()
+            self._ip = None
 
     def printReceipt(self, data: dict, formatter) -> None:
         if self._p is None:
