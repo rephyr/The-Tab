@@ -3,6 +3,7 @@
     "connection": "win32raw",
     "printerName": "",
     "saveImages": true,
+    "useCardImages": true,
     "outputDir": "output",
     "widthImage": 576,
     "heightImage": 120,

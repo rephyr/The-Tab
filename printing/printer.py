@@ -43,6 +43,8 @@ class ReceiptPrinter:
                     raise RuntimeError("escpos not available")
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
+                if self.config.get("useCardImages"):
+                    self._p = CardAwareWrapper(self._p, self.config)
             except Exception:
                 self._p = self._fallback()
 
@@ -145,6 +147,38 @@ class StdoutPrinter:
 
     def close(self):
         sys.stdout.buffer.flush()
+
+
+class CardAwareWrapper:
+    """Wraps a real ESC/POS printer to render card text rows as images instead of Unicode text."""
+    def __init__(self, printer, config):
+        self._p = printer
+        self._config = config
+        self._style = {}
+
+    def set(self, **kwargs):
+        self._style.update(kwargs)
+        self._p.set(**kwargs)
+
+    def textln(self, text=""):
+        if self._style.get("double_width") or self._style.get("double_height"):
+            from printing.imagePrinter import _parseCards, _buildCardRowImage
+            cards = _parseCards(str(text))
+            if cards:
+                img = _buildCardRowImage(cards, self._config, self._style.get("invert", False))
+                if img is not None:
+                    self._p.image(img)
+                    return
+        self._p.textln(text)
+
+    def text(self, text=""):
+        self._p.text(text)
+
+    def cut(self):
+        self._p.cut()
+
+    def close(self):
+        self._p.close()
 
 
 class FilePrinter:

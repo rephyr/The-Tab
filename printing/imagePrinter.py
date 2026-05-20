@@ -79,6 +79,47 @@ def _parseCards(text):
     return result
 
 
+def _cropCard(img):
+    """Crop a card image to its content bounding box with a small padding."""
+    from PIL import ImageChops
+    bg = Image.new("RGB", img.size, "white")
+    diff = ImageChops.difference(img, bg)
+    bbox = diff.getbbox()
+    if bbox is None:
+        return img
+    pad = 6
+    bbox = (
+        max(0, bbox[0] - pad),
+        max(0, bbox[1] - pad),
+        min(img.width, bbox[2] + pad),
+        min(img.height, bbox[3] + pad),
+    )
+    return img.crop(bbox)
+
+
+def _buildCardRowImage(cards, config, invert=False):
+    """Build a stitched PIL image of a card row from [(rank, suit), ...].
+    Returns None if fonts are unavailable."""
+    from printing.cardImage import buildCardImage
+    cfg = dict(config)
+    cfg["rankFontSize"] = int(cfg.get("rankFontSize", 80))
+    cfg["suitFontSize"] = int(cfg.get("suitFontSize", 90))
+    try:
+        card_imgs = [_cropCard(buildCardImage(rank, suit, cfg)) for rank, suit in cards]
+    except Exception:
+        return None
+    if invert:
+        card_imgs = [ImageOps.invert(ci) for ci in card_imgs]
+    total_w = sum(ci.width for ci in card_imgs) + _CARD_GAP * (len(card_imgs) - 1)
+    max_h = max(ci.height for ci in card_imgs)
+    row = Image.new("RGB", (total_w, max_h), "white")
+    x = 0
+    for ci in card_imgs:
+        row.paste(ci, (x, 0))
+        x += ci.width + _CARD_GAP
+    return row
+
+
 class ImagePrinter:
     """Renders receipt content to numbered JPG images for layout preview."""
 
@@ -134,14 +175,6 @@ class ImagePrinter:
         if big:
             return self._font_2x_bold if bold else self._font_2x
         return self._font_bold if bold else self._font
-
-    def _buildCardImage(self, rank, suit):
-        """Build a single card image, converting string font sizes to int."""
-        from printing.cardImage import buildCardImage
-        cfg = dict(self._config)
-        cfg["rankFontSize"] = int(cfg.get("rankFontSize", 80))
-        cfg["suitFontSize"] = int(cfg.get("suitFontSize", 90))
-        return buildCardImage(rank, suit, cfg)
 
     def _expand(self, draw):
         """Return render-ready items: ('text', text, style) or ('cards', [(rank,suit),...], style)."""
@@ -216,30 +249,21 @@ class ImagePrinter:
         invert = style.get("invert", False)
         row_h = self._card_row_height()
 
-        try:
-            card_imgs = [self._buildCardImage(rank, suit) for rank, suit in cards]
-        except Exception:
-            # Font files missing — fall back to text
+        row_img = _buildCardRowImage(cards, self._config, invert)
+        if row_img is None:
             d = ImageDraw.Draw(img)
-            text = "  ".join(f"{s[0]}{r}" for r, s in cards)
+            text = "  ".join(f"{s}{r}" for r, s in cards)
             return self._drawTextLine(d, y, text, style)
 
-        if invert:
-            card_imgs = [ImageOps.invert(ci) for ci in card_imgs]
+        max_w = self.width - _MARGIN * 2
+        if row_img.width > max_w:
+            scale = max_w / row_img.width
+            row_img = row_img.resize(
+                (int(row_img.width * scale), int(row_img.height * scale)),
+                Image.LANCZOS,
+            )
 
-        total_w = sum(ci.width for ci in card_imgs) + _CARD_GAP * (len(card_imgs) - 1)
-        if total_w > self.width - _MARGIN * 2:
-            scale = (self.width - _MARGIN * 2) / total_w
-            card_imgs = [
-                ci.resize((int(ci.width * scale), int(ci.height * scale)), Image.LANCZOS)
-                for ci in card_imgs
-            ]
-            total_w = sum(ci.width for ci in card_imgs) + _CARD_GAP * (len(card_imgs) - 1)
-
-        x = (self.width - total_w) // 2
-        card_y = y + _MARGIN
-        for ci in card_imgs:
-            img.paste(ci, (x, card_y))
-            x += ci.width + _CARD_GAP
-
+        x = (self.width - row_img.width) // 2
+        card_y = y + max(0, (row_h - row_img.height) // 2)
+        img.paste(row_img, (x, card_y))
         return y + row_h
