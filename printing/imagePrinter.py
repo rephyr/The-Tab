@@ -18,10 +18,12 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 _FONT_SIZE = 18
 _MARGIN = 6
+_CARD_PADDING = 20
 _CARD_GAP = 8
 
 _SUIT_MAP = {"♥": "Hearts", "♦": "Diamonds", "♣": "Clubs", "♠": "Spades"}
 _VALID_RANKS = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"}
+_INVERTED_SUITS = {"♣", "♠"}
 
 
 def _loadFont(path, size=_FONT_SIZE):
@@ -33,16 +35,16 @@ def _loadFont(path, size=_FONT_SIZE):
     return ImageFont.load_default()
 
 
-def _wrap(text, font, draw, max_width):
-    """Split text into lines that fit within max_width, breaking at word boundaries."""
-    if draw.textlength(text, font=font) <= max_width:
+def _wrap(text, font, draw, maxWidth):
+    """Split text into lines that fit within maxWidth, breaking at word boundaries."""
+    if draw.textlength(text, font=font) <= maxWidth:
         return [text]
     words = text.split(" ")
     lines = []
     current = ""
     for word in words:
         candidate = (current + " " + word).strip()
-        if draw.textlength(candidate, font=font) <= max_width:
+        if draw.textlength(candidate, font=font) <= maxWidth:
             current = candidate
         else:
             if current:
@@ -96,16 +98,19 @@ def _buildCardRowImage(cards, config, invert=False):
     cfg["rankFontSize"] = int(cfg.get("rankFontSize", 80))
     cfg["suitFontSize"] = int(cfg.get("suitFontSize", 90))
     try:
-        card_imgs = [_cropCard(buildCardImage(rank, suit, cfg)) for rank, suit in cards]
+        cardImgs = []
+        for rank, suit in cards:
+            ci = _cropCard(buildCardImage(rank, suit, cfg))
+            if (suit in _INVERTED_SUITS) ^ invert:
+                ci = ImageOps.invert(ci)
+            cardImgs.append(ci)
     except Exception:
         return None
-    if invert:
-        card_imgs = [ImageOps.invert(ci) for ci in card_imgs]
-    total_w = sum(ci.width for ci in card_imgs) + _CARD_GAP * (len(card_imgs) - 1)
-    max_h = max(ci.height for ci in card_imgs)
-    row = Image.new("RGB", (total_w, max_h), "white")
+    totalW = sum(ci.width for ci in cardImgs) + _CARD_GAP * (len(cardImgs) - 1)
+    maxH = max(ci.height for ci in cardImgs)
+    row = Image.new("RGB", (totalW, maxH), "white")
     x = 0
-    for ci in card_imgs:
+    for ci in cardImgs:
         row.paste(ci, (x, 0))
         x += ci.width + _CARD_GAP
     return row
@@ -114,22 +119,22 @@ def _buildCardRowImage(cards, config, invert=False):
 class ImagePrinter:
     """Renders receipt content to numbered JPG images for layout preview."""
 
-    def __init__(self, config: dict, output_dir: str = "output"):
+    def __init__(self, config: dict, outputDir: str = "output"):
         self.width = int(config.get("widthImage", 576))
         self._config = config
-        self.output_dir = output_dir
+        self.outputDir = outputDir
         fp = config.get("receiptFont", "")
         fb = config.get("receiptFontBold", "") or fp
         self._font = _loadFont(fp)
-        self._font_bold = _loadFont(fb)
-        self._font_2x = _loadFont(fp, size=_FONT_SIZE * 2)
-        self._font_2x_bold = _loadFont(fb, size=_FONT_SIZE * 2)
-        self._receipt_num = 0
+        self._fontBold = _loadFont(fb)
+        self._font2x = _loadFont(fp, size=_FONT_SIZE * 2)
+        self._font2xBold = _loadFont(fb, size=_FONT_SIZE * 2)
+        self._receiptNum = 0
         self._lines = []
         self._pending = ""
-        self._style = self._default_style()
+        self._style = self._defaultStyle()
 
-    def _default_style(self):
+    def _defaultStyle(self):
         return {
             "align": "left",
             "bold": False,
@@ -154,71 +159,74 @@ class ImagePrinter:
             self.textln()
         if not self._lines:
             return
-        self._receipt_num += 1
+        self._receiptNum += 1
         self._render()
         self._lines = []
-        self._style = self._default_style()
+        self._style = self._defaultStyle()
 
     def close(self):
         pass
 
-    def _pick_font(self, style):
+    def _pickFont(self, style):
         bold = style.get("bold", False)
         big = style.get("double_width") or style.get("double_height")
         if big:
-            return self._font_2x_bold if bold else self._font_2x
-        return self._font_bold if bold else self._font
+            return self._font2xBold if bold else self._font2x
+        return self._fontBold if bold else self._font
 
     def _expand(self, draw):
-        """Return render-ready items: ('text', text, style) or ('cards', [(rank,suit),...], style)."""
+        """Return render-ready items: ('text', text, style) or ('cards', pil_image, style)."""
         items = []
-        max_w = self.width - _MARGIN * 2
+        maxW = self.width - _MARGIN * 2
         for text, style in self._lines:
-            is_double = style.get("double_width") or style.get("double_height")
-            if is_double:
+            isDouble = style.get("double_width") or style.get("double_height")
+            if isDouble:
                 cards = _parseCards(text)
                 if cards is not None:
-                    items.append(("cards", cards, style))
-                    continue
-            f = self._pick_font(style)
-            for line in _wrap(text, f, draw, max_w):
+                    rowImg = _buildCardRowImage(cards, self._config, style.get("invert", False))
+                    if rowImg is not None:
+                        items.append(("cards", rowImg, style))
+                        continue
+                    text = "  ".join(f"{s}{r}" for r, s in cards)
+            f = self._pickFont(style)
+            for line in _wrap(text, f, draw, maxW):
                 items.append(("text", line, style))
         return items
 
-    def _text_line_height(self, style):
+    def _textLineHeight(self, style):
         base = _FONT_SIZE + 6
         return base * 2 if style.get("double_height") else base
 
-    def _card_row_height(self):
-        return int(self._config.get("heightImage", 120)) + _MARGIN * 2
-
     def _render(self):
-        dummy_draw = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-        items = self._expand(dummy_draw)
+        dummyDraw = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+        items = self._expand(dummyDraw)
 
-        total_h = _MARGIN
-        for kind, _, style in items:
-            total_h += self._card_row_height() if kind == "cards" else self._text_line_height(style)
-        total_h += _MARGIN
+        totalH = _MARGIN
+        for kind, content, style in items:
+            if kind == "cards":
+                totalH += content.height + _CARD_PADDING * 2
+            else:
+                totalH += self._textLineHeight(style)
+        totalH += _MARGIN
 
-        img = Image.new("RGB", (self.width, total_h), "white")
+        img = Image.new("RGB", (self.width, totalH), "white")
         d = ImageDraw.Draw(img)
 
         y = _MARGIN
         for kind, content, style in items:
             if kind == "cards":
-                y = self._drawCardRow(img, y, content, style)
+                y = self._drawCardRow(img, y, content)
             else:
                 y = self._drawTextLine(d, y, content, style)
 
-        os.makedirs(self.output_dir, exist_ok=True)
-        path = os.path.join(self.output_dir, f"receipt_{self._receipt_num:03d}.jpg")
+        os.makedirs(self.outputDir, exist_ok=True)
+        path = os.path.join(self.outputDir, f"receipt_{self._receiptNum:03d}.jpg")
         img.save(path, "JPEG")
         print(f"[Tallennettu: {path}]")
 
     def _drawTextLine(self, d, y, text, style):
-        f = self._pick_font(style)
-        lh = self._text_line_height(style)
+        f = self._pickFont(style)
+        lh = self._textLineHeight(style)
         align = style.get("align", "left")
         invert = style.get("invert", False)
 
@@ -238,25 +246,14 @@ class ImagePrinter:
 
         return y + lh
 
-    def _drawCardRow(self, img, y, cards, style):
-        invert = style.get("invert", False)
-        row_h = self._card_row_height()
-
-        row_img = _buildCardRowImage(cards, self._config, invert)
-        if row_img is None:
-            d = ImageDraw.Draw(img)
-            text = "  ".join(f"{s}{r}" for r, s in cards)
-            return self._drawTextLine(d, y, text, style)
-
-        max_w = self.width - _MARGIN * 2
-        if row_img.width > max_w:
-            scale = max_w / row_img.width
-            row_img = row_img.resize(
-                (int(row_img.width * scale), int(row_img.height * scale)),
+    def _drawCardRow(self, img, y, rowImg):
+        maxW = self.width - _MARGIN * 2
+        if rowImg.width > maxW:
+            scale = maxW / rowImg.width
+            rowImg = rowImg.resize(
+                (int(rowImg.width * scale), int(rowImg.height * scale)),
                 Image.LANCZOS,
             )
-
-        x = (self.width - row_img.width) // 2
-        card_y = y + max(0, (row_h - row_img.height) // 2)
-        img.paste(row_img, (x, card_y))
-        return y + row_h
+        x = (self.width - rowImg.width) // 2
+        img.paste(rowImg, (x, y + _CARD_PADDING))
+        return y + rowImg.height + _CARD_PADDING * 2

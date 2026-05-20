@@ -28,7 +28,7 @@ class ReceiptPrinter:
         self._ip = None
         if self.config.get("saveImages"):
             from printing.imagePrinter import ImagePrinter
-            self._ip = ImagePrinter(self.config, output_dir=self.config.get("outputDir", "output"))
+            self._ip = ImagePrinter(self.config, outputDir=self.config.get("outputDir", "output"))
 
     def _fallback(self):
         """Return StdoutPrinter in debug mode, NullPrinter otherwise."""
@@ -69,7 +69,7 @@ class ReceiptPrinter:
         elif conn == "image":
             from printing.imagePrinter import ImagePrinter
             output_dir = self.config.get("outputDir", "output")
-            self._p = ImagePrinter(self.config, output_dir=output_dir)
+            self._p = ImagePrinter(self.config, outputDir=output_dir)
 
         else:
             self._p = self._fallback()

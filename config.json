@@ -9,8 +9,6 @@
     "heightImage": 120,
     "rankFont": "fonts/JqkasWild-w1YD6.ttf",
     "suitFont": "fonts/timesbd.ttf",
-    "receiptFont": "C:/Windows/Fonts/consola.ttf",
-    "receiptFontBold": "C:/Windows/Fonts/consolab.ttf",
     "rankFontSize": "80",
     "suitFontSize": "90"
   },
