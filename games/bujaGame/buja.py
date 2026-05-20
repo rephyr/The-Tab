@@ -35,6 +35,7 @@ class Buja(Game):
     def __post_init__(self):
         self.inputFunc = defaultInput
         self.deck.deckCount = self._getConfig("deckCount", 1)
+        self.deck.resetDeck()
 
     @staticmethod
     def cardsNeeded(playerCount: int, boardLength: int) -> int:
