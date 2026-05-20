@@ -347,8 +347,20 @@ class Buja(Game):
         card = self.deck.drawCard()
 
         if card is None:
-            self.deck.resetDeck()
-            card = self.deck.drawCard()
+            print("Virhe: kortit loppuivat kesken pelin!")
+            while True:
+                ans = self.inputFunc("Lisätäänkö yksi pakka? (k/e): ")
+                if ans == "k":
+                    extra = Deck()
+                    extra.buildDeck()
+                    extra.shuffleDeck()
+                    self.deck.cards.extend(extra.cards)
+                    self.deck.deckCount += 1
+                    card = self.deck.drawCard()
+                    break
+                elif ans == "e":
+                    print("Peli lopetetaan.")
+                    exit()
 
         player.addCardToHand(card)
         return card
