@@ -29,6 +29,7 @@ class TaskGame(Game):
     immunePlayers: list = field(default_factory=list) # players with one pending immunity
     activePenalties: list = field(default_factory=list)  # [{"player": Player, "title": str, "turnsLeft": int}]
     doubleNext: bool = False
+    chainStep: int = 0  # 0 = no chain active; N>0 = next player drinks N*3
 
     def _buildPool(self) -> list:
         """Build a shuffled deck with each task repeated according to its rarity and config."""
@@ -56,6 +57,7 @@ class TaskGame(Game):
         while running:
             for player in self.players:
                 self._tickPenalties()
+                self._applyChain(player)
                 self._showLinks()
                 while True:
                     cmd = input(f"\n{player.getName()}n vuoro -- paina Enter nostaaksesi (d = pakka): ").strip().lower()
@@ -177,6 +179,14 @@ class TaskGame(Game):
             self.activePenalties.remove(entry)
             print(f"  [{entry['title']}] PÄÄTTYI — {entry['player'].getName()} vapautui rangaistuksesta!")
 
+    def _applyChain(self, player) -> None:
+        if self.chainStep == 0:
+            return
+        amount = self.chainStep * 3
+        print(f"\n  KETJU: {player.getName()} juo {amount}!")
+        self._assignDrinks(player, amount)
+        self.chainStep += 1
+
     def _showLinks(self) -> None:
         """Print active pair and huora links if any exist."""
         parts = []
@@ -188,6 +198,8 @@ class TaskGame(Game):
             parts.append(f"{p.getName()} (immuuni)")
         if self.doubleNext:
             parts.append("TUPLA aktiivinen")
+        if self.chainStep > 0:
+            parts.append(f"KETJU aktiivinen — seuraava juo {self.chainStep * 3}")
         if parts:
             print("Aktiiviset linkit: " + " | ".join(parts))
 
@@ -241,6 +253,11 @@ class TaskGame(Game):
                 if hit:
                     self._assignDrinks(p, drinks)
                     break
+
+        elif drinkType == "chain":
+            self._assignDrinks(drawer, drinks)
+            self.chainStep = 2
+            print(f"\n  Ketju alkaa! Seuraava juo 6, sitten 9 jne.")
 
         elif drinkType == "special":
             if task["title"] == "Immunitetti":

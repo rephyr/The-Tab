@@ -34,7 +34,7 @@ TASKS = [
         "description": "1. juo 3, 2. juo 6, 3. juo 9 jne.",
         "players": 1,
         "drinks": 3,
-        "drinkType": "take",
+        "drinkType": "chain",
         "rarity": "common",
     },
     {
