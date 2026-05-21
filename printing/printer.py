@@ -26,7 +26,7 @@ class ReceiptPrinter:
         self.debug = debug
         self._p = None
         self._ip = None
-        if self.config.get("saveImages"):
+        if self.config.get("saveImages") and self.debug:
             from printing.imagePrinter import ImagePrinter
             self._ip = ImagePrinter(self.config, outputDir=self.config.get("outputDir", "output"))
 

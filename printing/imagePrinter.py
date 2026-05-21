@@ -132,6 +132,7 @@ class ImagePrinter:
         self._lines = []
         self._pending = ""
         self._style = self._defaultStyle()
+        self._tabStop = 0
 
     def _defaultStyle(self):
         return {
@@ -204,6 +205,14 @@ class ImagePrinter:
 
     def _render(self):
         dummyDraw = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+        self._tabStop = 0
+        for text, style in self._lines:
+            if "\t" in text:
+                left = text.split("\t", 1)[0]
+                f = self._pickFont(style)
+                w = int(dummyDraw.textlength(left, font=f))
+                if w + _MARGIN * 3 > self._tabStop:
+                    self._tabStop = w + _MARGIN * 3
         items = self._expand(dummyDraw)
 
         totalH = _MARGIN
@@ -234,8 +243,18 @@ class ImagePrinter:
         lh = self._textLineHeight(style)
         align = style.get("align", "left")
         invert = style.get("invert", False)
+        fill = "white" if invert else "black"
 
         text = str(text)
+
+        if "\t" in text:
+            left, _, right = text.partition("\t")
+            if invert:
+                d.rectangle([0, y, self.width, y + lh], fill="black")
+            d.text((_MARGIN, y + 2), left, font=f, fill=fill)
+            d.text((_MARGIN + self._tabStop, y + 2), right, font=f, fill=fill)
+            return y + lh
+
         if text and len(set(text)) == 1:
             charW = d.textlength(text[0], font=f)
             if charW > 0:
@@ -252,9 +271,7 @@ class ImagePrinter:
 
         if invert:
             d.rectangle([0, y, self.width, y + lh], fill="black")
-            d.text((x, y + 2), str(text), font=f, fill="white")
-        else:
-            d.text((x, y + 2), str(text), font=f, fill="black")
+        d.text((x, y + 2), text, font=f, fill=fill)
 
         return y + lh
 

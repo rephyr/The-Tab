@@ -83,10 +83,12 @@ class TaskGame(Game):
 
                 self._handlePostTask(task, targets, player)
 
-                quit = input("\nJatketaan? (Enter = kyllä, q = lopeta): ").strip().lower()
-                if quit == "q":
+                quit = input("\nJatketaan? (Enter = kyllä, quit = lopeta): ").strip().lower()
+                if quit == "quit":
                     running = False
                     break
+
+        self._interactiveGivePhase()
 
         self.emit(GameEndEvent([
             {"name": p.getName(), "drinksTaken": p.getDrinksTaken(), "drinksToGive": p.drinksToGive}
@@ -173,17 +175,8 @@ class TaskGame(Game):
                 self._assignDrinks(drawer, amount)
 
         elif drinkType == "give":
-            names = ", ".join(p.getName() for p in self.players if p != drawer)
-            raw = input(f"\nKenelle {drinks} juomaa? ({names}) tai Enter ohittaaksesi: ").strip()
-            if raw:
-                receiver = self._findPlayer(raw)
-                if receiver and receiver != drawer:
-                    self._assignDrinks(receiver, drinks)
-                    drawer.addDrinksToGive(drinks)
-                elif receiver == drawer:
-                    print("Et voi antaa itsellesi.")
-                else:
-                    print(f"Pelaajaa '{raw}' ei löydy, ohitetaan.")
+            print(f"\n{drawer.getName()} saa antaa {drinks} juomaa lopussa.")
+            drawer.pendingGive += drinks
 
         elif drinkType == "social":
             hint = f" (ehdotus: {drinks})" if drinks is not None else ""
