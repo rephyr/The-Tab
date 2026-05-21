@@ -105,7 +105,8 @@ class TestDrinkTracking(SilentTest):
 
     def testSocialDrinks(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
-        with patch("builtins.input", return_value="Teppo:2 Matti:1"):
+        # numbered list: pick 1 (Teppo) → 2 drinks, pick 2 (Matti) → 1 drink, budget exhausted
+        with patch("builtins.input", side_effect=["1", "2", "2", "1"]):
             game._handlePostTask(makeTask("social", drinks=3), list(game.players), game.players[0])
         self.assertEqual(game.players[0].getDrinksTaken(), 2)
         self.assertEqual(game.players[1].getDrinksTaken(), 1)
@@ -122,7 +123,8 @@ class TestPlayerLinks(SilentTest):
     def testPairStored(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
         drawer, partner = game.players[0], game.players[1]
-        game._handlePostTask(makeTask("link", title="Pari", players=2), [partner], drawer)
+        with patch("builtins.input", return_value="Matti"):
+            game._handlePostTask(makeTask("link", title="Pari", players=2), [partner], drawer)
         self.assertEqual(len(game.activePairs), 1)
         self.assertIn(drawer, game.activePairs[0])
         self.assertIn(partner, game.activePairs[0])
@@ -131,7 +133,8 @@ class TestPlayerLinks(SilentTest):
         game = TaskGame(players=makePlayers("Teppo", "Matti", "Pekka"))
         p1, p2, p3 = game.players
         game.activePairs = [[p1, p2]]
-        game._handlePostTask(makeTask("link", title="Pari", players=2), [p3], p1)
+        with patch("builtins.input", return_value="Pekka"):
+            game._handlePostTask(makeTask("link", title="Pari", players=2), [p3], p1)
         self.assertEqual(len(game.activePairs), 1)
         self.assertIn(p3, game.activePairs[0])
         self.assertNotIn(p2, game.activePairs[0])
@@ -155,7 +158,8 @@ class TestPlayerLinks(SilentTest):
     def testHuoraStored(self):
         game = TaskGame(players=makePlayers("Master", "Huora"))
         master, huora = game.players
-        game._handlePostTask(makeTask("link", title="Huora", players=2), [huora], master)
+        with patch("builtins.input", return_value="Huora"):
+            game._handlePostTask(makeTask("link", title="Huora", players=2), [huora], master)
         self.assertEqual(len(game.activeHuoras), 1)
 
     def testHuoraDrinksWhenMasterDrinks(self):
@@ -178,8 +182,9 @@ class TestPlayerLinks(SilentTest):
         game = TaskGame(players=makePlayers("Master", "Huora"))
         master, huora = game.players
         task = makeTask("link", title="Huora", players=2)
-        game._handlePostTask(task, [huora], master)
-        game._handlePostTask(task, [huora], master)
+        with patch("builtins.input", side_effect=["Huora", "Huora"]):
+            game._handlePostTask(task, [huora], master)
+            game._handlePostTask(task, [huora], master)
         self.assertEqual(len(game.activeHuoras), 1)
 
     def testMultipleHuorasStack(self):
@@ -352,6 +357,278 @@ class TestBuildPool(SilentTest):
                 game.playRound()
         endEvents = [e for e in log.events if isinstance(e, GameEndEvent)]
         self.assertEqual(len(endEvents), 1)
+
+
+class TestHuoraChainPropagation(SilentTest):
+    def testTwoHopHuoraChain(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        a, b, c = game.players
+        game.activeHuoras = [[a, b], [b, c]]
+        game._assignDrinks(a, 3)
+        self.assertEqual(a.getDrinksTaken(), 3)
+        self.assertEqual(b.getDrinksTaken(), 3)
+        self.assertEqual(c.getDrinksTaken(), 3)
+
+    def testHuoraCircularNoDoubleCount(self):
+        game = TaskGame(players=makePlayers("A", "B"))
+        a, b = game.players
+        game.activeHuoras = [[a, b], [b, a]]
+        game._assignDrinks(a, 3)
+        self.assertEqual(a.getDrinksTaken(), 3)
+        self.assertEqual(b.getDrinksTaken(), 3)
+
+    def testPairMemberHuoraDrinks(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        a, b, c = game.players
+        game.activePairs = [[a, b]]
+        game.activeHuoras = [[b, c]]
+        game._assignDrinks(a, 5)
+        self.assertEqual(a.getDrinksTaken(), 5)
+        self.assertEqual(b.getDrinksTaken(), 5)
+        self.assertEqual(c.getDrinksTaken(), 5)
+
+    def testPairNoBackPropagation(self):
+        game = TaskGame(players=makePlayers("A", "B"))
+        a, b = game.players
+        game.activePairs = [[a, b]]
+        game._assignDrinks(a, 4)
+        self.assertEqual(a.getDrinksTaken(), 4)
+        self.assertEqual(b.getDrinksTaken(), 4)
+
+    def testHuoraChainWithPairNoBounceBack(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        a, b, c = game.players
+        game.activeHuoras = [[a, b]]
+        game.activePairs = [[b, c]]
+        game._assignDrinks(a, 2)
+        self.assertEqual(a.getDrinksTaken(), 2)
+        self.assertEqual(b.getDrinksTaken(), 2)
+        self.assertEqual(c.getDrinksTaken(), 2)
+
+
+class TestChainCard(SilentTest):
+    def _chainTask(self, drinks=3):
+        return makeTask("chain", drinks=drinks, title="Juo 3,6,9...")
+
+    def testChainCardSetsChainStep(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        game._handlePostTask(self._chainTask(), [game.players[0]], game.players[0])
+        self.assertEqual(game.chainStep, 2)
+
+    def testChainCardSetsStepsLeft(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        game._handlePostTask(self._chainTask(), [game.players[0]], game.players[0])
+        self.assertEqual(game.chainStepsLeft, 2)  # len(players) - 1
+
+    def testChainDrawerDrinks(self):
+        game = TaskGame(players=makePlayers("A", "B"))
+        drawer = game.players[0]
+        game._handlePostTask(self._chainTask(drinks=3), [drawer], drawer)
+        self.assertEqual(drawer.getDrinksTaken(), 3)
+
+    def testApplyChainFiresCorrectAmount(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        game.chainStep = 2
+        game.chainStepsLeft = 2
+        game._applyChain(game.players[1])
+        self.assertEqual(game.players[1].getDrinksTaken(), 6)
+
+    def testApplyChainIncrementsStep(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        game.chainStep = 2
+        game.chainStepsLeft = 2
+        game._applyChain(game.players[1])
+        self.assertEqual(game.chainStep, 3)
+
+    def testChainStopsWhenExhausted(self):
+        game = TaskGame(players=makePlayers("A", "B"))
+        game.chainStep = 2
+        game.chainStepsLeft = 1
+        game._applyChain(game.players[1])
+        self.assertEqual(game.chainStep, 0)
+
+    def testChainStepsLeftDecrement(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        game.chainStep = 2
+        game.chainStepsLeft = 3
+        game._applyChain(game.players[1])
+        self.assertEqual(game.chainStepsLeft, 2)
+
+    def testChainEscalates(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        a, b, c = game.players
+        game._handlePostTask(self._chainTask(drinks=3), [a], a)
+        game._applyChain(b)
+        game._applyChain(c)
+        self.assertEqual(a.getDrinksTaken(), 3)
+        self.assertEqual(b.getDrinksTaken(), 6)
+        self.assertEqual(c.getDrinksTaken(), 9)
+
+    def testChainInactiveDoesNothing(self):
+        game = TaskGame(players=makePlayers("A"))
+        game._applyChain(game.players[0])
+        self.assertEqual(game.players[0].getDrinksTaken(), 0)
+
+
+class TestCalcChainAssignments(SilentTest):
+    def testAssignmentCount(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        result = game._calcChainAssignments(game.players[0], 3)
+        self.assertEqual(len(result), 3)
+
+    def testDrawerFirst(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        result = game._calcChainAssignments(game.players[0], 3)
+        self.assertEqual(result[0]["name"], "A")
+        self.assertEqual(result[0]["amount"], 3)
+
+    def testAmountsEscalate(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        result = game._calcChainAssignments(game.players[0], 3)
+        self.assertEqual(result[1]["amount"], 6)
+        self.assertEqual(result[2]["amount"], 9)
+
+    def testTurnOrderWraps(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        result = game._calcChainAssignments(game.players[1], 3)  # B draws
+        self.assertEqual(result[0]["name"], "B")
+        self.assertEqual(result[1]["name"], "C")
+        self.assertEqual(result[2]["name"], "A")
+
+    def testCascadeIncluded(self):
+        game = TaskGame(players=makePlayers("A", "B", "C"))
+        a, b = game.players[0], game.players[1]
+        game.activeHuoras = [[a, b]]
+        result = game._calcChainAssignments(a, 3)
+        cascadeNames = [entry["name"] for entry in result[0]["cascades"]]
+        self.assertIn("B", cascadeNames)
+
+    def testTraceCascadeDoesNotModifyState(self):
+        game = TaskGame(players=makePlayers("A", "B"))
+        a, b = game.players
+        game.activeHuoras = [[a, b]]
+        game._traceCascade(a, 5)
+        self.assertEqual(a.getDrinksTaken(), 0)
+        self.assertEqual(b.getDrinksTaken(), 0)
+
+    def testTraceCascadeNoCycle(self):
+        game = TaskGame(players=makePlayers("A", "B"))
+        a, b = game.players
+        game.activePairs = [[a, b]]
+        result = game._traceCascade(a, 3)
+        # Only B should appear once, not looped back to A
+        names = [r["name"] for r in result]
+        self.assertIn("B", names)
+        self.assertNotIn("A", names)
+
+
+class TestChainEventEmission(SilentTest):
+    def testChainCardEmitsTaskChainStartEvent(self):
+        from printing.log import GameLog
+        from core.events import TaskChainStartEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A", "B"), log=log)
+        task = makeTask("chain", drinks=3, title="Juo 3,6,9...", rarity="common")
+        with patch("games.taskGame.taskGame.TASKS", [task]):
+            with patch("builtins.input", side_effect=["", "quit"]):
+                game.playRound()
+        events = [e for e in log.events if isinstance(e, TaskChainStartEvent)]
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].drawer, "A")
+
+    def testChainCardDoesNotEmitTaskDrawEvent(self):
+        from printing.log import GameLog
+        from core.events import TaskDrawEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A", "B"), log=log)
+        task = makeTask("chain", drinks=3, title="Juo 3,6,9...", rarity="common")
+        with patch("games.taskGame.taskGame.TASKS", [task]):
+            with patch("builtins.input", side_effect=["", "quit"]):
+                game.playRound()
+        self.assertEqual(len([e for e in log.events if isinstance(e, TaskDrawEvent)]), 0)
+
+    def testNonChainCardEmitsTaskDrawEvent(self):
+        from printing.log import GameLog
+        from core.events import TaskDrawEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A"), log=log)
+        task = makeTask("special", title="X", rarity="common")
+        with patch("games.taskGame.taskGame.TASKS", [task]):
+            with patch("builtins.input", side_effect=["", "quit"]):
+                game.playRound()
+        self.assertEqual(len([e for e in log.events if isinstance(e, TaskDrawEvent)]), 1)
+
+    def testNonChainCardEmitsTallySummary(self):
+        from printing.log import GameLog
+        from core.events import TaskDrinkSummaryEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A"), log=log)
+        task = makeTask("take", drinks=3, title="Juo 3", rarity="common")
+        with patch("games.taskGame.taskGame.TASKS", [task]):
+            with patch("builtins.input", side_effect=["", "", "quit"]):
+                game.playRound()
+        self.assertGreater(len([e for e in log.events if isinstance(e, TaskDrinkSummaryEvent)]), 0)
+
+    def testChainCardDoesNotEmitTallySummary(self):
+        from printing.log import GameLog
+        from core.events import TaskDrinkSummaryEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A", "B"), log=log)
+        task = makeTask("chain", drinks=3, title="Juo 3,6,9...", rarity="common")
+        with patch("games.taskGame.taskGame.TASKS", [task]):
+            with patch("builtins.input", side_effect=["", "quit"]):
+                game.playRound()
+        self.assertEqual(len([e for e in log.events if isinstance(e, TaskDrinkSummaryEvent)]), 0)
+
+    def testChainStartEventHasAllAssignments(self):
+        from printing.log import GameLog
+        from core.events import TaskChainStartEvent
+        log = GameLog()
+        game = TaskGame(players=makePlayers("A", "B", "C"), log=log)
+        task = makeTask("chain", drinks=3, title="Juo 3,6,9...", rarity="common")
+        with patch("games.taskGame.taskGame.TASKS", [task]):
+            with patch("builtins.input", side_effect=["", "quit"]):
+                game.playRound()
+        event = next(e for e in log.events if isinstance(e, TaskChainStartEvent))
+        self.assertEqual(len(event.assignments), 3)
+        amounts = [a["amount"] for a in event.assignments]
+        self.assertEqual(amounts, [3, 6, 9])
+
+
+class TestInteractiveLinkCard(SilentTest):
+    def testPairCardPromptsForTarget(self):
+        game = TaskGame(players=makePlayers("Teppo", "Matti"))
+        with patch("builtins.input", return_value="Matti") as mock_input:
+            game._handlePostTask(makeTask("link", title="Pari"), [game.players[0]], game.players[0])
+        mock_input.assert_called()
+
+    def testPairCardPickByNumber(self):
+        game = TaskGame(players=makePlayers("Teppo", "Matti"))
+        drawer, partner = game.players
+        with patch("builtins.input", return_value="1"):
+            game._handlePostTask(makeTask("link", title="Pari"), [drawer], drawer)
+        self.assertIn(partner, game.activePairs[0])
+
+    def testPairCardPickByName(self):
+        game = TaskGame(players=makePlayers("Teppo", "Matti"))
+        drawer, partner = game.players
+        with patch("builtins.input", return_value="Matti"):
+            game._handlePostTask(makeTask("link", title="Pari"), [drawer], drawer)
+        self.assertIn(partner, game.activePairs[0])
+
+    def testHuoraCardPickByNumber(self):
+        game = TaskGame(players=makePlayers("Master", "Huora"))
+        master, huora = game.players
+        with patch("builtins.input", return_value="1"):
+            game._handlePostTask(makeTask("link", title="Huora"), [master], master)
+        self.assertEqual(len(game.activeHuoras), 1)
+        self.assertIn(huora, game.activeHuoras[0])
+
+    def testLinkCardRetryOnUnknown(self):
+        game = TaskGame(players=makePlayers("Teppo", "Matti"))
+        with patch("builtins.input", side_effect=["Pekka", "Matti"]):
+            game._handlePostTask(makeTask("link", title="Pari"), [game.players[0]], game.players[0])
+        self.assertEqual(len(game.activePairs), 1)
 
 
 if __name__ == "__main__":

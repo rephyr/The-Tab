@@ -3,9 +3,9 @@ LivePrinter listens to game events and prints receipts in real time as the game 
 
 Register it with: log.on(LivePrinter(printer).hook)
 """
-from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
+from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatRouletteResult, formatEndReceipt as formatBujaReceipt
-from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw
+from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw, formatDrinkSummary, formatChainDraw
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner
 
 
@@ -65,6 +65,12 @@ class LivePrinter:
 
         elif isinstance(event, TaskDrawEvent):
             self._printer.printWith(lambda p, e=event: formatTaskDraw(e, p))
+
+        elif isinstance(event, TaskChainStartEvent):
+            self._printer.printWith(lambda p, e=event: formatChainDraw(e, p))
+
+        elif isinstance(event, TaskDrinkSummaryEvent):
+            self._printer.printWith(lambda p, e=event: formatDrinkSummary(e, p))
 
         elif isinstance(event, RouletteResultEvent):
             self._printer.printWith(lambda p, e=event: formatRouletteResult(e, p))

@@ -53,6 +53,52 @@ class Game(ABC):
                     break
                 print("  Tuntematon pelaaja, yritä uudelleen.")
 
+    def _interactiveAssignDrinks(self, budget: int = None) -> bool:
+        """Numbered player list for assigning drinks. Returns True if quit was requested.
+
+        budget: total drinks available to assign; None means unlimited.
+        Shows remaining budget at top, errors if an assignment would exceed it.
+        """
+        players = list(self.players)
+        remaining = budget
+
+        while True:
+            print()
+            if remaining is not None:
+                print(f"  Jaettavana: {remaining} juomaa")
+            for i, p in enumerate(players, 1):
+                print(f"  {i}. {p.getName()}")
+            print("  (Enter lopettaaksesi)")
+            raw = input("  Kenelle? ").strip()
+            if not raw:
+                return False
+            if raw.lower() == "quit":
+                return True
+
+            target = self._findTargetByNameOrNumber(raw, players)
+            if not target:
+                print("  Tuntematon pelaaja, yritä uudelleen.")
+                continue
+
+            amountRaw = input(f"  Montako {target.getName()}lle? ").strip()
+            if not amountRaw.isdigit() or int(amountRaw) <= 0:
+                print("  Virheellinen määrä.")
+                continue
+
+            amount = int(amountRaw)
+            if remaining is not None and amount > remaining:
+                print(f"  Liikaa! Voit antaa enintään {remaining} juomaa.")
+                continue
+
+            print(f"  {target.getName()} juo {amount}")
+            self._assignDrinks(target, amount)
+            if remaining is not None:
+                remaining -= amount
+                if remaining <= 0:
+                    break
+
+        return False
+
     def _findTargetByNameOrNumber(self, raw: str, players: list):
         """Return a player matching a 1-based number or name (case-insensitive)."""
         if raw.isdigit():

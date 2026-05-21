@@ -3,7 +3,7 @@ TaskGame: a turn-based drinking game where each turn a random task is drawn.
 Tasks can target a single player, multiple random players, or everyone.
 """
 from core.game import Game
-from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent
+from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, TaskDrinkSummaryEvent, TaskChainStartEvent
 from dataclasses import dataclass, field
 from games.taskGame.tasks import TASKS
 from games.penalties import drawPenalty
@@ -29,7 +29,8 @@ class TaskGame(Game):
     immunePlayers: list = field(default_factory=list) # players with one pending immunity
     activePenalties: list = field(default_factory=list)  # [{"player": Player, "title": str, "turnsLeft": int}]
     doubleNext: bool = False
-    chainStep: int = 0  # 0 = no chain active; N>0 = next player drinks N*3
+    chainStep: int = 0       # 0 = no chain active; N>0 = next player drinks N*3
+    chainStepsLeft: int = 0  # turns remaining in the chain
 
     def _buildPool(self) -> list:
         """Build a shuffled deck with each task repeated according to its rarity and config."""
@@ -57,7 +58,6 @@ class TaskGame(Game):
         while running:
             for player in self.players:
                 self._tickPenalties()
-                self._applyChain(player)
                 self._showLinks()
                 while True:
                     cmd = input(f"\n{player.getName()}n vuoro -- paina Enter nostaaksesi (d = pakka): ").strip().lower()
@@ -65,6 +65,8 @@ class TaskGame(Game):
                         print(f"Kortteja jäljellä: {len(taskPool)}/{deckTotal}")
                     else:
                         break
+
+                self._applyChain(player)
 
                 if not taskPool:
                     running = False
@@ -79,37 +81,42 @@ class TaskGame(Game):
                 print(f"Pelaajat: {targetNames}")
                 print(task["description"])
 
-                self.emit(TaskDrawEvent(
-                    drawer=player.getName(),
-                    title=task["title"],
-                    description=task["description"],
-                    targets=[p.getName() for p in targets],
-                ))
+                drinkType = task.get("drinkType", "social")
+
+                if drinkType == "chain":
+                    self.emit(TaskChainStartEvent(
+                        drawer=player.getName(),
+                        title=task["title"],
+                        description=task["description"],
+                        assignments=self._calcChainAssignments(player, task.get("drinks", 3)),
+                    ))
+                else:
+                    self.emit(TaskDrawEvent(
+                        drawer=player.getName(),
+                        title=task["title"],
+                        description=task["description"],
+                        targets=[p.getName() for p in targets],
+                    ))
 
                 self._handlePostTask(task, targets, player)
 
+                if drinkType != "chain" and any(p.getDrinksTaken() > 0 or p.pendingGive > 0 for p in self.players):
+                    self.emit(TaskDrinkSummaryEvent([
+                        {"name": p.getName(), "drank": p.getDrinksTaken(), "toGive": p.pendingGive}
+                        for p in self.players
+                    ]))
+
                 while True:
-                    raw = input("\nJatketaan? (Enter = kyllä, quit = lopeta, Nimi:N = kirjaa juomat): ").strip()
-                    if raw.lower() == "quit":
+                    raw = input("\nJatketaan? (Enter = kyllä, quit = lopeta, j = kirjaa juomat): ").strip().lower()
+                    if raw == "quit":
                         running = False
                         break
-                    if not raw:
+                    if raw == "j":
+                        self._interactiveAssignDrinks()
+                    elif not raw:
                         break
-                    logged = False
-                    for token in raw.split():
-                        if ":" not in token:
-                            continue
-                        name, _, val = token.partition(":")
-                        if not val.isdigit():
-                            continue
-                        p = self._findPlayer(name)
-                        if p:
-                            self._assignDrinks(p, int(val))
-                            logged = True
-                        else:
-                            print(f"  Pelaajaa '{name}' ei löydy.")
-                    if not logged:
-                        print("  (Enter = jatka, quit = lopeta, tai esim. Teppo:3 Matti:2)")
+                    else:
+                        print("  (Enter = jatka, quit = lopeta, j = kirjaa juomat)")
                 if not running:
                     break
 
@@ -140,24 +147,74 @@ class TaskGame(Game):
         pool = [p for p in self.players if p != exclude]
         return random.sample(pool, min(count, len(pool)))
 
-    def _assignDrinks(self, player, amount: int) -> None:
-        """Add drinks to a player and propagate one hop through active links."""
+    def _assignDrinks(self, player, amount: int, _visited=None) -> None:
+        """Add drinks to a player and propagate through active links.
+
+        Huora chains are fully recursive (A→B→C). Pairs also propagate recursively.
+        The visited set prevents any back-propagation or loops.
+        """
+        if _visited is None:
+            _visited = set()
+        if id(player) in _visited:
+            return
+
         if player in self.immunePlayers:
             self.immunePlayers.remove(player)
             print(f"  {player.getName()} käytti immuniteetin! (ei juo)")
+            _visited.add(id(player))
             return
+
         player.addDrinks(amount)
+        _visited.add(id(player))
+
         for p1, p2 in self.activePairs:
-            if player == p1:
-                p2.addDrinks(amount)
+            if player == p1 and id(p2) not in _visited:
                 print(f"  {p2.getName()} juo myös {amount} (pari)")
-            elif player == p2:
-                p1.addDrinks(amount)
+                self._assignDrinks(p2, amount, _visited)
+            elif player == p2 and id(p1) not in _visited:
                 print(f"  {p1.getName()} juo myös {amount} (pari)")
+                self._assignDrinks(p1, amount, _visited)
+
         for master, huora in self.activeHuoras:
-            if player == master:
-                huora.addDrinks(amount)
+            if player == master and id(huora) not in _visited:
                 print(f"  {huora.getName()} juo myös {amount} (huora)")
+                self._assignDrinks(huora, amount, _visited)
+
+    def _traceCascade(self, player, amount: int, visited=None) -> list:
+        """Simulate huora/pair propagation without modifying state."""
+        if visited is None:
+            visited = set()
+        if id(player) in visited:
+            return []
+        visited.add(id(player))
+        result = []
+        for p1, p2 in self.activePairs:
+            if player == p1 and id(p2) not in visited:
+                result.append({"name": p2.getName(), "amount": amount, "reason": "pari"})
+                result.extend(self._traceCascade(p2, amount, visited))
+            elif player == p2 and id(p1) not in visited:
+                result.append({"name": p1.getName(), "amount": amount, "reason": "pari"})
+                result.extend(self._traceCascade(p1, amount, visited))
+        for master, huora in self.activeHuoras:
+            if player == master and id(huora) not in visited:
+                result.append({"name": huora.getName(), "amount": amount, "reason": "huora"})
+                result.extend(self._traceCascade(huora, amount, visited))
+        return result
+
+    def _calcChainAssignments(self, drawer, baseAmount: int) -> list:
+        """Calculate chain drink amounts for all players in turn order, including cascades."""
+        drawerIdx = self.players.index(drawer)
+        n = len(self.players)
+        assignments = []
+        for i in range(n):
+            p = self.players[(drawerIdx + i) % n]
+            amount = (i + 1) * baseAmount
+            assignments.append({
+                "name": p.getName(),
+                "amount": amount,
+                "cascades": self._traceCascade(p, amount),
+            })
+        return assignments
 
     def _findPlayer(self, name: str):
         """Return the player whose name matches (case-insensitive), or None."""
@@ -186,6 +243,10 @@ class TaskGame(Game):
         print(f"\n  KETJU: {player.getName()} juo {amount}!")
         self._assignDrinks(player, amount)
         self.chainStep += 1
+        self.chainStepsLeft -= 1
+        if self.chainStepsLeft <= 0:
+            self.chainStep = 0
+            print("  Ketju päättyi!")
 
     def _showLinks(self) -> None:
         """Print active pair and huora links if any exist."""
@@ -199,7 +260,7 @@ class TaskGame(Game):
         if self.doubleNext:
             parts.append("TUPLA aktiivinen")
         if self.chainStep > 0:
-            parts.append(f"KETJU aktiivinen — seuraava juo {self.chainStep * 3}")
+            parts.append(f"KETJU — seuraava juo {self.chainStep * 3}")
         if parts:
             print("Aktiiviset linkit: " + " | ".join(parts))
 
@@ -220,6 +281,7 @@ class TaskGame(Game):
             if raw.isdigit():
                 amount = int(raw)
             if amount > 0:
+                print(f"  {drawer.getName()} juo {amount}")
                 self._assignDrinks(drawer, amount)
 
         elif drinkType == "give":
@@ -227,20 +289,12 @@ class TaskGame(Game):
             drawer.pendingGive += drinks
 
         elif drinkType == "social":
-            hint = f" (ehdotus: {drinks})" if drinks is not None else ""
-            raw = input(f"\nKirjaa juomat{hint} Nimi:N pareina (esim. Teppo:3 Matti:2) tai Enter ohittaaksesi: ").strip()
-            if raw:
-                for token in raw.split():
-                    if ":" not in token:
-                        continue
-                    name, _, val = token.partition(":")
-                    if not val.isdigit():
-                        continue
-                    player = self._findPlayer(name)
-                    if player:
-                        self._assignDrinks(player, int(val))
-                    else:
-                        print(f"  Pelaajaa '{name}' ei löydy, ohitetaan.")
+            if drinks is not None:
+                print(f"\nJaa {drinks} juomaa:")
+                self._interactiveAssignDrinks(budget=drinks)
+            else:
+                print("\nKirjaa juomat:")
+                self._interactiveAssignDrinks()
 
         elif drinkType == "roulette":
             bulletIndex = random.randint(0, len(self.players) - 1)
@@ -255,9 +309,11 @@ class TaskGame(Game):
                     break
 
         elif drinkType == "chain":
+            print(f"\n  {drawer.getName()} juo {drinks}!")
             self._assignDrinks(drawer, drinks)
             self.chainStep = 2
-            print(f"\n  Ketju alkaa! Seuraava juo 6, sitten 9 jne.")
+            self.chainStepsLeft = len(self.players) - 1
+            print(f"  Ketju alkaa! {self.chainStepsLeft} vuoroa jäljellä.")
 
         elif drinkType == "special":
             if task["title"] == "Immunitetti":
@@ -268,9 +324,18 @@ class TaskGame(Game):
                 print("\nSeuraavan kortin juomat tuplataan!")
 
         elif drinkType == "link":
-            if not targets:
+            others = [p for p in self.players if p != drawer]
+            if not others:
                 return
-            target = targets[0]
+            print()
+            for i, p in enumerate(others, 1):
+                print(f"  {i}. {p.getName()}")
+            while True:
+                raw = input("  Kenelle? (numero tai nimi): ").strip()
+                target = self._findTargetByNameOrNumber(raw, others)
+                if target:
+                    break
+                print("  Tuntematon pelaaja, yritä uudelleen.")
             if task["title"] == "Pari":
                 self.activePairs.clear()
                 self.activePairs.append([drawer, target])

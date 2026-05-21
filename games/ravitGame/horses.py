@@ -7,7 +7,7 @@ HORSE_NAMES = [
     "Takuu", "Lehmä", "Mönkiä", "Iso", "Taika", "Velho", "Veto", "Panos",
     "Turbovauhti", "Pikaliito", "Ässä", "Hurjapää", "Voittamaton", "Häviämätön",
     "Tulikavio", "Viesker", "Pata", "Risti", "Arpa", "Saamaton", "Ahdin", 
-    "Lötinä", "Täräyttäjä","Massikeisari", "Vetäjä", "Työntö", 
+    "Lötinä", "Täräyttäjä","Massikeisari", "Vetäjä", "Työntö", "Jabin" 
 ]
 
 
