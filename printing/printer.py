@@ -113,6 +113,7 @@ class NullPrinter:
     def text(self, text=""): pass
     def cut(self): pass
     def close(self): pass
+    def printWith(self, fn): pass
 
 
 class StdoutPrinter:
