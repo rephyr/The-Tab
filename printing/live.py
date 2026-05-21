@@ -1,14 +1,13 @@
 """
-LivePrinter listens to game events and prints receipts in real time as the game progresses,
-rather than printing everything at the end.
+LivePrinter listens to game events and prints receipts in real time as the game progresses.
 
 Register it with: log.on(LivePrinter(printer).hook)
 """
-from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, RaceStartEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
+from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, RaceStartEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw, formatRouletteResult
 from printing.receipts.taskGame import formatReceipt as formatTaskGameReceipt
 from printing.receipts.buja import formatReceipt as formatBujaReceipt
-from printing.receipts.ravit import formatBettingSlip, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
+from printing.receipts.ravit import formatBettingSlip, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner
 
 
 class LivePrinter:
@@ -90,6 +89,9 @@ class LivePrinter:
 
         elif isinstance(event, TiebreakStartEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakStart(e, p))
+
+        elif isinstance(event, TiebreakRoundEvent):
+            self._printer.printWith(lambda p, e=event: formatTiebreakRound(e, p))
 
         elif isinstance(event, TiebreakEliminationEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakElimination(e, p))
