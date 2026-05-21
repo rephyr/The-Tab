@@ -81,8 +81,13 @@ class ReceiptPrinter:
         """Call fn(p) to write content, then cut the paper."""
         if self._p is None:
             self._connect()
-        fn(self._p)
-        self._p.cut()
+        try:
+            fn(self._p)
+            self._p.cut()
+        except Exception as e:
+            print(f"[Tulostin: virhe tulostuksessa — {e}]")
+            self._p = None
+            return
         # win32raw batches everything into one spooler job until close() is called,
         # so close after each receipt to make it print immediately.
         if self.config.get("connection") == "win32raw":
