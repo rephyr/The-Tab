@@ -1,3 +1,12 @@
+"""
+RavitGame — Finnish trotting-race drinking game.
+
+Before the race each player bets a number of drinks on a horse.
+The race runs in rounds with random events (boosts, falls, fights, lightning).
+After the race: bettors on dead/DNF horses drink double their bet; bettors on the
+winner give drinks (bet × odds, rounded up) to last-place bettors; all others
+drink their bet amount.
+"""
 import random
 import math
 from dataclasses import dataclass, field
@@ -6,13 +15,15 @@ from core.events import (
     GameStartEvent, GameEndEvent,
     DrinkEvent,
     RaceStartEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
-    TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
+    TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
 )
 from games.ravitGame.horses import generateHorses
 
 
 @dataclass
 class RavitGame(Game):
+    """Drinking-game horse race. Call playRound() to run one full game."""
+
     gameTitle: str = "Ravit"
     config: dict = field(default_factory=dict)
     horses: list = field(default_factory=list)
@@ -66,12 +77,12 @@ class RavitGame(Game):
 
     def _raceLoop(self) -> None:
         trackLength = self._getConfig("trackLength", 20)
-        print("\nKilpailu alkaa! Paina Enter edetäksesi kierros kerrallaan.\n")
+        print("\nKilpailu alkaa! Paina Enter edetäksesi.\n")
         input()
         while True:
             self._roundNumber += 1
             self._runOneRound()
-            aliveHorses = [h for h in self.horses if h["alive"]]
+            aliveHorses = [h for h in self.horses if h["status"] == "racing"]
             if not aliveHorses or any(h["position"] >= trackLength for h in aliveHorses):
                 break
             input("\nPaina Enter jatkaaksesi...")
@@ -81,19 +92,21 @@ class RavitGame(Game):
         self._resolveFights()
         self._checkNewFights()
         for horse in self.horses:
-            if not horse["alive"] or horse["fightRoundsLeft"] > 0:
+            if horse["status"] != "racing" or horse["fightRoundsLeft"] > 0:
                 continue
             self._tryFireEvent(horse)
-            if horse["alive"]:
+            if horse["status"] == "racing":
                 self._moveHorse(horse)
-        trackLength = self._getConfig("trackLength", 40)
+        trackLength = self._getConfig("trackLength", 20)
         positions = [
             {
                 "id": h["id"], "name": h["name"], "position": h["position"],
-                "alive": h["alive"], "tiredRoundsLeft": h["tiredRoundsLeft"],
+                "status": h["status"],
+                "tiredRoundsLeft": h["tiredRoundsLeft"],
                 "stumbleRoundsLeft": h["stumbleRoundsLeft"],
                 "motivatedRoundsLeft": h["motivatedRoundsLeft"],
                 "fightRoundsLeft": h["fightRoundsLeft"],
+                "confusedRoundsLeft": h["confusedRoundsLeft"],
             }
             for h in self.horses
         ]
@@ -107,7 +120,7 @@ class RavitGame(Game):
 
     def _checkNewFights(self) -> None:
         fightChance = self._getConfig("fightChance", 0.35)
-        free = [h for h in self.horses if h["alive"] and h["fightRoundsLeft"] == 0 and h["position"] > 5]
+        free = [h for h in self.horses if h["status"] == "racing" and h["fightRoundsLeft"] == 0 and h["position"] > 5]
         fighting = set()
         for i, h1 in enumerate(free):
             if h1["id"] in fighting:
@@ -123,7 +136,7 @@ class RavitGame(Game):
                     h2["fightOpponent"] = h1["id"]
                     fighting.add(h1["id"])
                     fighting.add(h2["id"])
-                    detail = f"{h1['name']} ja {h2['name']} aloittavat tappelun! ({rounds} kierrosta)"
+                    detail = f"{h1['name']} ja {h2['name']} tappelevat!"
                     print(f"  *** {detail}")
                     self._roundEvents.append({"horseName": h1["name"], "eventType": "fight_start", "detail": detail})
                     self.emit(HorseEventFiredEvent(
@@ -138,7 +151,7 @@ class RavitGame(Game):
     def _resolveFights(self) -> None:
         processed = set()
         for horse in self.horses:
-            if not horse["alive"] or horse["fightRoundsLeft"] <= 0 or horse["id"] in processed:
+            if horse["status"] != "racing" or horse["fightRoundsLeft"] <= 0 or horse["id"] in processed:
                 continue
             opponent = self._getHorseById(horse["fightOpponent"])
             processed.add(horse["id"])
@@ -146,21 +159,22 @@ class RavitGame(Game):
             horse["fightRoundsLeft"] -= 1
             opponent["fightRoundsLeft"] -= 1
             if horse["fightRoundsLeft"] <= 0:
-                if not opponent["alive"]:
+                if opponent["status"] != "racing":
                     horse["fightOpponent"] = None
                 else:
                     self._resolveFightBetween(horse, opponent)
 
     def _resolveFightBetween(self, h1: dict, h2: dict) -> None:
+        """Determine fight winner by strength ratio; loser dies, winner loses 1 in all stats."""
         total = h1["fightStrength"] + h2["fightStrength"]
         winner, loser = (h1, h2) if random.random() < h1["fightStrength"] / total else (h2, h1)
-        loser["alive"] = False
+        loser["status"] = "dead"
         winner["fightRoundsLeft"] = 0
         winner["fightOpponent"] = None
         for stat in ("speed", "endurance", "luck"):
             winner[stat] = max(1, winner[stat] - 1)
         detail = (
-            f"Tappelu ohi! {winner['name']} voitti — {loser['name']} kaatuu! "
+            f"Tappelu ohi! {winner['name']} voitti — {loser['name']} kuoli! "
             f"{winner['name']} on loukkaantunut (kaikki tilastot -1)!"
         )
         print(f"  *** {detail}")
@@ -174,8 +188,9 @@ class RavitGame(Game):
         ))
 
     def _tiebreakFight(self, tied: list) -> dict:
+        """Run interactive multi-round combat between tied finishers; returns the surviving winner."""
         print("\n" + "=" * 40)
-        print("  *** TASAPELI! EEPINEN LOPPUKAMPPAILU! ***")
+        print("  *** TASAPELI! VALMISTAUTUKAA LOPPUKAMPPAILUUN! ***")
         print("=" * 40)
         names = ", ".join(h["name"] for h in tied)
         print(f"\n{names} ylittävät maaliviivan samaan aikaan!")
@@ -194,42 +209,44 @@ class RavitGame(Game):
         self._printCombatantBars(combatants)
         input("\nPaina Enter aloittaaksesi taistelun...")
 
-        round_num = 0
+        roundNum = 0
         while len(combatants) > 1:
-            round_num += 1
-            print(f"\n  --- TAISTELUKIERROS {round_num} ---")
+            roundNum += 1
+            print(f"\n  --- TAISTELUKIERROS {roundNum} ---")
             input("  Paina Enter...")
 
-            this_round = list(combatants)
-            for attacker in this_round:
-                targets = [h for h in this_round if h["id"] != attacker["id"]]
+            thisRound = list(combatants)
+            for attacker in thisRound:
+                targets = [h for h in thisRound if h["id"] != attacker["id"]]
                 target = random.choice(targets)
                 damage = random.randint(1, attacker["fightStrength"])
                 target["fightHealth"] = max(0, target["fightHealth"] - damage)
                 print(f"  {attacker['name']:<12} -> {target['name']}: -{damage} HP")
 
-            self._printCombatantBars(this_round)
-
-            eliminated = [h for h in this_round if h["fightHealth"] <= 0]
-            combatants = [h for h in this_round if h["fightHealth"] > 0]
+            eliminated = [h for h in thisRound if h["fightHealth"] <= 0]
+            combatants = [h for h in thisRound if h["fightHealth"] > 0]
 
             if not combatants:
-                survivor = max(eliminated, key=lambda h: h["fightStrength"])
+                survivor = random.choice(eliminated)
                 survivor["fightHealth"] = 1
                 combatants = [survivor]
                 eliminated = [h for h in eliminated if h["id"] != survivor["id"]]
 
-            all_state = [
+            self._printCombatantBars(thisRound)
+
+            allState = [
                 {"name": h["name"], "health": h["fightHealth"],
                  "maxHealth": h["fightMaxHealth"], "strength": h["fightStrength"]}
-                for h in this_round
+                for h in thisRound
             ]
+            self.emit(TiebreakRoundEvent(roundNumber=roundNum, combatants=allState))
+
             for loser in eliminated:
-                print(f"\n  *** {loser['name']} kaatuu!")
+                print(f"\n  *** {loser['name']} kuoli!")
                 self.emit(TiebreakEliminationEvent(
                     loserName=loser["name"],
                     remaining=[h["name"] for h in combatants],
-                    combatants=all_state,
+                    combatants=allState,
                 ))
 
         winner = combatants[0]
@@ -251,49 +268,52 @@ class RavitGame(Game):
             maxHp = h["fightMaxHealth"]
             filled = int(hp / maxHp * 16) if maxHp > 0 else 0
             bar = "█" * filled + "░" * (16 - filled)
-            status = " [KAATUI]" if hp <= 0 else f"  (v:{h['fightStrength']})"
+            status = " [KUOLI]" if hp <= 0 else f"  (v:{h['fightStrength']})"
             print(f"  {h['name']:<12} [{bar}] {hp:>3}/{maxHp}{status}")
 
     def _resolveFinish(self) -> None:
+        """Rank horses, trigger tiebreak if the top positions are within 1 tile, emit RaceFinishedEvent."""
         trackLength = self._getConfig("trackLength", 20)
-        aliveHorses = [h for h in self.horses if h["alive"]]
-        deadHorses = [h for h in self.horses if not h["alive"]]
+        aliveHorses = [h for h in self.horses if h["status"] == "racing"]
+        outHorses = [h for h in self.horses if h["status"] != "racing"]
 
         aliveHorses.sort(key=lambda h: h["position"], reverse=True)
 
         if aliveHorses:
             topPos = aliveHorses[0]["position"]
-            tiedFirst = [h for h in aliveHorses if h["position"] == topPos]
-            if len(tiedFirst) > 1:
-                winner = self._tiebreakFight(tiedFirst)
+            closeFinish = [h for h in aliveHorses if topPos - h["position"] <= 1]
+            if len(closeFinish) > 1:
+                winner = self._tiebreakFight(closeFinish)
                 aliveHorses = [winner] + [h for h in aliveHorses if h["id"] != winner["id"]]
 
         deadPenalty = len(self.horses) + 1
 
         finalPositions = []
         for place, horse in enumerate(aliveHorses, start=1):
+            displayPos = horse["position"] if place == 1 else min(horse["position"], trackLength - 1)
             finalPositions.append({
                 "horseId": horse["id"],
                 "horseName": horse["name"],
-                "position": horse["position"],
+                "position": displayPos,
                 "place": place,
-                "alive": True,
+                "status": "racing",
             })
-        for horse in deadHorses:
+        for horse in outHorses:
             finalPositions.append({
                 "horseId": horse["id"],
                 "horseName": horse["name"],
                 "position": horse["position"],
                 "place": deadPenalty,
-                "alive": False,
+                "status": horse["status"],
             })
 
         print("\n=== LOPPUTULOS ===")
         for fp in finalPositions:
-            if fp["alive"]:
+            if fp["status"] == "racing":
                 print(f"{fp['place']}. {fp['horseName']:<14} {fp['position']}/{trackLength} ruutua")
             else:
-                print(f"   [KUOLLUT] {fp['horseName']}")
+                label = "[KUOLI]" if fp["status"] == "dead" else "[POISTUI]"
+                print(f"   {label} {fp['horseName']}")
 
         self.emit(RaceFinishedEvent(
             roundNumber=self._roundNumber,
@@ -301,9 +321,10 @@ class RavitGame(Game):
         ))
 
     def _drinkResolution(self) -> None:
-        aliveHorses = [h for h in self.horses if h["alive"]]
+        """Assign drinks: dead-horse bettors drink double, winner gives to last-place bettors, rest drink their bet."""
+        aliveHorses = [h for h in self.horses if h["status"] == "racing"]
         if not aliveHorses:
-            # Edge case: all dead — no winner
+            # Edge case: all dead no winner
             for bet in self.bets:
                 player = self._findPlayer(bet["player"])
                 if player:
@@ -319,7 +340,7 @@ class RavitGame(Game):
                 if not player:
                     continue
                 horse = self._getHorseById(bet["horseId"])
-                if not horse["alive"]:
+                if horse["status"] != "racing":
                     player.addDrinks(bet["amount"] * 2)
                     self.emit(DrinkEvent(player=bet["player"], amount=bet["amount"] * 2, reason="hevonen kuoli"))
                 elif horse["id"] == winnerId:
@@ -342,6 +363,7 @@ class RavitGame(Game):
             print(f"{s['name']}: joi {s['drinksTaken']} | antoi {s['drinksToGive']}")
 
     def _moveHorse(self, horse: dict) -> None:
+        """Advance horse one round, applying stamina depletion, tired/stumble/confused/motivated effects."""
         trackLength = self._getConfig("trackLength", 20)
         if horse["stumbleRoundsLeft"] > 0:
             horse["stumbleRoundsLeft"] -= 1
@@ -349,12 +371,18 @@ class RavitGame(Game):
 
         baseRoll = random.randint(0, 2)
         effectiveSpeed = horse["speed"]
-        if horse["tiredRoundsLeft"] > 0:
+        wasTired = horse["tiredRoundsLeft"] > 0
+        if wasTired:
             effectiveSpeed = max(1, effectiveSpeed - 1)
             horse["tiredRoundsLeft"] -= 1
         if horse["motivatedRoundsLeft"] > 0:
             effectiveSpeed += 1
             horse["motivatedRoundsLeft"] -= 1
+
+        if horse["confusedRoundsLeft"] > 0:
+            horse["confusedRoundsLeft"] -= 1
+            horse["position"] = max(0, horse["position"] - (effectiveSpeed + baseRoll))
+            return
 
         move = effectiveSpeed + baseRoll
         halfway = trackLength // 2
@@ -366,40 +394,76 @@ class RavitGame(Game):
 
         horse["position"] = min(horse["position"] + move, trackLength)
 
-    def _tryFireEvent(self, horse: dict) -> None:
-        eventChance = self._getConfig("eventChance", 0.15)
-        luckMultiplier = (6 - horse["luck"]) / 3.0
-        adjustedChance = min(eventChance * luckMultiplier, 0.95)
-        if random.random() >= adjustedChance:
-            return
+        if not wasTired:
+            horse["staminaLeft"] -= 1
+            if horse["staminaLeft"] <= 0:
+                horse["tiredRoundsLeft"] = 2
+                horse["staminaLeft"] = max(1, horse["endurance"] * 2)
 
-        eventType = random.choices(
-            ["death", "backwards", "boost", "tired", "stumble", "motivated"],
-            weights=[1, 3, 4, 3, 3, 4],
-        )[0]
+    def _tryFireEvent(self, horse: dict) -> None:
+        """Roll for a random event; positive events scale with luck, negative events scale inversely."""
+        baseChance = self._getConfig("eventChance", 0.15)
+        posChance = min(baseChance * (horse["luck"] / 3.0), 0.95)
+        negChance = min(baseChance * ((6 - horse["luck"]) / 3.0), 0.95)
+
+        r = random.random()
+        if r < posChance:
+            eventType = random.choices(
+                ["boost", "motivated", "overtake"],
+                weights=[4, 4, 3],
+            )[0]
+        elif r < posChance + negChance:
+            eventType = random.choices(
+                ["death", "backwards", "stumble", "slipFall", "confused", "lightning"],
+                weights=[1, 3, 3, 3, 2, 2],
+            )[0]
+        else:
+            return
 
         trackLength = self._getConfig("trackLength", 20)
 
-        if eventType == "death":
-            horse["alive"] = False
+        if eventType == "overtake":
+            aheadHorses = [
+                h for h in self.horses
+                if h["status"] == "racing" and h["id"] != horse["id"]
+                and 0 < h["position"] - horse["position"] <= 3
+            ]
+            if not aheadHorses:
+                return
+            target = min(aheadHorses, key=lambda h: h["position"])
+            horse["position"] = min(target["position"] + 1, trackLength)
+            detail = f"{horse['name']} juoksee hevosen {target['name']} imussa ja ohittaa hänet!"
+        elif eventType == "boost":
+            horse["position"] = min(horse["position"] + 3, trackLength)
+            detail = f"{horse['name']} saa vauhtia ja hyppää 3 ruutua eteenpäin!"
+        elif eventType == "motivated":
+            rounds = random.randint(1, 3)
+            horse["motivatedRoundsLeft"] = rounds
+            detail = f"{horse['name']} on inspiroitunut. Hän juoksee vauhdikkaasti vielä {rounds} kierrosta!"
+        elif eventType == "death":
+            horse["status"] = "dnf"
             detail = f"{horse['name']} kaatuu ja poistuu kilpailusta!"
         elif eventType == "backwards":
             tiles = random.randint(2, 3)
             horse["position"] = max(0, horse["position"] - tiles)
             detail = f"{horse['name']} kompastuu ja peruuttaa {tiles} ruutua!"
-        elif eventType == "boost":
-            horse["position"] = min(horse["position"] + 3, trackLength)
-            detail = f"{horse['name']} saa vauhtia ja lentää 3 ruutua eteenpäin!"
-        elif eventType == "tired":
-            horse["tiredRoundsLeft"] = 2
-            detail = f"{horse['name']} väsyy — nopeus -1 seuraavat 2 kierrosta!"
         elif eventType == "stumble":
             horse["stumbleRoundsLeft"] = 1
-            detail = f"{horse['name']} kompuroi — ohittaa seuraavan kierroksen!"
+            detail = f"{horse['name']} kompuroi. {horse['name']} ottaa lepiä maassa!"
+        elif eventType == "slipFall":
+            tiles = random.randint(2, 3)
+            horse["position"] = max(0, horse["position"] - tiles)
+            horse["stumbleRoundsLeft"] = 1
+            detail = f"{horse['name']} liukastuu ja kaatuu! Menettää {tiles} ruutua ja yhden kierroksen!"
+        elif eventType == "confused":
+            rounds = random.randint(1, 2)
+            horse["confusedRoundsLeft"] = rounds
+            detail = f"{horse['name']} hämmentyy ja juoksee väärään suuntaan {rounds} kierrosta!"
+        elif eventType == "lightning":
+            horse["status"] = "dead"
+            detail = f"Salama iskee {horse['name']}! Hevonen kuolee saman tien!"
         else:
-            rounds = random.randint(1, 3)
-            horse["motivatedRoundsLeft"] = rounds
-            detail = f"{horse['name']} saa motivaatiota — nopeus +1 seuraavat {rounds} kierrosta!"
+            return
 
         print(f"  *** {detail}")
         self._roundEvents.append({"horseName": horse["name"], "eventType": eventType, "detail": detail})
@@ -415,17 +479,20 @@ class RavitGame(Game):
         trackLength = self._getConfig("trackLength", 20)
         print(f"\n=== KIERROS {self._roundNumber} ===")
         for horse in self.horses:
-            if not horse["alive"]:
-                print(f"{horse['name']:<14} [KUOLLUT]")
+            if horse["status"] != "racing":
+                label = "[KUOLI]" if horse["status"] == "dead" else "[POISTUI]"
+                print(f"{horse['name']:<14} {label}")
                 continue
             barLen = int(horse["position"] / trackLength * 22)
             barLen = max(0, min(22, barLen))
             bar = "-" * barLen + "@" + "-" * (22 - barLen)
             if horse["fightRoundsLeft"] > 0:
                 opponent = self._getHorseById(horse["fightOpponent"])
-                status = f"  [TAPPELU vs {opponent['name']} — {horse['fightRoundsLeft']}krt]"
+                status = f"  [TAPPELU vs {opponent['name']}. {horse['fightRoundsLeft']}krt]"
             elif horse["motivatedRoundsLeft"] > 0:
                 status = f"  [MOTIVOITUNUT {horse['motivatedRoundsLeft']}krt]"
+            elif horse["confusedRoundsLeft"] > 0:
+                status = f"  [SEKAISIN {horse['confusedRoundsLeft']}krt]"
             elif horse["tiredRoundsLeft"] > 0:
                 status = f"  [VÄSYNYT {horse['tiredRoundsLeft']}krt]"
             else:
@@ -437,9 +504,6 @@ class RavitGame(Game):
 
     def _getHorseById(self, horseId: int) -> dict:
         return next(h for h in self.horses if h["id"] == horseId)
-
-    def _betsForHorse(self, horseId: int) -> list:
-        return [b for b in self.bets if b["horseId"] == horseId]
 
     def _findPlayer(self, name: str):
         for p in self.players:

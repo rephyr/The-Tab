@@ -1,10 +1,12 @@
 import unittest
 from core.deck import Deck
 from core.cards import Cards
+from tests.testUtils import SilentTest
 
-class TestDeck(unittest.TestCase):
-    
+class TestDeck(SilentTest):
+
     def setUp(self):
+        super().setUp()
         self.deck = Deck()
         self.deck.buildDeck()
  
@@ -42,7 +44,7 @@ class TestDeck(unittest.TestCase):
         shuffled = self.deck.seeDeck()
         self.assertNotEqual(original, shuffled)
         
-class TestMultiDeck(unittest.TestCase):
+class TestMultiDeck(SilentTest):
     def testTwoDecksBuild104Cards(self):
         deck = Deck(deckCount=2)
         deck.buildDeck()

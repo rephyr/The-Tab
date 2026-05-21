@@ -13,7 +13,7 @@ from core.events import (
 from dataclasses import dataclass, field
 
 
-def defaultInput(prompt: str) -> str:
+def _defaultInput(prompt: str) -> str:
     answer = input(prompt).strip().lower()
     if answer == "quit":
         print("Lopetetaan...")
@@ -33,7 +33,7 @@ class Buja(Game):
     deck: Deck = field(default_factory=Deck)
 
     def __post_init__(self):
-        self.inputFunc = defaultInput
+        self.inputFunc = _defaultInput
         self.deck.deckCount = self._getConfig("deckCount", 1)
         self.deck.resetDeck()
 
@@ -42,7 +42,7 @@ class Buja(Game):
         """Minimum cards required: 4 phase cards per player + 3 per board row + 1 final card."""
         return 4 * playerCount + boardLength * 3 + 1
 
-    def setInput(self, fn):
+    def _setInput(self, fn):
         self.inputFunc = fn
 
     def playRound(self) -> None:

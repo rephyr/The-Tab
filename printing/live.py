@@ -81,7 +81,7 @@ class LivePrinter:
             self._printer.printWith(lambda p, e=event: formatRaceRound(e, p))
 
         elif isinstance(event, HorseEventFiredEvent):
-            if event.eventType in ("death", "backwards"):
+            if event.eventType in ("death", "backwards", "lightning"):
                 self._printer.printWith(lambda p, e=event: formatHorseEvent(e, p))
 
         elif isinstance(event, RaceFinishedEvent):

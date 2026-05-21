@@ -1,14 +1,19 @@
+"""Generates randomised horses with stats and relative odds for RavitGame."""
 import random
 
 HORSE_NAMES = [
     "Ukko", "Tuulikki", "Rauhala", "Pitkämäki",
     "Laukki", "Talvikki", "Salamaveto", "Pohjantähti",
     "Myrsky", "Loimu", "Varjo", "Halla", "Aava", "Vauhti", "Arkku",
-    "Takuu", "Lehmä", "Mönkiä", "Iso", "Taika", "Velho", "Veto", "Panos"
+    "Takuu", "Lehmä", "Mönkiä", "Iso", "Taika", "Velho", "Veto", "Panos",
+    "Kalsarikännit", "Turbovauhti", "Pikaliito", "Brad De Veluwe",
+    "Charme Asserda", "Hurjapää", "Voittamaton", "Häviämätön",
+    "Keisari Suuri", "Tulikavio", "Viesker", "Pata Ässä", "Risti seiska",
+    "Arpa", "Saamaton"
 ]
 
 
-def generateHorse(horseId: int, name: str) -> dict:
+def _generateHorse(horseId: int, name: str) -> dict:
     speed = random.randint(1, 5)
     endurance = random.randint(1, 5)
     luck = random.randint(1, 5)
@@ -20,7 +25,7 @@ def generateHorse(horseId: int, name: str) -> dict:
         "luck": luck,
         "odds": 0.0,
         "position": 0,
-        "alive": True,
+        "status": "racing",
         "tiredRoundsLeft": 0,
         "stumbleRoundsLeft": 0,
         "motivatedRoundsLeft": 0,
@@ -29,6 +34,8 @@ def generateHorse(horseId: int, name: str) -> dict:
         "fightStrength": random.randint(1, 5),
         "fightMaxHealth": random.randint(15, 30),
         "fightHealth": 0,
+        "confusedRoundsLeft": 0,
+        "staminaLeft": endurance * 3,
     }
 
 
@@ -46,6 +53,6 @@ def _assignRelativeOdds(horses: list) -> None:
 
 def generateHorses(count: int) -> list:
     names = random.sample(HORSE_NAMES, count)
-    horses = [generateHorse(i + 1, name) for i, name in enumerate(names)]
+    horses = [_generateHorse(i + 1, name) for i, name in enumerate(names)]
     _assignRelativeOdds(horses)
     return horses

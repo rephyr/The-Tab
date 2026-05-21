@@ -8,6 +8,7 @@ from games.bujaGame.buja import Buja
 from printing.log import GameLog
 from printing.printer import StdoutPrinter
 from printing.formatter import formatReceipt
+from tests.testUtils import SilentTest
 
 def makePlayer(id=1, name="Test"):
     return Player(id=id, name=name)
@@ -23,7 +24,7 @@ def makeBujaWithLog():
     game = Buja(players=players, deck=deck, config={}, log=log)
     return game, log
 
-class TestBujaUsesLog(unittest.TestCase):
+class TestBujaUsesLog(SilentTest):
 
     def testLogReceivesEventsAfterRound(self):
         game, log = makeBujaWithLog()
@@ -116,19 +117,19 @@ class TestBujaUsesLog(unittest.TestCase):
         game, log = makeBujaWithLog()
         player = game.players[0]
 
-        with patch("builtins.input", return_value="r"), \
+        with patch("builtins.input", side_effect=["r", "1"]), \
              patch("builtins.print"), \
-             patch.object(game, "_draw", return_value=makeCard("A", "Hearts")), \
-             patch.object(game, "_chooseTarget", return_value=game.players[1]):
+             patch.object(game, "_draw", return_value=makeCard("A", "Hearts")):
 
             game._redOrBlack(player)
+            game._interactiveGivePhase()
 
         giveEvents = [e for e in log.events if isinstance(e, GiveEvent)]
         self.assertEqual(len(giveEvents), 1)
         self.assertEqual(giveEvents[0].giver, "Testi Matti")
         self.assertEqual(giveEvents[0].receiver, "Testi Timo")
 
-class TestFullPipeline(unittest.TestCase):
+class TestFullPipeline(SilentTest):
 
     def testGamePlaysItselfAndPrintsReceipt(self):
         deck = Deck()
@@ -142,7 +143,8 @@ class TestFullPipeline(unittest.TestCase):
 
         with patch("builtins.input", side_effect=inputs), \
              patch("builtins.print"), \
-             patch.object(game, "_chooseTarget", return_value=game.players[1]):
+             patch.object(game, "_chooseTarget", return_value=game.players[1]), \
+             patch.object(game, "_interactiveGivePhase"):
             game.playRound()
 
         data = log.toDict()

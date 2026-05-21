@@ -1,3 +1,6 @@
+"""Receipt formatters for the Ravit horse-race game."""
+
+
 def formatBettingSlip(horses: list, bets: list, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("RAVIT")
@@ -8,7 +11,7 @@ def formatBettingSlip(horses: list, bets: list, p) -> None:
     p.set(bold=False)
     p.textln("-" * 24)
     for h in horses:
-        p.textln(f"#{h['id']} {h['name']:<12} x{h['odds']}")
+        p.textln(f"#{h['id']} {h['name']}\tkerroin: x{h['odds']}")
     p.textln("=" * 24)
     p.set(bold=True)
     p.textln("VEDONLYÖNTI")
@@ -26,16 +29,18 @@ def formatRaceRound(event, p) -> None:
     p.set(align="left", bold=False)
     p.textln("=" * 24)
     for pos in event.positions:
-        if pos["alive"]:
+        if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
             bar = "-" * barLen + "@" + "-" * (15 - barLen)
             p.textln(f"{pos['name']}\t[{bar}]")
         else:
-            p.textln(f"{pos['name']}\t[KUOLLUT]")
+            label = "[KUOLI]" if pos["status"] == "dead" else "[POISTUI]"
+            p.textln(f"{pos['name']}\t{label}")
     if event.raceEvents:
-        p.textln("-" * 24)
+        p.textln("=" * 24)
         for ev in event.raceEvents:
             p.textln(ev["detail"])
+            p.textln("-" * 24)
     p.textln("=" * 24)
 
 
@@ -70,16 +75,30 @@ def formatTiebreakStart(event, p) -> None:
     p.textln("=" * 24)
 
 
+def formatTiebreakRound(event, p) -> None:
+    p.set(align="center", bold=True)
+    p.textln(f"TAISTELUKIERROS {event.roundNumber}")
+    p.set(align="left", bold=False)
+    p.textln("=" * 24)
+    for c in event.combatants:
+        bar = _hpBar(c["health"], c["maxHealth"])
+        if c["health"] <= 0:
+            p.textln(f"{c['name']:<10}\t[{bar}] [KUOLI]")
+        else:
+            p.textln(f"{c['name']:<10}\t[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
+    p.textln("=" * 24)
+
+
 def formatTiebreakElimination(event, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
     p.textln(event.loserName.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     p.textln("=" * 24)
-    p.textln("kaatuu loppukamppailussa!")
+    p.textln(f"{event.loserName} kuoli loppukamppailussa!")
     p.textln("-" * 24)
     for c in event.combatants:
         bar = _hpBar(c["health"], c["maxHealth"])
-        marker = " [KAATUI]" if c["health"] <= 0 else f" v:{c['strength']}"
+        marker = " [KUOLI]" if c["health"] <= 0 else f" v:{c['strength']}"
         p.textln(f"{c['name']:<10}\t[{bar}] {c['health']}/{c['maxHealth']}{marker}")
     p.textln("=" * 24)
 
@@ -99,7 +118,7 @@ def formatTiebreakWinner(event, p) -> None:
 
 def formatRavitFinal(data: dict, p) -> None:
     trackLength = len(data.get("finalPositions", [])) and max(
-        (fp["position"] for fp in data.get("finalPositions", []) if fp["alive"]),
+        (fp["position"] for fp in data.get("finalPositions", []) if fp["status"] == "racing"),
         default=20
     )
     # Use horses snapshot to recover trackLength if possible
@@ -114,15 +133,21 @@ def formatRavitFinal(data: dict, p) -> None:
     p.textln("=" * 24)
     p.textln(data.get("timestamp", ""))
     p.textln("=" * 24)
+    oddsMap = {h["name"]: h["odds"] for h in data.get("horses", [])}
     p.set(bold=True)
     p.textln("SIJOITUKSET")
     p.set(bold=False)
     p.textln("-" * 24)
     for fp in sorted(data.get("finalPositions", []), key=lambda x: x["place"]):
-        if fp["alive"]:
-            p.textln(f"{fp['place']}. {fp['horseName']:<12} {fp['position']} ruutua")
+        odds = oddsMap.get(fp["horseName"], "?")
+        if fp["status"] == "racing":
+            prefix = f"{fp['place']}."
+        elif fp["status"] == "dead":
+            prefix = "KUOLI"
         else:
-            p.textln(f"[KUOLLUT] {fp['horseName']}")
+            prefix = "POISTUI"
+        name = fp["horseName"]
+        p.textln(f"{prefix} {name}\tkerroin: x{odds}")
     p.textln("=" * 24)
     p.set(bold=True)
     p.textln("JUOMAT")

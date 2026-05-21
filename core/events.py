@@ -93,7 +93,7 @@ class GameEndEvent:
 class RaceRoundEvent:
     roundNumber: int
     trackLength: int
-    positions: list   # [{"id", "name", "position", "alive", "tiredRoundsLeft", "stumbleRoundsLeft"}, ...]
+    positions: list   # [{"id", "name", "position", "status", "tiredRoundsLeft", "stumbleRoundsLeft"}, ...]
     raceEvents: list  # [{"horseName", "eventType", "detail"}, ...] events that fired this round
 
 
@@ -123,6 +123,12 @@ class RaceFinishedEvent:
 @dataclass
 class TiebreakStartEvent:
     combatants: list  # [{"id", "name", "odds", "health", "maxHealth", "strength"}, ...]
+
+
+@dataclass
+class TiebreakRoundEvent:
+    roundNumber: int
+    combatants: list  # [{"name", "health", "maxHealth", "strength"}, ...] state after damage
 
 
 @dataclass

@@ -1,4 +1,5 @@
 import unittest
+from tests.testUtils import SilentTest
 from unittest.mock import patch
 from core.player import Player
 from core.events import GameStartEvent, GameEndEvent, RaceStartEvent, HorseEventFiredEvent, RaceFinishedEvent
@@ -6,7 +7,7 @@ from games.ravitGame.ravit import RavitGame
 from printing.log import GameLog
 
 
-def makeRavitWithLog(inputs=None):
+def makeRavitWithLog():
     players = [Player(1, "Testi"), Player(2, "Matti")]
     log = GameLog()
     game = RavitGame(players=players, config={"horseCount": 2, "trackLength": 5, "maxBet": 3, "eventChance": 0.0}, log=log)
@@ -19,7 +20,7 @@ def _runWithInputs(game, inputs):
         game.playRound()
 
 
-class TestRavitLogIntegration(unittest.TestCase):
+class TestRavitLogIntegration(SilentTest):
 
     def testFirstEventIsGameStart(self):
         game, log = makeRavitWithLog()
@@ -73,7 +74,7 @@ class TestRavitLogIntegration(unittest.TestCase):
     def testHorseEventFiredWhenForced(self):
         game, log = makeRavitWithLog()
         game.config["eventChance"] = 1.0
-        with patch("random.choices", return_value=["tired"]):
+        with patch("random.choices", return_value=["boost"]):
             _runWithInputs(game, ["1", "1", "2", "1", ""] * 20)
         events = [e for e in log.events if isinstance(e, HorseEventFiredEvent)]
         self.assertGreater(len(events), 0)
@@ -87,7 +88,7 @@ class TestRavitLogIntegration(unittest.TestCase):
         _runWithInputs(game, ["1", "1", "2", "1", ""] * 20)
 
 
-class TestRavitFullPipeline(unittest.TestCase):
+class TestRavitFullPipeline(SilentTest):
 
     def testGameRunsEndToEnd(self):
         game, log = makeRavitWithLog()

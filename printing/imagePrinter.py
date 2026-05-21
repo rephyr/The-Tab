@@ -249,6 +249,12 @@ class ImagePrinter:
 
         if "\t" in text:
             left, _, right = text.partition("\t")
+            if right.startswith("[") and "]" in right:
+                close = right.index("]")
+                bar_chars = right[1:close]
+                after = right[close + 1:].lstrip()
+                if bar_chars and all(c in "=-" for c in bar_chars):
+                    return self._drawHpBarLine(d, y, left, bar_chars.count("="), len(bar_chars), after, style)
             if invert:
                 d.rectangle([0, y, self.width, y + lh], fill="black")
             d.text((_MARGIN, y + 2), left, font=f, fill=fill)
@@ -273,6 +279,33 @@ class ImagePrinter:
             d.rectangle([0, y, self.width, y + lh], fill="black")
         d.text((x, y + 2), text, font=f, fill=fill)
 
+        return y + lh
+
+    def _drawHpBarLine(self, d, y, left, filled, total, after, style):
+        f = self._pickFont(style)
+        lh = self._textLineHeight(style)
+        invert = style.get("invert", False)
+        fill = "white" if invert else "black"
+        bg = "black" if invert else "white"
+
+        if invert:
+            d.rectangle([0, y, self.width, y + lh], fill="black")
+
+        d.text((_MARGIN, y + 2), left, font=f, fill=fill)
+
+        bar_x = _MARGIN + self._tabStop
+        bar_w = self.width // 4
+        bar_pad = 3
+        bar_y0 = y + bar_pad
+        bar_y1 = y + lh - bar_pad
+
+        d.rectangle([bar_x, bar_y0, bar_x + bar_w, bar_y1], outline=fill, fill=bg)
+        if total > 0 and filled > 0:
+            filled_w = int(filled / total * bar_w)
+            d.rectangle([bar_x, bar_y0, bar_x + filled_w, bar_y1], fill=fill)
+
+        after_x = bar_x + bar_w + _MARGIN
+        d.text((after_x, y + 2), after, font=f, fill=fill)
         return y + lh
 
     def _drawCardRow(self, img, y, rowImg):

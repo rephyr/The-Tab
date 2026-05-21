@@ -270,7 +270,7 @@ def runCli(adminMode=False, debug=False):
             if adminMode:
                 print("M - Hallitse dataa")
             if debug:
-                print("P - Tulosta testi")
+                print("P - Testi tulostus")
             print('\n(kirjoita "quit" poistuaksesi)')
 
             userInput = input("\nValinta: ").strip()
@@ -356,7 +356,8 @@ def runCli(adminMode=False, debug=False):
             log = GameLog()
             store.gameTitle = gameClass.gameTitle
             log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug), gameTitle=gameClass.gameTitle).hook)
-            log.on(store.hook)
+            if not debug:
+                log.on(store.hook)
             game = gameClass(players=players, log=log, config=gameConfig)
 
             print(f"\nAloitetaan {game.gameTitle}...\n")

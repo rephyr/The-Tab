@@ -106,11 +106,11 @@ TEST_TASK_DRAWS = [
 
 TEST_HORSES_RAVIT = [
     {"id": 1, "name": "Ukko",     "speed": 4, "endurance": 5, "luck": 3, "odds": 1.3,
-     "position": 20, "alive": True,  "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
+     "position": 20, "status": "racing", "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
     {"id": 2, "name": "Tuulikki", "speed": 2, "endurance": 2, "luck": 1, "odds": 3.0,
-     "position": 14, "alive": True,  "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
+     "position": 14, "status": "racing", "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
     {"id": 3, "name": "Laukki",   "speed": 1, "endurance": 2, "luck": 1, "odds": 5.0,
-     "position": 5,  "alive": False, "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
+     "position": 5,  "status": "dead",   "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
 ]
 
 TEST_BETS_RAVIT = [
@@ -119,9 +119,9 @@ TEST_BETS_RAVIT = [
 ]
 
 TEST_RAVIT_FINAL_POSITIONS = [
-    {"horseId": 1, "horseName": "Ukko",     "position": 20, "place": 1, "alive": True},
-    {"horseId": 2, "horseName": "Tuulikki", "position": 14, "place": 2, "alive": True},
-    {"horseId": 3, "horseName": "Laukki",   "position": 5,  "place": 4, "alive": False},
+    {"horseId": 1, "horseName": "Ukko",     "position": 20, "place": 1, "status": "racing"},
+    {"horseId": 2, "horseName": "Tuulikki", "position": 14, "place": 2, "status": "racing"},
+    {"horseId": 3, "horseName": "Laukki",   "position": 5,  "place": 4, "status": "dead"},
 ]
 
 TEST_RAVIT_SCORES = [
