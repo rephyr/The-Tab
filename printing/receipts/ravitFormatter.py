@@ -23,21 +23,7 @@ p.textln(text) — prints one line
 _W = 32
 
 
-def _wrapText(text: str, width: int = _W) -> list:
-    words = text.split()
-    lines = []
-    current = ""
-    for word in words:
-        if not current:
-            current = word
-        elif len(current) + 1 + len(word) <= width:
-            current += " " + word
-        else:
-            lines.append(current)
-            current = word
-    if current:
-        lines.append(current)
-    return lines or [""]
+from printing.receipts.textWrapper import wrapText as _wrapText
 
 
 def formatHorseList(horses: list, p) -> None:
@@ -84,7 +70,7 @@ def formatRaceRound(event, p) -> None:
     if event.raceEvents:
         p.textln("=" * _W)
         for ev in event.raceEvents:
-            for line in _wrapText(ev["detail"]):
+            for line in _wrapText(ev["detail"], _W):
                 p.textln(line)
             p.textln("-" * _W)
     p.textln("=" * _W)
@@ -102,7 +88,7 @@ def formatHorseEvent(event, p) -> None:
         p.textln(f"R.I.P {event.horseName.upper()}")
         p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
         p.textln("=" * _W)
-        for line in _wrapText(event.detail):
+        for line in _wrapText(event.detail, _W):
             p.textln(line)
         p.textln("=" * _W)
     elif event.eventType == "death":
@@ -110,7 +96,7 @@ def formatHorseEvent(event, p) -> None:
         p.textln(f"DNF {event.horseName.upper()}")
         p.set(align="left", bold=False, double_width=False, double_height=False)
         p.textln("=" * _W)
-        for line in _wrapText(event.detail):
+        for line in _wrapText(event.detail, _W):
             p.textln(line)
         p.textln("=" * _W)
     else:
@@ -118,7 +104,7 @@ def formatHorseEvent(event, p) -> None:
         p.textln(event.horseName.upper())
         p.set(align="left", bold=False, double_width=False, double_height=False)
         p.textln("=" * _W)
-        for line in _wrapText(event.detail):
+        for line in _wrapText(event.detail, _W):
             p.textln(line)
         p.textln("=" * _W)
 

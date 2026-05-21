@@ -18,22 +18,7 @@ p.textln(text) — prints one line
 # Adjust to match how many characters fit across your printer in normal font.
 _W = 32
 
-
-def _wrapText(text: str, width: int = _W) -> list:
-    words = text.split()
-    lines = []
-    current = ""
-    for word in words:
-        if not current:
-            current = word
-        elif len(current) + 1 + len(word) <= width:
-            current += " " + word
-        else:
-            lines.append(current)
-            current = word
-    if current:
-        lines.append(current)
-    return lines or [""]
+from printing.receipts.textWrapper import wrapText as _wrapText
 
 
 def formatTurn(phaseName: str, turn: dict, p) -> None:
