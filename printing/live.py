@@ -4,10 +4,9 @@ LivePrinter listens to game events and prints receipts in real time as the game 
 Register it with: log.on(LivePrinter(printer).hook)
 """
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw, formatRouletteResult
-from printing.receipts.taskGame import formatReceipt as formatTaskGameReceipt
-from printing.receipts.buja import formatReceipt as formatBujaReceipt
-from printing.receipts.ravit import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner
+from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatRouletteResult, formatEndReceipt as formatBujaReceipt
+from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner
 
 
 class LivePrinter:

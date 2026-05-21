@@ -1,5 +1,6 @@
 import unittest
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatTaskDraw, formatRouletteResult
+from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatRouletteResult
+from printing.receipts.taskGameFormatter import formatTaskDraw
 from core.events import TaskDrawEvent, RouletteResultEvent
 from tests.testUtils import SilentTest
 

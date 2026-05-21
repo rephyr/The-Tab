@@ -2,8 +2,9 @@
 Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
-from printing.receipts.ravit import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
+from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
+from printing.receipts.taskGameFormatter import formatTaskDraw
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
 from core.events import TaskDrawEvent, HorseEventFiredEvent, RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 
 TEST_PHASES = [

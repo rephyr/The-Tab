@@ -1,6 +1,18 @@
 """
-Receipt formatter functions. Each one writes to a printer object p using
-p.set(), p.textln(), and p.text(). formatReceipt() runs the full game through all of them.
+Receipt formatters for the Buja card drinking game.
+
+formatTurn           — one player's turn in any phase
+formatHand           — player's full card hand
+formatBoardCard      — one board card with action and outcomes
+formatTally          — end-of-game drink totals
+formatRouletteResult — Russian roulette result card
+formatReceipt        — full game receipt (all turns, hands, board, tally)
+formatEndReceipt     — compact end-of-game summary (title, board, scores)
+
+Printer API used in this module:
+
+p.set(align, bold, double_width, double_height, invert)
+p.textln(text) — prints one line
 """
 
 # Adjust to match how many characters fit across your printer in normal font.
@@ -141,19 +153,6 @@ def formatRouletteResult(event, p) -> None:
     p.textln("=" * _W)
 
 
-def formatTaskDraw(event, p) -> None:
-    """Print a single TaskGame task receipt."""
-    p.set(align="center", bold=True, double_width=True, double_height=True)
-    p.textln(event.title.upper())
-    p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * _W)
-    for line in _wrapText("Pelaajat: " + ", ".join(event.targets)):
-        p.textln(line)
-    for line in _wrapText(event.description):
-        p.textln(line)
-    p.textln("=" * _W)
-
-
 def formatReceipt(data: dict, p) -> None:
     """Print the full game receipt: all turns, hands, board cards, and tally."""
     for phase in data["phases"]:
@@ -167,3 +166,46 @@ def formatReceipt(data: dict, p) -> None:
         formatBoardCard(card, p)
         p.cut()
     formatTally(data["scores"], p)
+
+
+def formatEndReceipt(data: dict, p) -> None:
+    """Print the compact end-of-game summary: title, board results, and drink scores."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("BUJA")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * _W)
+    p.textln(data["timestamp"])
+    p.textln(", ".join(data["players"]))
+    p.textln("=" * _W)
+
+    if data["board"]:
+        p.set(align="center", bold=True)
+        p.textln("LAUTA")
+        p.set(align="left", bold=False)
+        p.textln("-" * _W)
+
+        for card in data["board"]:
+            p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
+            p.textln(card["card"])
+            p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+            p.textln(f"{card['action'].upper()} {card['drinks']}")
+
+            if not card["matched"]:
+                p.textln("Ei osumia")
+            else:
+                for outcome in card["outcomes"]:
+                    if outcome["type"] == "drink":
+                        p.textln(f"{outcome['player']} juo {outcome['drinks']}")
+                    elif outcome["type"] == "give":
+                        p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
+                    elif outcome["type"] == "share":
+                        p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
+            p.textln("-" * _W)
+
+    p.set(align="center", bold=True)
+    p.textln("LOPPUSALDO")
+    p.set(align="left", bold=False)
+    p.textln("=" * _W)
+    for score in data["scores"]:
+        p.textln(f"{score['name']}: joi {score['drank']} | antoi {score['gave']}")
+    p.textln("=" * _W)
