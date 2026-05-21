@@ -1,5 +1,6 @@
 {
   "printer": {
+    "receiptWidth": 32,
     "connection": "win32raw",
     "printerName": "CK710 Printer",
     "escposFont": "b",

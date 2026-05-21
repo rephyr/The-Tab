@@ -6,7 +6,7 @@ Register it with: log.on(LivePrinter(printer).hook)
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatRouletteResult, formatEndReceipt as formatBujaReceipt
 from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw, formatDrinkSummary, formatChainDraw
-from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, configure as _configureRavitFormatter
 
 
 class LivePrinter:
@@ -14,6 +14,7 @@ class LivePrinter:
     def __init__(self, printer, gameTitle=""):
         self._printer = printer
         self._gameTitle = gameTitle
+        _configureRavitFormatter(getattr(printer, "config", {}))
         self._inBoard = False
         self._boardCardCount = 0
         self._printedBoardCards = set()

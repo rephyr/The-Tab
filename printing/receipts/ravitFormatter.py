@@ -19,8 +19,13 @@ p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
 
-# Adjust to match how many characters fit across your printer in normal font.
 _W = 32
+
+
+def configure(config: dict) -> None:
+    """Read receiptWidth from printer config. Call once before printing."""
+    global _W
+    _W = int(config.get("receiptWidth", 32))
 
 
 from printing.receipts.textWrapper import wrapText as _wrapText
