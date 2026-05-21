@@ -2,14 +2,12 @@
 import random
 
 HORSE_NAMES = [
-    "Ukko", "Tuulikki", "Rauhala", "Pitkämäki",
-    "Laukki", "Talvikki", "Salamaveto", "Pohjantähti",
-    "Myrsky", "Loimu", "Varjo", "Halla", "Aava", "Vauhti", "Arkku",
+    "Ukko", "Tuulikki", "Rauhala", "Pitkämäki","Laukki", "Talvikki", 
+    "Salamaveto", "Myrsky", "Loimu", "Varjo", "Halla", "Aava", "Vauhti", "Arkku",
     "Takuu", "Lehmä", "Mönkiä", "Iso", "Taika", "Velho", "Veto", "Panos",
-    "Kalsarikännit", "Turbovauhti", "Pikaliito", "Brad De Veluwe",
-    "Charme Asserda", "Hurjapää", "Voittamaton", "Häviämätön",
-    "Keisari Suuri", "Tulikavio", "Viesker", "Pata Ässä", "Risti seiska",
-    "Arpa", "Saamaton"
+    "Turbovauhti", "Pikaliito", "Ässä", "Hurjapää", "Voittamaton", "Häviämätön",
+    "Tulikavio", "Viesker", "Pata", "Risti", "Arpa", "Saamaton", "Ahdin", 
+    "Lötinä", "Täräyttäjä","Massikeisari", "Vetäjä", "Työntö", "Jabin" 
 ]
 
 
@@ -31,7 +29,7 @@ def _generateHorse(horseId: int, name: str) -> dict:
         "motivatedRoundsLeft": 0,
         "fightRoundsLeft": 0,
         "fightOpponent": None,
-        "fightStrength": random.randint(1, 5),
+        "fightStrength": random.randint(5, 10),
         "fightMaxHealth": random.randint(15, 30),
         "fightHealth": 0,
         "confusedRoundsLeft": 0,
@@ -47,7 +45,7 @@ def _assignRelativeOdds(horses: list) -> None:
             base = 3.5
         else:
             t = (total - minT) / (maxT - minT)  # 0 = weakest, 1 = strongest
-            base = 8.0 - t * 6.5                    # weakest → 8.0, strongest → 1.5
+            base = 8.0 - t * 6.5                # weakest → 8.0, strongest → 1.5
         h["odds"] = max(1.5, round(base * random.uniform(0.85, 1.25), 1))
 
 

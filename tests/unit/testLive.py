@@ -5,9 +5,12 @@ from core.events import (
     DrinkEvent, GiveEvent, ShareEvent,
     BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
     TaskDrawEvent, RouletteResultEvent,
+    RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
+    TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
 )
 from printing.log import GameLog
 from printing.live import LivePrinter
+from printing.printer import NullPrinter
 from tests.testUtils import SilentTest
 
 def makeLog():
@@ -169,6 +172,64 @@ class TestLivePrinterTaskGame(SilentTest):
         log.add(RouletteResultEvent(player="Teppo", hit=False, drinks=10))
         log.add(RouletteResultEvent(player="Matti", hit=True, drinks=10))
         self.assertEqual(printer.printWith.call_count, 2)
+
+
+class TestNullPrinterWithLivePrinter(SilentTest):
+    """NullPrinter must implement the full printer interface so LivePrinter never crashes."""
+
+    def _makeLog(self):
+        log = GameLog()
+        log.add(GameStartEvent(["A", "B"]))
+        log.on(LivePrinter(NullPrinter(), gameTitle="Ravit").hook)
+        return log
+
+    def testPhaseAndGuessEventsDoNotCrash(self):
+        log = self._makeLog()
+        log.add(PhaseEvent("Red or Black", "A"))
+        log.add(GuessEvent("A", "Red or Black", "Red", "♥A", True))
+        log.add(GiveEvent("A", "B", 1))
+
+    def testBoardEventsDoNotCrash(self):
+        log = self._makeLog()
+        log.add(PhaseEvent("Board", ""))
+        log.add(BoardCardEvent("♥A", "drink", 2, []))
+        log.add(BoardCardDoneEvent())
+
+    def testTaskDrawDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(TaskDrawEvent(drawer="A", title="X", description="Y", targets=["A"]))
+
+    def testRouletteResultDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(RouletteResultEvent(player="A", hit=True, drinks=3))
+
+    def testRaceStartDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(RaceStartEvent(players=["A", "B"], horses=[]))
+
+    def testBetsPlacedDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(BetsPlacedEvent(horses=[], bets=[]))
+
+    def testRaceRoundDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(RaceRoundEvent(roundNumber=1, trackLength=20, positions=[], raceEvents=[]))
+
+    def testHorseEventDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(HorseEventFiredEvent(roundNumber=1, horseId=1, horseName="Ukko", eventType="death", detail="kuoli"))
+
+    def testTiebreakEventsDoNotCrash(self):
+        log = self._makeLog()
+        combatants = [{"name": "A", "health": 10, "maxHealth": 10, "strength": 3}]
+        log.add(TiebreakStartEvent(combatants=combatants))
+        log.add(TiebreakRoundEvent(roundNumber=1, combatants=combatants))
+        log.add(TiebreakEliminationEvent(loserName="A", remaining=[], combatants=combatants))
+        log.add(TiebreakWinnerEvent(winnerName="A", health=5, maxHealth=10, strength=3))
+
+    def testGameEndDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(GameEndEvent(scores=[{"name": "A", "drinksTaken": 1, "drinksToGive": 0}]))
 
 
 if __name__ == "__main__":

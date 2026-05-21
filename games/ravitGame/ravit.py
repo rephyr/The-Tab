@@ -14,7 +14,7 @@ from core.game import Game
 from core.events import (
     GameStartEvent, GameEndEvent,
     DrinkEvent,
-    RaceStartEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
+    RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
     TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
 )
 from games.ravitGame.horses import generateHorses
@@ -47,9 +47,14 @@ class RavitGame(Game):
         print("\n=== VEDONLYÖNTI ===\n")
         debug = self._getConfig("debug", False)
         for h in self.horses:
-            stats = f"  [nop:{h['speed']} kes:{h['endurance']} tur:{h['luck']}]" if debug else ""
-            print(f"{h['id']}. {h['name']:<14}  kerroin: x{h['odds']}{stats}")
+            stats = f"  [nop:{h['speed']} kes:{h['endurance']} tur:{h['luck']} voi:{h['fightStrength']} hp:{h['fightMaxHealth']}]" if debug else ""
+            print(f"{h['id']}. {h['name']:<{self._nameWidth()}}  kerroin: x{h['odds']}{stats}")
         print()
+
+        self.emit(RaceStartEvent(
+            players=[p.getName() for p in self.players],
+            horses=[dict(h) for h in self.horses],
+        ))
 
         maxBet = self._getConfig("maxBet", 5)
         for player in self.players:
@@ -69,16 +74,25 @@ class RavitGame(Game):
             self.bets.append({"player": player.getName(), "horseId": horseId, "amount": amount})
             print()
 
-        self.emit(RaceStartEvent(
-            players=[p.getName() for p in self.players],
+        self.emit(BetsPlacedEvent(
             horses=[dict(h) for h in self.horses],
             bets=list(self.bets),
         ))
 
     def _raceLoop(self) -> None:
         trackLength = self._getConfig("trackLength", 20)
-        print("\nKilpailu alkaa! Paina Enter edetäksesi.\n")
-        input()
+        print("\n=== STARTTIVIIVA ===")
+        for horse in self.horses:
+            bar = "@" + "-" * 22
+            print(f"{horse['name']:<{self._nameWidth()}} [{bar}]  0/{trackLength}")
+        startPositions = [
+            {"id": h["id"], "name": h["name"], "position": 0, "status": "racing",
+             "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0, "motivatedRoundsLeft": 0,
+             "fightRoundsLeft": 0, "confusedRoundsLeft": 0}
+            for h in self.horses
+        ]
+        self.emit(RaceRoundEvent(roundNumber=0, trackLength=trackLength, positions=startPositions, raceEvents=[]))
+        input("\nKilpailu alkaa! Paina Enter edetäksesi.\n")
         while True:
             self._roundNumber += 1
             self._runOneRound()
@@ -183,7 +197,7 @@ class RavitGame(Game):
             roundNumber=self._roundNumber,
             horseId=loser["id"],
             horseName=loser["name"],
-            eventType="death",
+            eventType="fightDeath",
             detail=detail,
         ))
 
@@ -286,8 +300,6 @@ class RavitGame(Game):
                 winner = self._tiebreakFight(closeFinish)
                 aliveHorses = [winner] + [h for h in aliveHorses if h["id"] != winner["id"]]
 
-        deadPenalty = len(self.horses) + 1
-
         finalPositions = []
         for place, horse in enumerate(aliveHorses, start=1):
             displayPos = horse["position"] if place == 1 else min(horse["position"], trackLength - 1)
@@ -298,21 +310,26 @@ class RavitGame(Game):
                 "place": place,
                 "status": "racing",
             })
-        for horse in outHorses:
+
+        nextPlace = len(aliveHorses) + 1
+        dnfHorses = sorted([h for h in outHorses if h["status"] == "dnf"], key=lambda h: -h["position"])
+        deadHorses = sorted([h for h in outHorses if h["status"] == "dead"], key=lambda h: -h["position"])
+        for horse in dnfHorses + deadHorses:
             finalPositions.append({
                 "horseId": horse["id"],
                 "horseName": horse["name"],
                 "position": horse["position"],
-                "place": deadPenalty,
+                "place": nextPlace,
                 "status": horse["status"],
             })
+            nextPlace += 1
 
         print("\n=== LOPPUTULOS ===")
         for fp in finalPositions:
             if fp["status"] == "racing":
-                print(f"{fp['place']}. {fp['horseName']:<14} {fp['position']}/{trackLength} ruutua")
+                print(f"{fp['place']}. {fp['horseName']:<{self._nameWidth()}} {fp['position']}/{trackLength} ruutua")
             else:
-                label = "[KUOLI]" if fp["status"] == "dead" else "[POISTUI]"
+                label = "[KUOLI]" if fp["status"] == "dead" else "[DNF]"
                 print(f"   {label} {fp['horseName']}")
 
         self.emit(RaceFinishedEvent(
@@ -341,8 +358,9 @@ class RavitGame(Game):
                     continue
                 horse = self._getHorseById(bet["horseId"])
                 if horse["status"] != "racing":
+                    reason = "hevonen kuoli" if horse["status"] == "dead" else "hevonen ei pystynyt jatkamaan"
                     player.addDrinks(bet["amount"] * 2)
-                    self.emit(DrinkEvent(player=bet["player"], amount=bet["amount"] * 2, reason="hevonen kuoli"))
+                    self.emit(DrinkEvent(player=bet["player"], amount=bet["amount"] * 2, reason=reason))
                 elif horse["id"] == winnerId:
                     if lastPlaceIds:
                         player.pendingGive += math.ceil(bet["amount"] * horse["odds"])
@@ -367,6 +385,12 @@ class RavitGame(Game):
         trackLength = self._getConfig("trackLength", 20)
         if horse["stumbleRoundsLeft"] > 0:
             horse["stumbleRoundsLeft"] -= 1
+            if horse["motivatedRoundsLeft"] > 0:
+                horse["motivatedRoundsLeft"] -= 1
+            if horse["tiredRoundsLeft"] > 0:
+                horse["tiredRoundsLeft"] -= 1
+            if horse["confusedRoundsLeft"] > 0:
+                horse["confusedRoundsLeft"] -= 1
             return
 
         baseRoll = random.randint(0, 2)
@@ -387,9 +411,7 @@ class RavitGame(Game):
         move = effectiveSpeed + baseRoll
         halfway = trackLength // 2
         if horse["position"] >= halfway:
-            if horse["endurance"] >= 4:
-                move += 1
-            elif horse["endurance"] <= 2:
+            if horse["endurance"] <= 2:
                 move = max(1, move - 1)
 
         horse["position"] = min(horse["position"] + move, trackLength)
@@ -402,6 +424,8 @@ class RavitGame(Game):
 
     def _tryFireEvent(self, horse: dict) -> None:
         """Roll for a random event; positive events scale with luck, negative events scale inversely."""
+        if self._roundNumber <= 1:
+            return
         baseChance = self._getConfig("eventChance", 0.15)
         posChance = min(baseChance * (horse["luck"] / 3.0), 0.95)
         negChance = min(baseChance * ((6 - horse["luck"]) / 3.0), 0.95)
@@ -435,14 +459,14 @@ class RavitGame(Game):
             detail = f"{horse['name']} juoksee hevosen {target['name']} imussa ja ohittaa hänet!"
         elif eventType == "boost":
             horse["position"] = min(horse["position"] + 3, trackLength)
-            detail = f"{horse['name']} saa vauhtia ja hyppää 3 ruutua eteenpäin!"
+            detail = f"{horse['name']} tekee tempun ja loikkaa 3 ruutua eteenpäin!"
         elif eventType == "motivated":
             rounds = random.randint(1, 3)
             horse["motivatedRoundsLeft"] = rounds
             detail = f"{horse['name']} on inspiroitunut. Hän juoksee vauhdikkaasti vielä {rounds} kierrosta!"
         elif eventType == "death":
             horse["status"] = "dnf"
-            detail = f"{horse['name']} kaatuu ja poistuu kilpailusta!"
+            detail = f"{horse['name']} ei pysty jatkamaan ja poistuu kilpailusta!"
         elif eventType == "backwards":
             tiles = random.randint(2, 3)
             horse["position"] = max(0, horse["position"] - tiles)
@@ -454,14 +478,14 @@ class RavitGame(Game):
             tiles = random.randint(2, 3)
             horse["position"] = max(0, horse["position"] - tiles)
             horse["stumbleRoundsLeft"] = 1
-            detail = f"{horse['name']} liukastuu ja kaatuu! Menettää {tiles} ruutua ja yhden kierroksen!"
+            detail = f"{horse['name']} liukastuu ja menee {tiles} ruutua taaksepäin!"
         elif eventType == "confused":
             rounds = random.randint(1, 2)
             horse["confusedRoundsLeft"] = rounds
-            detail = f"{horse['name']} hämmentyy ja juoksee väärään suuntaan {rounds} kierrosta!"
+            detail = f"{horse['name']} eksyy ja juoksee väärään suuntaan vielä {rounds} kierrosta!"
         elif eventType == "lightning":
             horse["status"] = "dead"
-            detail = f"Salama iskee {horse['name']}! Hevonen kuolee saman tien!"
+            detail = f"Salama iskee! {horse['name']} kuolee saman tien :(!"
         else:
             return
 
@@ -480,8 +504,8 @@ class RavitGame(Game):
         print(f"\n=== KIERROS {self._roundNumber} ===")
         for horse in self.horses:
             if horse["status"] != "racing":
-                label = "[KUOLI]" if horse["status"] == "dead" else "[POISTUI]"
-                print(f"{horse['name']:<14} {label}")
+                label = "[KUOLI]" if horse["status"] == "dead" else "[DNF]"
+                print(f"{horse['name']:<{self._nameWidth()}} {label}")
                 continue
             barLen = int(horse["position"] / trackLength * 22)
             barLen = max(0, min(22, barLen))
@@ -497,7 +521,10 @@ class RavitGame(Game):
                 status = f"  [VÄSYNYT {horse['tiredRoundsLeft']}krt]"
             else:
                 status = ""
-            print(f"{horse['name']:<14} [{bar}]  {horse['position']}/{trackLength}{status}")
+            print(f"{horse['name']:<{self._nameWidth()}} [{bar}]  {horse['position']}/{trackLength}{status}")
+
+    def _nameWidth(self) -> int:
+        return max((len(h["name"]) for h in self.horses), default=14)
 
     def _getConfig(self, key, default):
         return self.config.get(key, default)

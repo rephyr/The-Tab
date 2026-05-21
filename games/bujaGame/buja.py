@@ -264,6 +264,16 @@ class Buja(Game):
 
                 if not matchedPlayers:
                     print("Ei osumia.")
+                elif action == "kippistä":
+                    self.emit(BoardCardDoneEvent())
+                    for player in matchedPlayers:
+                        target = self._chooseTarget(player)
+                        print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
+                        player.addDrinks(drinks)
+                        target.addDrinks(drinks)
+                        player.addDrinksToGive(drinks)
+                        self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+                    continue
                 else:
                     for player in matchedPlayers:
                         if action == "juo":
@@ -275,14 +285,6 @@ class Buja(Game):
                             print(f"{player.getName()} antaa {drinks} lopussa")
                             player.pendingGive += drinks
 
-                        elif action == "kippistä":
-                            target = self._chooseTarget(player)
-                            print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
-                            player.addDrinks(drinks)
-                            target.addDrinks(drinks)
-                            player.addDrinksToGive(drinks)
-                            self.emit(ShareEvent(player.getName(), target.getName(), drinks))
-
                 self.emit(BoardCardDoneEvent())
 
         print(f"\n=== LOPPU | {finalDrinks} ryyppyä | KIPPISTÄ ===")
@@ -291,6 +293,8 @@ class Buja(Game):
 
         matchedPlayers = [p for p in self.players if p.hasRank(finalCard.rank)]
         self.emit(BoardCardEvent(str(finalCard), "kippistä", finalDrinks, [p.getName() for p in matchedPlayers]))
+
+        self.emit(BoardCardDoneEvent())
 
         if not matchedPlayers:
             print("Ei osumia.")
@@ -302,8 +306,6 @@ class Buja(Game):
                 target.addDrinks(finalDrinks)
                 player.addDrinksToGive(finalDrinks)
                 self.emit(ShareEvent(player.getName(), target.getName(), finalDrinks))
-
-        self.emit(BoardCardDoneEvent())
 
         print("\n=== LAUTA LOPPU ===\n")
 

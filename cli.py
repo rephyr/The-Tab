@@ -40,6 +40,45 @@ def listGames():
     return gameClasses
 
 
+def showSessionResult(scores, title):
+    """Print the scores from a single just-completed game."""
+    if not scores:
+        return
+    print(f"\n--- {title} — tulos ---\n")
+    print(f"{'Nimi':<20} {'Joi':>6} {'Antoi':>6}")
+    print("-" * 34)
+    for s in sorted(scores, key=lambda x: x["drank"], reverse=True):
+        print(f"{s['name']:<20} {s['drank']:>6} {s['gave']:>6}")
+    print()
+    input("Paina Enter jatkaaksesi...")
+
+
+def showSessionHistory(sessionHistory):
+    """Show in-memory sessions from the current run and allow drilling into one."""
+    if not sessionHistory:
+        print("\nEi sessioita tässä ajossa.")
+        input("Paina Enter jatkaaksesi...")
+        return
+
+    print("\n--- Tämän ajon sessiot ---\n")
+    for i, s in enumerate(sessionHistory):
+        players = ", ".join(sc["name"] for sc in s["scores"])
+        print(f"{i + 1}. [{s['timestamp']}] {s['game']} — {players}")
+
+    raw = input("\nSession numero (tai Enter peruuttaaksesi): ").strip()
+    if not raw or not raw.isdigit() or not (1 <= int(raw) <= len(sessionHistory)):
+        return
+
+    s = sessionHistory[int(raw) - 1]
+    print(f"\n[{s['timestamp']}] {s['game']}\n")
+    print(f"{'Nimi':<20} {'Joi':>6} {'Antoi':>6}")
+    print("-" * 34)
+    for sc in sorted(s["scores"], key=lambda x: x["drank"], reverse=True):
+        print(f"{sc['name']:<20} {sc['drank']:>6} {sc['gave']:>6}")
+    print()
+    input("Paina Enter jatkaaksesi...")
+
+
 def showLeaderboard(store):
     """Print the all-time leaderboard ranked by drinks taken."""
     board = store.getLeaderboard()
@@ -217,8 +256,9 @@ def showPrintTest(config, debug):
         ("3", "Lautakortit",                     ["board"]),
         ("4", "Loppulasku",                      ["tally"]),
         ("5", "TaskGame-kuitit",                 ["tasks"]),
-        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]),
-        ("7", "Kaikki yllä",                     None),
+        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-rata", "ravit-event", "ravit-tiebreak", "ravit-final"]),
+        ("7", "Ravit-rata",                      ["ravit-rata"]),
+        ("8", "Kaikki yllä",                     None),
     ]
 
     optionMap = {key: parts for key, _, parts in options}
@@ -228,11 +268,11 @@ def showPrintTest(config, debug):
             print("\nTulosta testikuitit:")
             for key, label, _ in options:
                 print(f"{key}. {label}")
-            print("8. Takaisin")
+            print("9. Takaisin")
 
             choice = input("\nValinta: ").strip()
 
-            if choice == "8":
+            if choice == "9":
                 break
             elif choice in optionMap:
                 printTestReceipts(printer, optionMap[choice])
@@ -257,20 +297,28 @@ def runCli(adminMode=False, debug=False):
 
     config = Config()
     store = PlayerStore()
+    receiptMode = True
+    saveData = True
+    sessionHistory = []
 
     modeLabel = " [ADMIN]" if adminMode else ""
     if debug:
         modeLabel += " [DEBUG]"
     try:
         while True:
+            receiptLabel = "PÄÄLLÄ" if receiptMode else "POIS"
+            saveLabel = "PÄÄLLÄ" if saveData else "POIS"
             print(f"\nPelit{modeLabel}:\n")
             for i, gameClass in enumerate(gamesList):
                 print(f"{i + 1}. {gameClass.gameTitle}")
             print("\nL - Tulostaulukko")
+            print("S - Sessiot")
             if adminMode:
                 print("M - Hallitse dataa")
             if debug:
                 print("P - Testi tulostus")
+            print(f"T - Tulostustila: kuitit [{receiptLabel}]")
+            print(f"D - Tallenna pelin tiedot [{saveLabel}]")
             print('\n(kirjoita "quit" poistuaksesi)')
 
             userInput = input("\nValinta: ").strip()
@@ -282,12 +330,26 @@ def runCli(adminMode=False, debug=False):
                 showLeaderboard(store)
                 continue
 
+            if userInput.lower() == "s":
+                showSession(store)
+                continue
+
             if userInput.lower() == "m" and adminMode:
                 manageData(store)
                 continue
 
             if userInput.lower() == "p" and debug:
                 showPrintTest(config, debug)
+                continue
+
+            if userInput.lower() == "t":
+                receiptMode = not receiptMode
+                print(f"Tulostustila: kuitit {'PÄÄLLÄ' if receiptMode else 'POIS'}")
+                continue
+
+            if userInput.lower() == "d":
+                saveData = not saveData
+                print(f"Tallenna pelin tiedot: {'PÄÄLLÄ' if saveData else 'POIS'}")
                 continue
 
             gameClass = None
@@ -353,10 +415,12 @@ def runCli(adminMode=False, debug=False):
                         print("Virheellinen numero.")
 
             printerConfig = config.data.get("printer", {})
+            from printing.printer import NullPrinter
+            printer = ReceiptPrinter(printerConfig, debug=debug) if receiptMode else NullPrinter()
             log = GameLog()
             store.gameTitle = gameClass.gameTitle
-            log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug), gameTitle=gameClass.gameTitle).hook)
-            if not debug:
+            log.on(LivePrinter(printer, gameTitle=gameClass.gameTitle).hook)
+            if not debug and saveData:
                 log.on(store.hook)
             game = gameClass(players=players, log=log, config=gameConfig)
 
@@ -364,6 +428,12 @@ def runCli(adminMode=False, debug=False):
 
             game.playRound()
 
-            showLeaderboard(store)
+            result = log.toDict()
+            sessionHistory.append({
+                "game": game.gameTitle,
+                "timestamp": result["timestamp"],
+                "scores": result["scores"],
+            })
+            showSessionResult(result["scores"], game.gameTitle)
     except KeyboardInterrupt:
         print()

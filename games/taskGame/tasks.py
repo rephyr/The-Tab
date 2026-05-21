@@ -34,7 +34,7 @@ TASKS = [
         "description": "1. juo 3, 2. juo 6, 3. juo 9 jne.",
         "players": 1,
         "drinks": 3,
-        "drinkType": "take",
+        "drinkType": "chain",
         "rarity": "common",
     },
     {
@@ -44,6 +44,7 @@ TASKS = [
         "drinks": None,
         "drinkType": "social",
         "rarity": "special",
+        "penalty": True,
     },
     {
         "title": "Luuppi",
@@ -104,7 +105,7 @@ TASKS = [
     {
         "title": "Huora",
         "description": "Valitse huora, huora juo aina kun kortin antaja juo",
-        "players": 2,
+        "players": 1,
         "drinks": None,
         "drinkType": "link",
         "rarity": "common",
@@ -120,7 +121,7 @@ TASKS = [
     {
         "title": "Pari",
         "description": "Teette parin. Aina kun toinen juo, toinen juo myös. Kestää kunnes seuraava parikortti nostetaan.",
-        "players": 2,
+        "players": 1,
         "drinks": None,
         "drinkType": "link",
         "rarity": "common",

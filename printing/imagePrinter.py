@@ -89,7 +89,7 @@ def _cropCard(img):
     return img.crop(bbox)
 
 
-def _buildCardRowImage(cards, config, invert=False):
+def _buildCardRowImage(cards, config):
     """Build a stitched PIL image of a card row from [(rank, suit), ...].
     Returns None if fonts are unavailable."""
     from printing.cardImage import buildCardImage
@@ -100,7 +100,7 @@ def _buildCardRowImage(cards, config, invert=False):
         cardImgs = []
         for rank, suit in cards:
             ci = _cropCard(buildCardImage(rank, suit, cfg))
-            if invert or (suit in _INVERTED_SUITS):
+            if suit in _INVERTED_SUITS:
                 ci = ImageOps.invert(ci)
             cardImgs.append(ci)
     except Exception:
@@ -183,7 +183,7 @@ class ImagePrinter:
             if isDouble:
                 cards = _parseCards(text)
                 if cards is not None:
-                    rowImg = _buildCardRowImage(cards, self._config, style.get("invert", False))
+                    rowImg = _buildCardRowImage(cards, self._config)
                     if rowImg is not None:
                         scale = float(self._config.get("imageCardScale", 1.0))
                         if scale != 1.0:
