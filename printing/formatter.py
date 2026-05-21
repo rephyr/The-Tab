@@ -51,8 +51,12 @@ def formatHand(player: str, cards: list, p) -> None:
 
 def formatBoardCard(card: dict, p) -> None:
     """Print a board card receipt with its action and outcomes."""
+    p.set(align="center", bold=True)
+    p.textln("=" * 24)
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
     p.textln(card["card"])
+    p.set(align="left", bold=False, invert=False)
+    p.textln("-" * 24)  
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     p.textln(f"{card['action'].upper()} {card['drinks']}")
     if not card["matched"]:
@@ -65,6 +69,9 @@ def formatBoardCard(card: dict, p) -> None:
                 p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
             elif outcome["type"] == "share":
                 p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
+    p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+    p.set(align="center", bold=True)
+    p.textln("=" * 24)
 
 
 def formatTally(scores: list, p) -> None:

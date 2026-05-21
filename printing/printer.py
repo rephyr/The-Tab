@@ -166,7 +166,7 @@ class CardAwareWrapper:
             from printing.imagePrinter import _parseCards, _buildCardRowImage
             cards = _parseCards(str(text))
             if cards:
-                img = _buildCardRowImage(cards, self._config, self._style.get("invert", False))
+                img = _buildCardRowImage(cards, self._config)
                 if img is not None:
                     self._p.set(invert=False)
                     self._p.image(img)

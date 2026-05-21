@@ -44,6 +44,7 @@ TASKS = [
         "drinks": None,
         "drinkType": "social",
         "rarity": "special",
+        "penalty": True,
     },
     {
         "title": "Luuppi",

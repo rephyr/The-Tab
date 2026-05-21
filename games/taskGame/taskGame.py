@@ -6,6 +6,7 @@ from core.game import Game
 from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent
 from dataclasses import dataclass, field
 from games.taskGame.tasks import TASKS
+from games.penalties import drawPenalty
 import random
 
 # Each task has:
@@ -26,6 +27,7 @@ class TaskGame(Game):
     activePairs: list = field(default_factory=list)   # [[player1, player2]]
     activeHuoras: list = field(default_factory=list)  # [[master, huora]]
     immunePlayers: list = field(default_factory=list) # players with one pending immunity
+    activePenalties: list = field(default_factory=list)  # [{"player": Player, "title": str, "turnsLeft": int}]
     doubleNext: bool = False
 
     def _buildPool(self) -> list:
@@ -53,6 +55,7 @@ class TaskGame(Game):
         running = True
         while running:
             for player in self.players:
+                self._tickPenalties()
                 self._showLinks()
                 while True:
                     cmd = input(f"\n{player.getName()}n vuoro -- paina Enter nostaaksesi (d = pakka): ").strip().lower()
@@ -83,9 +86,29 @@ class TaskGame(Game):
 
                 self._handlePostTask(task, targets, player)
 
-                quit = input("\nJatketaan? (Enter = kyllä, quit = lopeta): ").strip().lower()
-                if quit == "quit":
-                    running = False
+                while True:
+                    raw = input("\nJatketaan? (Enter = kyllä, quit = lopeta, Nimi:N = kirjaa juomat): ").strip()
+                    if raw.lower() == "quit":
+                        running = False
+                        break
+                    if not raw:
+                        break
+                    logged = False
+                    for token in raw.split():
+                        if ":" not in token:
+                            continue
+                        name, _, val = token.partition(":")
+                        if not val.isdigit():
+                            continue
+                        p = self._findPlayer(name)
+                        if p:
+                            self._assignDrinks(p, int(val))
+                            logged = True
+                        else:
+                            print(f"  Pelaajaa '{name}' ei löydy.")
+                    if not logged:
+                        print("  (Enter = jatka, quit = lopeta, tai esim. Teppo:3 Matti:2)")
+                if not running:
                     break
 
         self._interactiveGivePhase()
@@ -140,6 +163,19 @@ class TaskGame(Game):
             if p.getName().lower() == name.lower():
                 return p
         return None
+
+    def _tickPenalties(self) -> None:
+        """Decrement active timed penalties and announce when they expire."""
+        expired = []
+        for entry in self.activePenalties:
+            entry["turnsLeft"] -= 1
+            if entry["turnsLeft"] <= 0:
+                expired.append(entry)
+            else:
+                print(f"  [{entry['title']}] {entry['player'].getName()}: {entry['turnsLeft']} vuoro(a) jäljellä")
+        for entry in expired:
+            self.activePenalties.remove(entry)
+            print(f"  [{entry['title']}] PÄÄTTYI — {entry['player'].getName()} vapautui rangaistuksesta!")
 
     def _showLinks(self) -> None:
         """Print active pair and huora links if any exist."""
@@ -228,3 +264,39 @@ class TaskGame(Game):
                 else:
                     self.activeHuoras.append([drawer, target])
                     print(f"\nUusi huora: {target.getName()} juo aina kun {drawer.getName()} juo")
+
+        if task.get("penalty"):
+            self._applyPenaltyToLoser()
+
+    def _applyPenaltyToLoser(self) -> None:
+        """Draw a random penalty and apply it to the player who lost the competition."""
+        penalty = drawPenalty()
+        print(f"\n--- RANGAISTUS ---")
+        print(f">>> {penalty['title']}")
+        print(penalty["description"])
+
+        needsPlayer = penalty["drinkType"] in ("take", "give") or penalty.get("duration") is not None
+        if not needsPlayer:
+            return
+
+        raw = input("\nKuka hävisi? (nimi tai Enter ohittaaksesi): ").strip()
+        if not raw:
+            return
+        loser = self._findPlayer(raw)
+        if not loser:
+            print(f"  Pelaajaa '{raw}' ei löydy, ohitetaan.")
+            return
+
+        if penalty["drinkType"] == "take" and penalty["drinks"] is not None:
+            self._assignDrinks(loser, penalty["drinks"])
+        elif penalty["drinkType"] == "give" and penalty["drinks"] is not None:
+            loser.pendingGive += penalty["drinks"]
+            print(f"  {loser.getName()} saa antaa {penalty['drinks']} juomaa lopussa.")
+
+        if penalty.get("duration") is not None:
+            self.activePenalties.append({
+                "player": loser,
+                "title": penalty["title"],
+                "turnsLeft": penalty["duration"],
+            })
+            print(f"  {loser.getName()} on rangaistuksessa {penalty['duration']} vuoroa.")
