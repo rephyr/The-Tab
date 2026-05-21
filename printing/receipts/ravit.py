@@ -19,7 +19,7 @@ def formatBettingSlip(horses: list, bets: list, p) -> None:
     p.textln("-" * 24)
     for bet in bets:
         horseName = next((h["name"] for h in horses if h["id"] == bet["horseId"]), "?")
-        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} x{bet['amount']}")
+        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName}lle {bet['amount']} juomaa.")
     p.textln("=" * 24)
 
 
@@ -32,7 +32,8 @@ def formatRaceRound(event, p) -> None:
         if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
             bar = "-" * barLen + "@" + "-" * (15 - barLen)
-            p.textln(f"{pos['name']}\t[{bar}]")
+            p.textln(f"{pos['name']}")
+            p.textln(f"\t[{bar}]")
         else:
             label = "[KUOLI]" if pos["status"] == "dead" else "[POISTUI]"
             p.textln(f"{pos['name']}\t{label}")
@@ -61,7 +62,7 @@ def _hpBar(health, maxHealth, width=14) -> str:
 
 
 def formatTiebreakStart(event, p) -> None:
-    p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+    p.set(align="center", bold=True, double_width=True, double_height=True, invert=False)
     p.textln("TASAPELI!")
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     p.textln("=" * 24)
