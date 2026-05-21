@@ -13,6 +13,7 @@ class Player:
     name: str
     drinksTaken: int = 0
     drinksToGive: int = 0
+    pendingGive: int = 0
     hand: List["Cards"] = field(default_factory=list)
  
     def getName(self) -> str:

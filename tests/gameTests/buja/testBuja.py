@@ -4,6 +4,7 @@ from core.cards import Cards
 from core.deck import Deck
 from core.player import Player
 from games.bujaGame.buja import Buja
+from tests.testUtils import SilentTest
 
 def makePlayer(id=1, name="Test"):
     return Player(id=id, name=name)
@@ -17,18 +18,18 @@ def makeBuja():
     players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
     return Buja(players=players, deck=deck, config={})
 
-class TestBujaRedOrBlack(unittest.TestCase):
+class TestBujaRedOrBlack(SilentTest):
 
     def testCorrectRed(self):
         game = makeBuja()
         player = game.players[0]
 
-        with patch("builtins.input", return_value="r"), \
+        with patch("builtins.input", side_effect=["r", "1"]), \
              patch("builtins.print"), \
-             patch.object(game, "_draw", return_value=makeCard("A", "Hearts")), \
-             patch.object(game, "_chooseTarget", return_value=game.players[1]):
+             patch.object(game, "_draw", return_value=makeCard("A", "Hearts")):
 
             game._redOrBlack(player)
+            game._interactiveGivePhase()
 
         self.assertEqual(game.players[1].getDrinksTaken(), 1)
         self.assertEqual(player.drinksToGive, 1)
@@ -45,20 +46,21 @@ class TestBujaRedOrBlack(unittest.TestCase):
 
         self.assertEqual(player.getDrinksTaken(), 1)
 
-class TestBujaHigherOrLower(unittest.TestCase):
+class TestBujaHigherOrLower(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.game = makeBuja()
         self.player = self.game.players[0]
         self.player.addCardToHand(makeCard("7"))
 
     def testCorrect(self):
-        with patch("builtins.input", return_value="h"), \
+        with patch("builtins.input", side_effect=["h", "1"]), \
              patch("builtins.print"), \
-             patch.object(self.game, "_draw", return_value=makeCard("9")), \
-             patch.object(self.game, "_chooseTarget", return_value=self.game.players[1]):
+             patch.object(self.game, "_draw", return_value=makeCard("9")):
 
             self.game._higherOrLower(self.player)
+            self.game._interactiveGivePhase()
 
         self.assertEqual(self.game.players[1].getDrinksTaken(), 1)
 
@@ -80,21 +82,22 @@ class TestBujaHigherOrLower(unittest.TestCase):
 
         self.assertEqual(self.player.getDrinksTaken(), 2)
 
-class TestBujaInsideOrOutside(unittest.TestCase):
+class TestBujaInsideOrOutside(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.game = makeBuja()
         self.player = self.game.players[0]
         self.player.addCardToHand(makeCard("3"))
         self.player.addCardToHand(makeCard("9"))
 
     def testCorrect(self):
-        with patch("builtins.input", return_value="i"), \
+        with patch("builtins.input", side_effect=["i", "1"]), \
              patch("builtins.print"), \
-             patch.object(self.game, "_draw", return_value=makeCard("6")), \
-             patch.object(self.game, "_chooseTarget", return_value=self.game.players[1]):
+             patch.object(self.game, "_draw", return_value=makeCard("6")):
 
             self.game._insideOrOutside(self.player)
+            self.game._interactiveGivePhase()
 
         self.assertEqual(self.game.players[1].getDrinksTaken(), 1)
 
@@ -116,18 +119,18 @@ class TestBujaInsideOrOutside(unittest.TestCase):
 
         self.assertEqual(self.player.getDrinksTaken(), 2)
 
-class TestBujaSuit(unittest.TestCase):
+class TestBujaSuit(SilentTest):
 
     def testCorrect(self):
         game = makeBuja()
         player = game.players[0]
 
-        with patch("builtins.input", return_value="h"), \
+        with patch("builtins.input", side_effect=["h", "1"]), \
              patch("builtins.print"), \
-             patch.object(game, "_draw", return_value=makeCard("A", "Hearts")), \
-             patch.object(game, "_chooseTarget", return_value=game.players[1]):
+             patch.object(game, "_draw", return_value=makeCard("A", "Hearts")):
 
             game._suit(player)
+            game._interactiveGivePhase()
 
         self.assertEqual(game.players[1].getDrinksTaken(), 1)
 
@@ -143,9 +146,10 @@ class TestBujaSuit(unittest.TestCase):
 
         self.assertEqual(player.getDrinksTaken(), 1)
 
-class TestBujaBoard(unittest.TestCase):
+class TestBujaBoard(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.game = makeBuja()
         self.testiMatti = self.game.players[0]
         self.testiTimo = self.game.players[1]

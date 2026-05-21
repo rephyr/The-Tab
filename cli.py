@@ -217,7 +217,8 @@ def showPrintTest(config, debug):
         ("3", "Lautakortit",                     ["board"]),
         ("4", "Loppulasku",                      ["tally"]),
         ("5", "TaskGame-kuitit",                 ["tasks"]),
-        ("6", "Kaikki yllä",                     None),
+        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]),
+        ("7", "Kaikki yllä",                     None),
     ]
 
     optionMap = {key: parts for key, _, parts in options}
@@ -227,11 +228,11 @@ def showPrintTest(config, debug):
             print("\nTulosta testikuitit:")
             for key, label, _ in options:
                 print(f"{key}. {label}")
-            print("7. Takaisin")
+            print("8. Takaisin")
 
             choice = input("\nValinta: ").strip()
 
-            if choice == "7":
+            if choice == "8":
                 break
             elif choice in optionMap:
                 printTestReceipts(printer, optionMap[choice])
@@ -269,12 +270,12 @@ def runCli(adminMode=False, debug=False):
             if adminMode:
                 print("M - Hallitse dataa")
             if debug:
-                print("P - Tulosta testi")
-            print('\n(kirjoita "lopeta" poistuaksesi)')
+                print("P - Testi tulostus")
+            print('\n(kirjoita "quit" poistuaksesi)')
 
             userInput = input("\nValinta: ").strip()
 
-            if userInput.lower() == "lopeta":
+            if userInput.lower() == "quit":
                 break
 
             if userInput.lower() == "l":
@@ -355,7 +356,8 @@ def runCli(adminMode=False, debug=False):
             log = GameLog()
             store.gameTitle = gameClass.gameTitle
             log.on(LivePrinter(ReceiptPrinter(printerConfig, debug=debug), gameTitle=gameClass.gameTitle).hook)
-            log.on(store.hook)
+            if not debug:
+                log.on(store.hook)
             game = gameClass(players=players, log=log, config=gameConfig)
 
             print(f"\nAloitetaan {game.gameTitle}...\n")

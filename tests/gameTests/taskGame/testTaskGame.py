@@ -3,6 +3,7 @@ from unittest.mock import patch
 from core.player import Player
 from core.events import GameEndEvent
 from games.taskGame.taskGame import TaskGame
+from tests.testUtils import SilentTest
 
 DUMMY_TASKS = [
     {"title": "Test Task", "description": "Do something.", "players": 1, "drinks": None, "drinkType": "special", "rarity": "common"},
@@ -19,11 +20,11 @@ def makeTask(drinkType, drinks=None, title="Task", players=1, rarity="common"):
     return {"title": title, "description": "desc", "players": players, "drinks": drinks, "drinkType": drinkType, "rarity": rarity}
 
 
-class TestTaskGameRuns(unittest.TestCase):
+class TestTaskGameRuns(SilentTest):
     def testGameCompletes(self):
         game = TaskGame(players=makePlayers("Testi Timo", "Testi Teppo"))
         with patch("games.taskGame.taskGame.TASKS", DUMMY_TASKS):
-            with patch("builtins.input", side_effect=["", "q"]):
+            with patch("builtins.input", side_effect=["", "quit"]):
                 game.playRound()
 
     def testEmptyTasksExitsEarly(self):
@@ -38,7 +39,7 @@ class TestTaskGameRuns(unittest.TestCase):
         log = GameLog()
         game = TaskGame(players=makePlayers("Testi Timo", "Testi Teppo"), log=log)
         with patch("games.taskGame.taskGame.TASKS", DUMMY_TASKS):
-            with patch("builtins.input", side_effect=["", "q"]):
+            with patch("builtins.input", side_effect=["", "quit"]):
                 game.playRound()
         endEvents = [e for e in log.events if isinstance(e, GameEndEvent)]
         self.assertEqual(len(endEvents), 1)
@@ -63,7 +64,7 @@ class TestTaskGameRuns(unittest.TestCase):
         self.assertNotIn(drawer, targets)
 
 
-class TestDrinkTracking(unittest.TestCase):
+class TestDrinkTracking(SilentTest):
     def testTakeDrinks(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
         drawer = game.players[0]
@@ -81,8 +82,10 @@ class TestDrinkTracking(unittest.TestCase):
     def testGiveDrinks(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
         drawer, receiver = game.players[0], game.players[1]
-        with patch("builtins.input", return_value="Matti"):
+        with patch("builtins.input", return_value="Matti"), \
+             patch("builtins.print"):
             game._handlePostTask(makeTask("give", drinks=3), [drawer], drawer)
+            game._interactiveGivePhase()
         self.assertEqual(receiver.getDrinksTaken(), 3)
         self.assertEqual(drawer.drinksToGive, 3)
 
@@ -115,7 +118,7 @@ class TestDrinkTracking(unittest.TestCase):
         self.assertEqual(game.players[1].getDrinksTaken(), 0)
 
 
-class TestPlayerLinks(unittest.TestCase):
+class TestPlayerLinks(SilentTest):
     def testPairStored(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
         drawer, partner = game.players[0], game.players[1]
@@ -188,7 +191,7 @@ class TestPlayerLinks(unittest.TestCase):
         self.assertEqual(h2.getDrinksTaken(), 2)
 
 
-class TestImmunity(unittest.TestCase):
+class TestImmunity(SilentTest):
     def testImmunityGranted(self):
         game = TaskGame(players=makePlayers("Teppo"))
         drawer = game.players[0]
@@ -218,7 +221,7 @@ class TestImmunity(unittest.TestCase):
         self.assertEqual(player.getDrinksTaken(), 3)
 
 
-class TestRoulette(unittest.TestCase):
+class TestRoulette(SilentTest):
     def testHitPlayerDrinks(self):
         game = TaskGame(players=makePlayers("A", "B", "C"))
         task = makeTask("roulette", drinks=10, players="all")
@@ -245,7 +248,7 @@ class TestRoulette(unittest.TestCase):
         self.assertEqual(mockInput.call_count, 2)
 
 
-class TestDoubleNext(unittest.TestCase):
+class TestDoubleNext(SilentTest):
     def testTuplaSetsFlagAndClearsOnNextCard(self):
         game = TaskGame(players=makePlayers("Teppo"))
         game._handlePostTask(makeTask("special", title="Tupla"), [game.players[0]], game.players[0])
@@ -275,7 +278,7 @@ class TestDoubleNext(unittest.TestCase):
         self.assertFalse(game.doubleNext)
 
 
-class TestDeckCommand(unittest.TestCase):
+class TestDeckCommand(SilentTest):
     def testDeckCommandShowsCount(self):
         from printing.log import GameLog
         game = TaskGame(players=makePlayers("A"), log=GameLog(), config={"commonCount": 1, "specialCount": 1})
@@ -309,7 +312,7 @@ class TestDeckCommand(unittest.TestCase):
         self.assertIn("1/3", printed)
 
 
-class TestBuildPool(unittest.TestCase):
+class TestBuildPool(SilentTest):
     def testCommonAndSpecialCounts(self):
         tasks = [
             makeTask("special", title="Common", rarity="common"),

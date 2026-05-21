@@ -3,7 +3,8 @@ Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
-from core.events import TaskDrawEvent
+from printing.receipts.ravit import formatBettingSlip, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
+from core.events import TaskDrawEvent, HorseEventFiredEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 
 TEST_PHASES = [
     ("Red or Black", {
@@ -103,6 +104,55 @@ TEST_TASK_DRAWS = [
 ]
 
 
+TEST_HORSES_RAVIT = [
+    {"id": 1, "name": "Ukko",     "speed": 4, "endurance": 5, "luck": 3, "odds": 1.3,
+     "position": 20, "status": "racing", "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
+    {"id": 2, "name": "Tuulikki", "speed": 2, "endurance": 2, "luck": 1, "odds": 3.0,
+     "position": 14, "status": "racing", "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
+    {"id": 3, "name": "Laukki",   "speed": 1, "endurance": 2, "luck": 1, "odds": 5.0,
+     "position": 5,  "status": "dead",   "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0},
+]
+
+TEST_BETS_RAVIT = [
+    {"player": "Testi Tatti", "horseId": 1, "amount": 3},
+    {"player": "Testi Matti", "horseId": 2, "amount": 2},
+]
+
+TEST_RAVIT_FINAL_POSITIONS = [
+    {"horseId": 1, "horseName": "Ukko",     "position": 20, "place": 1, "status": "racing"},
+    {"horseId": 2, "horseName": "Tuulikki", "position": 14, "place": 2, "status": "racing"},
+    {"horseId": 3, "horseName": "Laukki",   "position": 5,  "place": 4, "status": "dead"},
+]
+
+TEST_RAVIT_SCORES = [
+    {"name": "Testi Tatti", "drank": 0, "gave": 2},
+    {"name": "Testi Matti", "drank": 2, "gave": 0},
+]
+
+TEST_HORSE_EVENT_RAVIT = HorseEventFiredEvent(
+    roundNumber=4, horseId=3, horseName="Laukki",
+    eventType="death", detail="Laukki kaatuu ja poistuu kilpailusta!",
+)
+
+TEST_TIEBREAK_START = TiebreakStartEvent(
+    combatants=[
+        {"id": 1, "name": "Ukko",   "odds": 1.5, "health": 28, "maxHealth": 28, "strength": 4},
+        {"id": 4, "name": "Myrsky", "odds": 3.0, "health": 20, "maxHealth": 20, "strength": 2},
+    ]
+)
+
+TEST_TIEBREAK_ELIMINATION = TiebreakEliminationEvent(
+    loserName="Myrsky",
+    remaining=["Ukko"],
+    combatants=[
+        {"name": "Ukko",   "health": 19, "maxHealth": 28, "strength": 4},
+        {"name": "Myrsky", "health": 0,  "maxHealth": 20, "strength": 2},
+    ],
+)
+
+TEST_TIEBREAK_WINNER = TiebreakWinnerEvent(winnerName="Ukko", health=19, maxHealth=28, strength=4)
+
+
 def printTestReceipts(printer, parts=None) -> None:
     """Print test receipts for the given parts.
 
@@ -110,7 +160,8 @@ def printTestReceipts(printer, parts=None) -> None:
     Pass None to print all.
     """
     if parts is None:
-        parts = ["turns", "hands", "board", "tally", "tasks"]
+        parts = ["turns", "hands", "board", "tally", "tasks",
+                 "ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]
 
     if "turns" in parts:
         for phaseName, turn in TEST_PHASES:
@@ -130,3 +181,25 @@ def printTestReceipts(printer, parts=None) -> None:
     if "tasks" in parts:
         for event in TEST_TASK_DRAWS:
             printer.printWith(lambda p, e=event: formatTaskDraw(e, p))
+
+    if "ravit-betting" in parts:
+        printer.printWith(lambda p: formatBettingSlip(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
+
+    if "ravit-event" in parts:
+        printer.printWith(lambda p, e=TEST_HORSE_EVENT_RAVIT: formatHorseEvent(e, p))
+
+    if "ravit-tiebreak" in parts:
+        printer.printWith(lambda p, e=TEST_TIEBREAK_START: formatTiebreakStart(e, p))
+        printer.printWith(lambda p, e=TEST_TIEBREAK_ELIMINATION: formatTiebreakElimination(e, p))
+        printer.printWith(lambda p, e=TEST_TIEBREAK_WINNER: formatTiebreakWinner(e, p))
+
+    if "ravit-final" in parts:
+        ravitData = {
+            "players": ["Testi Tatti", "Testi Matti"],
+            "timestamp": "2026-05-21 22:00",
+            "horses": TEST_HORSES_RAVIT,
+            "bets": TEST_BETS_RAVIT,
+            "finalPositions": TEST_RAVIT_FINAL_POSITIONS,
+            "scores": TEST_RAVIT_SCORES,
+        }
+        printer.printWith(lambda p, d=ravitData: formatRavitFinal(d, p))
