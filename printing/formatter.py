@@ -3,7 +3,8 @@ Receipt formatter functions. Each one writes to a printer object p using
 p.set(), p.textln(), and p.text(). formatReceipt() runs the full game through all of them.
 """
 
-_W = 24
+# Adjust to match how many characters fit across your printer in normal font.
+_W = 32
 
 
 def _wrapText(text: str, width: int = _W) -> list:
@@ -25,15 +26,18 @@ def _wrapText(text: str, width: int = _W) -> list:
 
 def formatTurn(phaseName: str, turn: dict, p) -> None:
     """Print one player's turn receipt for a phase."""
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(align="center", bold=True)
     p.textln(phaseName.upper())
     p.set(align="left", bold=False)
-    p.textln("-" * 24)
+    p.textln("-" * _W)
     p.textln(f"Pelaaja : {turn['player']}")
     if phaseName == "Välistä vai ulkoa?" and turn.get("handBefore"):
         hand = turn["handBefore"]
-        p.textln(f"Kädessä : {' | '.join(hand)}")
+        p.textln("Kädessä:")
+        p.set(align="center", bold=True, double_width=True, double_height=True)
+        p.textln("  ".join(hand))
+        p.set(align="left", bold=False, double_width=False, double_height=False)
     if turn["guess"]:
         p.textln(f"Arvaus  : {turn['guess']}")
     if turn["card"]:
@@ -53,7 +57,15 @@ def formatTurn(phaseName: str, turn: dict, p) -> None:
     elif turn["drinks"] > 0:
         note = f" ({turn['note']})" if turn["note"] else ""
         p.textln(f"Väärin! Juo {turn['drinks']}{note}.")
-    p.textln("-" * 24)
+    currentHand = list(turn.get("handBefore") or [])
+    if turn.get("card"):
+        currentHand.append(turn["card"])
+    if currentHand:
+        p.textln("-" * _W)
+        p.set(align="center", bold=True, double_width=True, double_height=True)
+        p.textln("  ".join(currentHand))
+        p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("-" * _W)
 
 
 def formatHand(player: str, cards: list, p) -> None:
@@ -61,21 +73,21 @@ def formatHand(player: str, cards: list, p) -> None:
     p.set(align="center", bold=True)
     p.textln(player.upper())
     p.set(align="left", bold=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("  ".join(cards))
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatBoardCard(card: dict, p) -> None:
     """Print a board card receipt with its action and outcomes."""
     p.set(align="center", bold=True)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
     p.textln(card["card"])
     p.set(align="left", bold=False, invert=False)
-    p.textln("-" * 24)  
+    p.textln("-" * _W)
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     p.textln(f"{card['action'].upper()} {card['drinks']}")
     if not card["matched"]:
@@ -93,7 +105,7 @@ def formatBoardCard(card: dict, p) -> None:
             p.textln(name)
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     p.set(align="center", bold=True)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatTally(scores: list, p) -> None:
@@ -101,10 +113,10 @@ def formatTally(scores: list, p) -> None:
     p.set(align="center", bold=True)
     p.textln("LOPPUSALDO")
     p.set(align="left", bold=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     for score in scores:
         p.textln(f"{score['name']}: joi {score['drank']} | antoi {score['gave']}")
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatRouletteResult(event, p) -> None:
@@ -112,11 +124,11 @@ def formatRouletteResult(event, p) -> None:
     p.set(align="center", bold=True)
     p.textln("VENÄLÄINEN RULETTI")
     p.set(align="left", bold=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln(event.player.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     if event.hit:
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
         p.textln("OSUMA!")
@@ -126,7 +138,7 @@ def formatRouletteResult(event, p) -> None:
         p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln("OHI!")
         p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatTaskDraw(event, p) -> None:
@@ -134,12 +146,12 @@ def formatTaskDraw(event, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln(event.title.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     for line in _wrapText("Pelaajat: " + ", ".join(event.targets)):
         p.textln(line)
     for line in _wrapText(event.description):
         p.textln(line)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatReceipt(data: dict, p) -> None:
