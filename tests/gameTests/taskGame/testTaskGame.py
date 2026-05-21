@@ -89,19 +89,22 @@ class TestDrinkTracking(SilentTest):
         self.assertEqual(receiver.getDrinksTaken(), 3)
         self.assertEqual(drawer.drinksToGive, 3)
 
-    def testGiveToSelfRejected(self):
+    def testGiveCannotTargetSelf(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
-        drawer = game.players[0]
-        with patch("builtins.input", return_value="Teppo"):
-            game._handlePostTask(makeTask("give", drinks=3), [drawer], drawer)
+        drawer, other = game.players
+        drawer.pendingGive = 3
+        with patch("builtins.input", side_effect=["Teppo", "Matti"]):
+            game._interactiveGivePhase()
         self.assertEqual(drawer.getDrinksTaken(), 0)
-        self.assertEqual(drawer.drinksToGive, 0)
+        self.assertEqual(other.getDrinksTaken(), 3)
 
-    def testGiveUnknownPlayerSkipped(self):
+    def testGiveUnknownNameRetriesUntilValid(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
-        with patch("builtins.input", return_value="Pekka"):
-            game._handlePostTask(makeTask("give", drinks=3), [game.players[0]], game.players[0])
-        self.assertEqual(game.players[1].getDrinksTaken(), 0)
+        drawer, other = game.players
+        drawer.pendingGive = 3
+        with patch("builtins.input", side_effect=["Pekka", "Matti"]):
+            game._interactiveGivePhase()
+        self.assertEqual(other.getDrinksTaken(), 3)
 
     def testSocialDrinks(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
@@ -596,12 +599,6 @@ class TestChainEventEmission(SilentTest):
 
 
 class TestInteractiveLinkCard(SilentTest):
-    def testPairCardPromptsForTarget(self):
-        game = TaskGame(players=makePlayers("Teppo", "Matti"))
-        with patch("builtins.input", return_value="Matti") as mock_input:
-            game._handlePostTask(makeTask("link", title="Pari"), [game.players[0]], game.players[0])
-        mock_input.assert_called()
-
     def testPairCardPickByNumber(self):
         game = TaskGame(players=makePlayers("Teppo", "Matti"))
         drawer, partner = game.players
