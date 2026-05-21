@@ -1,7 +1,27 @@
-"""Receipt formatters for the Ravit horse-race game."""
+"""
+Receipt formatters for the Ravit horse-race game.
+
+Receipts are printed in this order during a game:
+
+formatHorseList        — before betting; lists horses and odds
+formatBettingReceipt   — after all bets are placed
+formatRaceRound        — every round (roundNumber 0 = starting line)
+formatHorseEvent       — per horse when a notable event fires
+formatTiebreakStart    — when tied horses enter sudden-death combat
+formatTiebreakRound    — each combat round
+formatTiebreakElimination — when a combatant is eliminated (3+ fighters only)
+formatTiebreakWinner   — when one combatant remains
+formatRavitFinal       — end of game; standings and drink scores
+
+Printer API used in this module:
+
+p.set(align, bold, double_width, double_height, invert)
+p.textln(text) — prints one line; use a tab character to split into two columns
+"""
 
 
 def formatHorseList(horses: list, p) -> None:
+    """Print the horse roster with ids and odds."""
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("RAVIT")
     p.set(align="left", bold=False, double_width=False, double_height=False)
@@ -16,6 +36,7 @@ def formatHorseList(horses: list, p) -> None:
 
 
 def formatBettingReceipt(horses: list, bets: list, p) -> None:
+    """Print each player's bet — horse id, name, and amount."""
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("VEDONLYÖNTI")
     p.set(align="left", bold=False, double_width=False, double_height=False)
@@ -27,6 +48,7 @@ def formatBettingReceipt(horses: list, bets: list, p) -> None:
 
 
 def formatRaceRound(event, p) -> None:
+    """Print the track state for one round. roundNumber 0 prints as the starting line."""
     p.set(align="center", bold=True)
     p.textln("LÄHTOVIIVA" if event.roundNumber == 0 else f"KIERROS {event.roundNumber}")
     p.set(align="left", bold=False)
@@ -48,6 +70,12 @@ def formatRaceRound(event, p) -> None:
 
 
 def formatHorseEvent(event, p) -> None:
+    """Print a mid-race horse event card.
+
+    lightning or fightDeath — inverted R.I.P. header
+    death (DNF)             — normal DNF header
+    other events            — normal horse name header
+    """
     if event.eventType in ("lightning", "fightDeath"):
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
         p.textln(f"R.I.P {event.horseName.upper()}")
@@ -78,6 +106,8 @@ def _hpBar(health, maxHealth, width=14) -> str:
 
 
 def formatTiebreakStart(event, p) -> None:
+    """Print the tiebreak announcement with all combatants' starting HP and strength."""
+
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
     p.textln("TASAPELI!")
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
@@ -104,6 +134,8 @@ def _formatCombatantBars(combatants, p) -> None:
 
 
 def formatTiebreakRound(event, p) -> None:
+    """Print one tiebreak combat round. In a 2-fighter duel the final round becomes an R.I.P. card."""
+
     dead = [c for c in event.combatants if c["health"] <= 0]
     isDuel = len(event.combatants) == 2
     if dead and isDuel:
@@ -120,6 +152,8 @@ def formatTiebreakRound(event, p) -> None:
 
 
 def formatTiebreakElimination(event, p) -> None:
+    """Print an R.I.P. card when a combatant is eliminated in a 3+ fighter tiebreak."""
+
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
     p.textln(f"R.I.P {event.loserName.upper()}")
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
@@ -129,6 +163,7 @@ def formatTiebreakElimination(event, p) -> None:
 
 
 def formatTiebreakWinner(event, p) -> None:
+    """Print the tiebreak winner announcement."""
     p.set(align="left", bold=False)
     p.textln("=" * 24)
     p.set(align="center", bold=True, double_width=True, double_height=True)
@@ -138,6 +173,12 @@ def formatTiebreakWinner(event, p) -> None:
 
 
 def formatRavitFinal(data: dict, p) -> None:
+    """Print the end-of-game summary: timestamp, final standings, and drink scores.
+
+    data keys: players, timestamp, horses, bets, finalPositions, scores
+    finalPositions — {horseId, horseName, position, place, status}; status racing/dnf/dead
+    scores         — {name, drank, gave}
+    """
     trackLength = len(data.get("finalPositions", [])) and max(
         (fp["position"] for fp in data.get("finalPositions", []) if fp["status"] == "racing"),
         default=20
@@ -168,7 +209,9 @@ def formatRavitFinal(data: dict, p) -> None:
             p.textln(f"KUOLLUT {name}\tkerroin: x{odds}")
             p.set(invert=False)
         elif fp["status"] == "dnf":
+            p.set(invert=True)
             p.textln(f"DNF {name}\tkerroin: x{odds}")
+            p.set(invert=False)
         else:
             p.textln(f"{fp['place']}. {name}\tkerroin: x{odds}")
     p.textln("=" * 24)
