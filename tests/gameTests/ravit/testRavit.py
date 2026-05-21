@@ -178,6 +178,7 @@ class TestHorseMovement(SilentTest):
 
 class TestRandomEvents(SilentTest):
     def _forceEvent(self, game, horse, eventType):
+        game._roundNumber = 2
         with patch("random.random", return_value=0.0), \
              patch("random.choices", return_value=[eventType]):
             game._tryFireEvent(horse)
@@ -190,6 +191,7 @@ class TestRandomEvents(SilentTest):
 
     def testBackwardsMovePositionBack(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h = makeHorse(luck=3)
         h["position"] = 10
         with patch("random.random", return_value=0.0), \
@@ -229,6 +231,7 @@ class TestRandomEvents(SilentTest):
 
     def testMotivatedSetsMotivatedRounds(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h = makeHorse(luck=3)
         with patch("random.random", return_value=0.0), \
              patch("random.choices", return_value=["motivated"]), \
@@ -238,6 +241,7 @@ class TestRandomEvents(SilentTest):
 
     def testSlipFallMovesBackAndStumbles(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h = makeHorse(luck=3)
         h["position"] = 10
         with patch("random.random", return_value=0.5), \
@@ -249,6 +253,7 @@ class TestRandomEvents(SilentTest):
 
     def testConfusedEventSetsRounds(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h = makeHorse(luck=3)
         with patch("random.random", return_value=0.5), \
              patch("random.choices", return_value=["confused"]), \
@@ -258,6 +263,7 @@ class TestRandomEvents(SilentTest):
 
     def testLightningKillsHorse(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h = makeHorse(luck=3)
         with patch("random.random", return_value=0.5), \
              patch("random.choices", return_value=["lightning"]):
@@ -266,6 +272,7 @@ class TestRandomEvents(SilentTest):
 
     def testOvertakeJumpsAheadOfNearbyHorse(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h1 = makeHorse(id=1, name="Ukko", luck=5)
         h2 = makeHorse(id=2, name="Myrsky")
         h1["position"] = 8
@@ -278,6 +285,7 @@ class TestRandomEvents(SilentTest):
 
     def testOvertakeDoesNothingIfNoHorseWithin3(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
         h1 = makeHorse(id=1, name="Ukko", luck=5)
         h2 = makeHorse(id=2, name="Myrsky")
         h1["position"] = 5
@@ -290,6 +298,7 @@ class TestRandomEvents(SilentTest):
 
     def testNoEventWhenRandomHighEnough(self):
         game = makeRavit({"trackLength": 20, "eventChance": 0.15})
+        game._roundNumber = 2
         h = makeHorse(luck=3)
         h["position"] = 5
         with patch("random.random", return_value=0.99):

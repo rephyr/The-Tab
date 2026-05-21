@@ -3,7 +3,7 @@ Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
-from printing.receipts.ravit import formatBettingSlip, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
+from printing.receipts.ravit import formatHorseList, formatBettingReceipt, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
 from core.events import TaskDrawEvent, HorseEventFiredEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 
 TEST_PHASES = [
@@ -183,7 +183,8 @@ def printTestReceipts(printer, parts=None) -> None:
             printer.printWith(lambda p, e=event: formatTaskDraw(e, p))
 
     if "ravit-betting" in parts:
-        printer.printWith(lambda p: formatBettingSlip(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
+        printer.printWith(lambda p: formatHorseList(TEST_HORSES_RAVIT, p))
+        printer.printWith(lambda p: formatBettingReceipt(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
 
     if "ravit-event" in parts:
         printer.printWith(lambda p, e=TEST_HORSE_EVENT_RAVIT: formatHorseEvent(e, p))

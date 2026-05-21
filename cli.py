@@ -296,7 +296,7 @@ def runCli(adminMode=False, debug=False):
 
     config = Config()
     store = PlayerStore()
-    receiptMode = False
+    receiptMode = True
     saveData = True
     sessionHistory = []
 
@@ -330,7 +330,7 @@ def runCli(adminMode=False, debug=False):
                 continue
 
             if userInput.lower() == "s":
-                showSessionHistory(sessionHistory)
+                showSession(store)
                 continue
 
             if userInput.lower() == "m" and adminMode:

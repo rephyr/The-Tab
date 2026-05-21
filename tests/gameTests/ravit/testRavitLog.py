@@ -2,7 +2,7 @@ import unittest
 from tests.testUtils import SilentTest
 from unittest.mock import patch
 from core.player import Player
-from core.events import GameStartEvent, GameEndEvent, RaceStartEvent, HorseEventFiredEvent, RaceFinishedEvent
+from core.events import GameStartEvent, GameEndEvent, RaceStartEvent, BetsPlacedEvent, HorseEventFiredEvent, RaceFinishedEvent
 from games.ravitGame.ravit import RavitGame
 from printing.log import GameLog
 
@@ -44,12 +44,17 @@ class TestRavitLogIntegration(SilentTest):
         raceStarts = [e for e in log.events if isinstance(e, RaceStartEvent)]
         self.assertEqual(len(raceStarts), 1)
 
-    def testRaceStartCarriesHorsesAndBets(self):
+    def testRaceStartCarriesHorses(self):
         game, log = makeRavitWithLog()
         _runWithInputs(game, ["1", "1", "2", "1", ""] * 20)
         rs = next(e for e in log.events if isinstance(e, RaceStartEvent))
         self.assertEqual(len(rs.horses), 2)
-        self.assertEqual(len(rs.bets), 2)
+
+    def testBetsPlacedCarriesBets(self):
+        game, log = makeRavitWithLog()
+        _runWithInputs(game, ["1", "1", "2", "1", ""] * 20)
+        bp = next(e for e in log.events if isinstance(e, BetsPlacedEvent))
+        self.assertEqual(len(bp.bets), 2)
 
     def testRaceFinishedEventPresent(self):
         game, log = makeRavitWithLog()
@@ -74,6 +79,7 @@ class TestRavitLogIntegration(SilentTest):
     def testHorseEventFiredWhenForced(self):
         game, log = makeRavitWithLog()
         game.config["eventChance"] = 1.0
+        game.config["trackLength"] = 20
         with patch("random.choices", return_value=["boost"]):
             _runWithInputs(game, ["1", "1", "2", "1", ""] * 20)
         events = [e for e in log.events if isinstance(e, HorseEventFiredEvent)]

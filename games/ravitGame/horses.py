@@ -9,7 +9,8 @@ HORSE_NAMES = [
     "Kalsarikännit", "Turbovauhti", "Pikaliito", "Brad De Veluwe",
     "Charme Asserda", "Hurjapää", "Voittamaton", "Häviämätön",
     "Keisari Suuri", "Tulikavio", "Viesker", "Pata Ässä", "Risti seiska",
-    "Arpa", "Saamaton"
+    "Arpa", "Saamaton", "Ahdin", "Lötinä", "Kylae Lôti Së The III", "Täräyttäjä",
+    "Massikeisari", "Târqi Lîz Hepü Nim", "Vetäjä", "Työntö", "Humma Humala"
 ]
 
 
@@ -31,7 +32,7 @@ def _generateHorse(horseId: int, name: str) -> dict:
         "motivatedRoundsLeft": 0,
         "fightRoundsLeft": 0,
         "fightOpponent": None,
-        "fightStrength": random.randint(1, 5),
+        "fightStrength": random.randint(5, 10),
         "fightMaxHealth": random.randint(15, 30),
         "fightHealth": 0,
         "confusedRoundsLeft": 0,

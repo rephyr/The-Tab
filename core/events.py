@@ -101,8 +101,13 @@ class RaceRoundEvent:
 class RaceStartEvent:
     players: list
     horses: list
-    bets: list
     timestamp: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class BetsPlacedEvent:
+    horses: list
+    bets: list
 
 
 @dataclass

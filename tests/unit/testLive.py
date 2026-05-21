@@ -5,7 +5,7 @@ from core.events import (
     DrinkEvent, GiveEvent, ShareEvent,
     BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
     TaskDrawEvent, RouletteResultEvent,
-    RaceStartEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
+    RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
     TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
 )
 from printing.log import GameLog
@@ -205,7 +205,11 @@ class TestNullPrinterWithLivePrinter(SilentTest):
 
     def testRaceStartDoesNotCrash(self):
         log = self._makeLog()
-        log.add(RaceStartEvent(players=["A", "B"], horses=[], bets=[]))
+        log.add(RaceStartEvent(players=["A", "B"], horses=[]))
+
+    def testBetsPlacedDoesNotCrash(self):
+        log = self._makeLog()
+        log.add(BetsPlacedEvent(horses=[], bets=[]))
 
     def testRaceRoundDoesNotCrash(self):
         log = self._makeLog()
