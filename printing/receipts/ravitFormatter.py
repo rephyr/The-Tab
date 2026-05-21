@@ -38,11 +38,11 @@ def formatHorseList(horses: list, p) -> None:
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * _W)
     p.set(bold=True)
-    p.textln("HEVOSET")
+    p.textln(f"{'HEVOSET':<16}kerroin")
     p.set(bold=False)
     p.textln("-" * _W)
     for h in horses:
-        p.textln(f"#{h['id']} {h['name']:<12}kerroin: x{h['odds']}")
+        p.textln(f"#{h['id']} {h['name']:<12} x{h['odds']}")
     p.textln("=" * _W)
 
 
