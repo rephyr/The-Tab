@@ -265,7 +265,6 @@ class Buja(Game):
                 if not matchedPlayers:
                     print("Ei osumia.")
                 elif action == "kippistä":
-                    self.emit(BoardCardDoneEvent())
                     for player in matchedPlayers:
                         target = self._chooseTarget(player)
                         print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
@@ -273,6 +272,7 @@ class Buja(Game):
                         target.addDrinks(drinks)
                         player.addDrinksToGive(drinks)
                         self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+                    self.emit(BoardCardDoneEvent())
                     continue
                 else:
                     for player in matchedPlayers:
@@ -294,8 +294,6 @@ class Buja(Game):
         matchedPlayers = [p for p in self.players if p.hasRank(finalCard.rank)]
         self.emit(BoardCardEvent(str(finalCard), "kippistä", finalDrinks, [p.getName() for p in matchedPlayers]))
 
-        self.emit(BoardCardDoneEvent())
-
         if not matchedPlayers:
             print("Ei osumia.")
         else:
@@ -306,6 +304,8 @@ class Buja(Game):
                 target.addDrinks(finalDrinks)
                 player.addDrinksToGive(finalDrinks)
                 self.emit(ShareEvent(player.getName(), target.getName(), finalDrinks))
+
+        self.emit(BoardCardDoneEvent())
 
         print("\n=== LAUTA LOPPU ===\n")
 

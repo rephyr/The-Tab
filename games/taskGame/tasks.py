@@ -157,6 +157,7 @@ TASKS = [
         "drinks": None,
         "drinkType": "special",
         "rarity": "special",
+        "key": "immunity",
     },
     {
         "title": "Tupla",
@@ -165,5 +166,6 @@ TASKS = [
         "drinks": None,
         "drinkType": "special",
         "rarity": "special",
+        "key": "doubleNext",
     },
 ]

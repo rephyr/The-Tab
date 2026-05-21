@@ -16,8 +16,11 @@ def makePlayers(*names):
     return [Player(i + 1, name) for i, name in enumerate(names)]
 
 
-def makeTask(drinkType, drinks=None, title="Task", players=1, rarity="common"):
-    return {"title": title, "description": "desc", "players": players, "drinks": drinks, "drinkType": drinkType, "rarity": rarity}
+def makeTask(drinkType, drinks=None, title="Task", players=1, rarity="common", key=None):
+    t = {"title": title, "description": "desc", "players": players, "drinks": drinks, "drinkType": drinkType, "rarity": rarity}
+    if key is not None:
+        t["key"] = key
+    return t
 
 
 class TestTaskGameRuns(SilentTest):
@@ -203,7 +206,7 @@ class TestImmunity(SilentTest):
     def testImmunityGranted(self):
         game = TaskGame(players=makePlayers("Teppo"))
         drawer = game.players[0]
-        game._handlePostTask(makeTask("special", title="Immunitetti"), [drawer], drawer)
+        game._handlePostTask(makeTask("special", title="Immunitetti", key="immunity"), [drawer], drawer)
         self.assertIn(drawer, game.immunePlayers)
 
     def testImmunityBlocksDrink(self):
@@ -259,7 +262,7 @@ class TestRoulette(SilentTest):
 class TestDoubleNext(SilentTest):
     def testTuplaSetsFlagAndClearsOnNextCard(self):
         game = TaskGame(players=makePlayers("Teppo"))
-        game._handlePostTask(makeTask("special", title="Tupla"), [game.players[0]], game.players[0])
+        game._handlePostTask(makeTask("special", title="Tupla", key="doubleNext"), [game.players[0]], game.players[0])
         self.assertTrue(game.doubleNext)
         with patch("builtins.input", return_value=""):
             game._handlePostTask(makeTask("take", drinks=3), [game.players[0]], game.players[0])

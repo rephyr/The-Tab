@@ -240,12 +240,6 @@ class RavitGame(Game):
             eliminated = [h for h in thisRound if h["fightHealth"] <= 0]
             combatants = [h for h in thisRound if h["fightHealth"] > 0]
 
-            if not combatants:
-                survivor = random.choice(eliminated)
-                survivor["fightHealth"] = 1
-                combatants = [survivor]
-                eliminated = [h for h in eliminated if h["id"] != survivor["id"]]
-
             self._printCombatantBars(thisRound)
 
             allState = [
@@ -262,6 +256,12 @@ class RavitGame(Game):
                     remaining=[h["name"] for h in combatants],
                     combatants=allState,
                 ))
+
+            if not combatants:
+                print(f"\n{'*' * 40}")
+                print("  KAIKKI KAATUIVAT! Ei voittajaa.")
+                print(f"{'*' * 40}\n")
+                return None
 
         winner = combatants[0]
         print(f"\n{'*' * 40}")
@@ -298,7 +298,8 @@ class RavitGame(Game):
             closeFinish = [h for h in aliveHorses if topPos - h["position"] <= 1]
             if len(closeFinish) > 1:
                 winner = self._tiebreakFight(closeFinish)
-                aliveHorses = [winner] + [h for h in aliveHorses if h["id"] != winner["id"]]
+                if winner is not None:
+                    aliveHorses = [winner] + [h for h in aliveHorses if h["id"] != winner["id"]]
 
         finalPositions = []
         for place, horse in enumerate(aliveHorses, start=1):
@@ -341,12 +342,13 @@ class RavitGame(Game):
         """Assign drinks: dead-horse bettors drink double, winner gives to last-place bettors, rest drink their bet."""
         aliveHorses = [h for h in self.horses if h["status"] == "racing"]
         if not aliveHorses:
-            # Edge case: all dead no winner
             for bet in self.bets:
                 player = self._findPlayer(bet["player"])
                 if player:
+                    horse = self._getHorseById(bet["horseId"])
+                    reason = "hevonen kuoli" if horse["status"] == "dead" else "hevonen ei pystynyt jatkamaan"
                     player.addDrinks(bet["amount"] * 2)
-                    self.emit(DrinkEvent(player=bet["player"], amount=bet["amount"] * 2, reason="hevonen kuoli"))
+                    self.emit(DrinkEvent(player=bet["player"], amount=bet["amount"] * 2, reason=reason))
         else:
             winnerId = max(aliveHorses, key=lambda h: h["position"])["id"]
             minPos = min(h["position"] for h in aliveHorses)
