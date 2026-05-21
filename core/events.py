@@ -83,8 +83,64 @@ class TaskDrawEvent:
     description: str
     targets: list
 
-21
 @dataclass
 class GameEndEvent:
     scores: list
     timestamp: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class RaceRoundEvent:
+    roundNumber: int
+    trackLength: int
+    positions: list   # [{"id", "name", "position", "status", "tiredRoundsLeft", "stumbleRoundsLeft"}, ...]
+    raceEvents: list  # [{"horseName", "eventType", "detail"}, ...] events that fired this round
+
+
+@dataclass
+class RaceStartEvent:
+    players: list
+    horses: list
+    bets: list
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class HorseEventFiredEvent:
+    roundNumber: int
+    horseId: int
+    horseName: str
+    eventType: str
+    detail: str
+
+
+@dataclass
+class RaceFinishedEvent:
+    roundNumber: int
+    finalPositions: list
+
+
+@dataclass
+class TiebreakStartEvent:
+    combatants: list  # [{"id", "name", "odds", "health", "maxHealth", "strength"}, ...]
+
+
+@dataclass
+class TiebreakRoundEvent:
+    roundNumber: int
+    combatants: list  # [{"name", "health", "maxHealth", "strength"}, ...] state after damage
+
+
+@dataclass
+class TiebreakEliminationEvent:
+    loserName: str
+    remaining: list       # names still in the fight
+    combatants: list      # [{"name", "health", "maxHealth", "strength"}, ...] full state incl. loser at 0 HP
+
+
+@dataclass
+class TiebreakWinnerEvent:
+    winnerName: str
+    health: int
+    maxHealth: int
+    strength: int

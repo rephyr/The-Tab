@@ -1,7 +1,8 @@
 import unittest
 from core.cards import Cards
+from tests.testUtils import SilentTest
 
-class TestCards(unittest.TestCase):
+class TestCards(SilentTest):
 
     def testStr(self):
         self.assertEqual(str(Cards("A", "Hearts")), "♥A")

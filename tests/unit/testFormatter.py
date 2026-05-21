@@ -1,6 +1,7 @@
 import unittest
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatTaskDraw, formatRouletteResult
 from core.events import TaskDrawEvent, RouletteResultEvent
+from tests.testUtils import SilentTest
 
 class MockPrinter:
     def __init__(self):
@@ -25,7 +26,7 @@ def makeTurn(player="Testi Matti", guess="Red", card="♥A", correct=True,
         "handBefore": handBefore or [],
     }
 
-class TestFormatTurn(unittest.TestCase):
+class TestFormatTurn(SilentTest):
 
     def testShowsPlayerName(self):
         p = MockPrinter()
@@ -76,7 +77,7 @@ class TestFormatTurn(unittest.TestCase):
         formatTurn("Red or Black", makeTurn(), p)
         self.assertEqual(p.cuts, 0)
 
-class TestFormatHand(unittest.TestCase):
+class TestFormatHand(SilentTest):
 
     def testShowsPlayerName(self):
         p = MockPrinter()
@@ -93,7 +94,7 @@ class TestFormatHand(unittest.TestCase):
         formatHand("Testi Matti", ["♥A"], p)
         self.assertEqual(p.cuts, 0)
 
-class TestFormatBoardCard(unittest.TestCase):
+class TestFormatBoardCard(SilentTest):
 
     def testShowsCard(self):
         p = MockPrinter()
@@ -135,7 +136,7 @@ class TestFormatBoardCard(unittest.TestCase):
         formatBoardCard(card, p)
         self.assertTrue(any("Testi Matti" in l and "Testi Timo" in l for l in p.lines))
 
-class TestFormatTally(unittest.TestCase):
+class TestFormatTally(SilentTest):
 
     def testShowsEachPlayer(self):
         p = MockPrinter()
@@ -148,7 +149,7 @@ class TestFormatTally(unittest.TestCase):
         formatTally([{"name": "Testi Matti", "drank": 5, "gave": 3}], p)
         self.assertTrue(any("5" in l and "3" in l for l in p.lines))
 
-class TestFormatReceipt(unittest.TestCase):
+class TestFormatReceipt(SilentTest):
 
     def testCutsAfterEachTurn(self):
         p = MockPrinter()
@@ -179,7 +180,7 @@ class TestFormatReceipt(unittest.TestCase):
         formatReceipt(data, p)
         self.assertEqual(p.cuts, 2)
 
-class TestFormatTaskDraw(unittest.TestCase):
+class TestFormatTaskDraw(SilentTest):
 
     def testShowsTitle(self):
         p = MockPrinter()
@@ -197,7 +198,7 @@ class TestFormatTaskDraw(unittest.TestCase):
         self.assertTrue(any("Do something." in l for l in p.lines))
 
 
-class TestFormatRouletteResult(unittest.TestCase):
+class TestFormatRouletteResult(SilentTest):
 
     def testShowsPlayerName(self):
         p = MockPrinter()

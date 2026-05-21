@@ -1,7 +1,18 @@
 {
   "printer": {
-    "connection": "",
-    "printerName": ""
+    "connection": "win32raw",
+    "printerName": "",
+    "saveImages": true,
+    "useCardImages": true,
+    "outputDir": "output",
+    "widthImage": 576,
+    "heightImage": 120,
+    "rankFont": "fonts/JqkasWild-w1YD6.ttf",
+    "suitFont": "fonts/timesbd.ttf",
+    "receiptFont": "fonts/timesbd.ttf",
+    "rankFontSize": "80",
+    "suitFontSize": "90",
+    "imageCardScale": 0.8
   },
   "taskgame": {
     "commonCount": 4,
@@ -13,5 +24,12 @@
     "boardIncrement": 2,
     "drinkAmount": 1,
     "deckCount": 1
+  },
+  "ravit": {
+    "horseCount": 8,
+    "trackLength": 40,
+    "maxBet": 5,
+    "eventChance": 0.20,
+    "fightChance": 0.05
   }
 }

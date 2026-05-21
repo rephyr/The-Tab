@@ -22,9 +22,11 @@ def formatTurn(phaseName: str, turn: dict, p) -> None:
             display = f"{turn['handBefore'][-1]}  {turn['card']}"
         else:
             display = turn["card"]
+        p.textln("")
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
         p.textln(display)
         p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+        p.textln("")
     if turn["gaveTo"]:
         p.textln(f"Oikein! {turn['gaveTo']} juo {turn['drinks']}.")
     elif turn.get("correct") is True:
@@ -104,7 +106,7 @@ def formatTaskDraw(event, p) -> None:
     p.textln(event.title.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * 24)
-    p.textln("Players: " + ", ".join(event.targets))
+    p.textln("Pelaajat: " + ", ".join(event.targets))
     p.textln(event.description)
     p.textln("=" * 24)
 

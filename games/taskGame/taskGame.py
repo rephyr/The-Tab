@@ -47,7 +47,7 @@ class TaskGame(Game):
         deckTotal = len(taskPool)
 
         if not taskPool:
-            print("No tasks defined.")
+            print("Ei tehtäviä määritelty.")
             return
 
         running = True
@@ -55,9 +55,9 @@ class TaskGame(Game):
             for player in self.players:
                 self._showLinks()
                 while True:
-                    cmd = input(f"\n{player.getName()}'s turn -- press Enter to draw (d = deck): ").strip().lower()
+                    cmd = input(f"\n{player.getName()}n vuoro -- paina Enter nostaaksesi (d = pakka): ").strip().lower()
                     if cmd == "d":
-                        print(f"Cards left: {len(taskPool)}/{deckTotal}")
+                        print(f"Kortteja jäljellä: {len(taskPool)}/{deckTotal}")
                     else:
                         break
 
@@ -71,7 +71,7 @@ class TaskGame(Game):
                 targetNames = ", ".join(p.getName() for p in targets)
 
                 print(f"\n>>> {task['title']}")
-                print(f"Players: {targetNames}")
+                print(f"Pelaajat: {targetNames}")
                 print(task["description"])
 
                 self.emit(TaskDrawEvent(
@@ -83,10 +83,12 @@ class TaskGame(Game):
 
                 self._handlePostTask(task, targets, player)
 
-                quit = input("\nContinue? (Enter = yes, q = quit): ").strip().lower()
-                if quit == "q":
+                quit = input("\nJatketaan? (Enter = kyllä, quit = lopeta): ").strip().lower()
+                if quit == "quit":
                     running = False
                     break
+
+        self._interactiveGivePhase()
 
         self.emit(GameEndEvent([
             {"name": p.getName(), "drinksTaken": p.getDrinksTaken(), "drinksToGive": p.drinksToGive}
@@ -94,10 +96,10 @@ class TaskGame(Game):
         ]))
 
         print("\n" + "=" * 24)
-        print("FINAL TALLY")
+        print("LOPPULASKU")
         print("=" * 24)
         for p in self.players:
-            print(f"{p.getName()}: drank {p.getDrinksTaken()} | gave {p.drinksToGive}")
+            print(f"{p.getName()}: joi {p.getDrinksTaken()} | antoi {p.drinksToGive}")
         print("=" * 24)
 
     def _resolveTargets(self, playerCount, drawer):
@@ -123,14 +125,14 @@ class TaskGame(Game):
         for p1, p2 in self.activePairs:
             if player == p1:
                 p2.addDrinks(amount)
-                print(f"  {p2.getName()} also drinks {amount} (pari)")
+                print(f"  {p2.getName()} juo myös {amount} (pari)")
             elif player == p2:
                 p1.addDrinks(amount)
-                print(f"  {p1.getName()} also drinks {amount} (pari)")
+                print(f"  {p1.getName()} juo myös {amount} (pari)")
         for master, huora in self.activeHuoras:
             if player == master:
                 huora.addDrinks(amount)
-                print(f"  {huora.getName()} also drinks {amount} (huora)")
+                print(f"  {huora.getName()} juo myös {amount} (huora)")
 
     def _findPlayer(self, name: str):
         """Return the player whose name matches (case-insensitive), or None."""
@@ -151,7 +153,7 @@ class TaskGame(Game):
         if self.doubleNext:
             parts.append("TUPLA aktiivinen")
         if parts:
-            print("Active links: " + " | ".join(parts))
+            print("Aktiiviset linkit: " + " | ".join(parts))
 
     def _handlePostTask(self, task: dict, targets: list, drawer) -> None:
         """Handle drink tracking and link updates after a task is shown."""
@@ -165,7 +167,7 @@ class TaskGame(Game):
                 print(f"  TUPLA! Juomat tuplattu -> {drinks}")
 
         if drinkType == "take":
-            raw = input(f"\nConfirm {drinks} drinks for {drawer.getName()}? (Enter = yes, or type amount): ").strip()
+            raw = input(f"\nVahvista {drinks} juomaa {drawer.getName()}lle? (Enter = kyllä, tai kirjoita määrä): ").strip()
             amount = drinks
             if raw.isdigit():
                 amount = int(raw)
@@ -173,21 +175,12 @@ class TaskGame(Game):
                 self._assignDrinks(drawer, amount)
 
         elif drinkType == "give":
-            names = ", ".join(p.getName() for p in self.players if p != drawer)
-            raw = input(f"\nWho gets the {drinks} drinks? ({names}) or Enter to skip: ").strip()
-            if raw:
-                receiver = self._findPlayer(raw)
-                if receiver and receiver != drawer:
-                    self._assignDrinks(receiver, drinks)
-                    drawer.addDrinksToGive(drinks)
-                elif receiver == drawer:
-                    print("Can't give to yourself.")
-                else:
-                    print(f"Player '{raw}' not found, skipping.")
+            print(f"\n{drawer.getName()} saa antaa {drinks} juomaa lopussa.")
+            drawer.pendingGive += drinks
 
         elif drinkType == "social":
-            hint = f" (suggested: {drinks})" if drinks is not None else ""
-            raw = input(f"\nLog drinks{hint} as Name:N pairs (e.g. Teppo:3 Matti:2) or Enter to skip: ").strip()
+            hint = f" (ehdotus: {drinks})" if drinks is not None else ""
+            raw = input(f"\nKirjaa juomat{hint} Nimi:N pareina (esim. Teppo:3 Matti:2) tai Enter ohittaaksesi: ").strip()
             if raw:
                 for token in raw.split():
                     if ":" not in token:
@@ -199,7 +192,7 @@ class TaskGame(Game):
                     if player:
                         self._assignDrinks(player, int(val))
                     else:
-                        print(f"  Player '{name}' not found, skipping.")
+                        print(f"  Pelaajaa '{name}' ei löydy, ohitetaan.")
 
         elif drinkType == "roulette":
             bulletIndex = random.randint(0, len(self.players) - 1)
@@ -228,10 +221,10 @@ class TaskGame(Game):
             if task["title"] == "Pari":
                 self.activePairs.clear()
                 self.activePairs.append([drawer, target])
-                print(f"\nNew pair: {drawer.getName()} <-> {target.getName()} (replaces any previous pair)")
+                print(f"\nUusi pari: {drawer.getName()} <-> {target.getName()} (korvaa edellisen parin)")
             elif task["title"] == "Huora":
                 if [drawer, target] in self.activeHuoras:
-                    print(f"\n{target.getName()} is already {drawer.getName()}'s huora.")
+                    print(f"\n{target.getName()} on jo {drawer.getName()}n huora.")
                 else:
                     self.activeHuoras.append([drawer, target])
-                    print(f"\nNew huora: {target.getName()} drinks whenever {drawer.getName()} drinks")
+                    print(f"\nUusi huora: {target.getName()} juo aina kun {drawer.getName()} juo")

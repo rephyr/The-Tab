@@ -5,6 +5,7 @@ import unittest
 from datetime import datetime
 from core.playerStore import PlayerStore
 from core.events import DrinkEvent, GameEndEvent
+from tests.testUtils import SilentTest
 
 
 def makeTempStore(initialData=None):
@@ -25,7 +26,7 @@ def makeEndEvent(scores):
     return event
 
 
-class TestPlayerStoreLoad(unittest.TestCase):
+class TestPlayerStoreLoad(SilentTest):
     def testLoadMissingFile(self):
         store = makeTempStore()
         self.assertEqual(store.data, {"players": {}, "sessions": []})
@@ -39,7 +40,7 @@ class TestPlayerStoreLoad(unittest.TestCase):
         self.assertEqual(store.data["players"]["Alice"]["gamesPlayed"], 1)
 
 
-class TestPlayerStoreHook(unittest.TestCase):
+class TestPlayerStoreHook(SilentTest):
     def testHookIgnoresNonGameEndEvent(self):
         store = makeTempStore()
         store.hook(DrinkEvent(player="Alice", amount=2, reason="wrong guess"), None)
@@ -87,7 +88,7 @@ class TestPlayerStoreHook(unittest.TestCase):
         self.assertIn("Alice", saved["players"])
 
 
-class TestPlayerStoreDelete(unittest.TestCase):
+class TestPlayerStoreDelete(SilentTest):
     def testDeletePlayer(self):
         store = makeTempStore()
         store.hook(makeEndEvent([{"name": "Alice", "drinksTaken": 5, "drinksToGive": 1}]), None)
@@ -141,7 +142,7 @@ class TestPlayerStoreDelete(unittest.TestCase):
         self.assertFalse(result)
 
 
-class TestPlayerStoreLeaderboard(unittest.TestCase):
+class TestPlayerStoreLeaderboard(SilentTest):
     def testGetLeaderboard(self):
         store = makeTempStore()
         store.hook(makeEndEvent([
@@ -181,7 +182,80 @@ class TestPlayerStoreLeaderboard(unittest.TestCase):
         self.assertEqual(board[1]["name"], "Testi Teppo")
 
 
-class TestPlayerStoreNameNormalization(unittest.TestCase):
+class TestPlayerStoreDailyLeaderboard(SilentTest):
+    def testDailyLeaderboardFiltersToDate(self):
+        initial = {
+            "players": {},
+            "sessions": [
+                {
+                    "id": "2026-05-20T10:00:00",
+                    "game": "Buja",
+                    "timestamp": "2026-05-20 10:00",
+                    "scores": [{"name": "Alice", "drinksTaken": 5, "drinksGiven": 1}],
+                },
+                {
+                    "id": "2026-05-19T10:00:00",
+                    "game": "Buja",
+                    "timestamp": "2026-05-19 10:00",
+                    "scores": [{"name": "Bob", "drinksTaken": 10, "drinksGiven": 2}],
+                },
+            ],
+        }
+        store = makeTempStore(initialData=initial)
+        board = store.getDailyLeaderboard("2026-05-20")
+        self.assertEqual(len(board), 1)
+        self.assertEqual(board[0]["name"], "Alice")
+
+    def testDailyLeaderboardAggregatesMultipleSessions(self):
+        initial = {
+            "players": {},
+            "sessions": [
+                {
+                    "id": "2026-05-20T10:00:00",
+                    "game": "Buja",
+                    "timestamp": "2026-05-20 10:00",
+                    "scores": [{"name": "Alice", "drinksTaken": 3, "drinksGiven": 1}],
+                },
+                {
+                    "id": "2026-05-20T14:00:00",
+                    "game": "TaskGame",
+                    "timestamp": "2026-05-20 14:00",
+                    "scores": [{"name": "Alice", "drinksTaken": 5, "drinksGiven": 0}],
+                },
+            ],
+        }
+        store = makeTempStore(initialData=initial)
+        board = store.getDailyLeaderboard("2026-05-20")
+        self.assertEqual(len(board), 1)
+        self.assertEqual(board[0]["totalDrinksTaken"], 8)
+        self.assertEqual(board[0]["gamesPlayed"], 2)
+
+    def testDailyLeaderboardEmptyWhenNoSessions(self):
+        store = makeTempStore()
+        self.assertEqual(store.getDailyLeaderboard("2026-05-20"), [])
+
+    def testDailyLeaderboardSortedByDrinksTaken(self):
+        initial = {
+            "players": {},
+            "sessions": [
+                {
+                    "id": "2026-05-20T10:00:00",
+                    "game": "Buja",
+                    "timestamp": "2026-05-20 10:00",
+                    "scores": [
+                        {"name": "Alice", "drinksTaken": 3, "drinksGiven": 0},
+                        {"name": "Bob", "drinksTaken": 9, "drinksGiven": 0},
+                    ],
+                },
+            ],
+        }
+        store = makeTempStore(initialData=initial)
+        board = store.getDailyLeaderboard("2026-05-20")
+        self.assertEqual(board[0]["name"], "Bob")
+        self.assertEqual(board[1]["name"], "Alice")
+
+
+class TestPlayerStoreNameNormalization(SilentTest):
     def testCaseInsensitiveLookupMergesStats(self):
         store = makeTempStore()
         store.hook(makeEndEvent([{"name": "Emi", "drinksTaken": 5, "drinksToGive": 1}]), None)

@@ -6,6 +6,7 @@ from core.events import (
     DrinkEvent, GiveEvent, ShareEvent,
     BoardCardEvent, GameEndEvent,
 )
+from tests.testUtils import SilentTest
 
 def makeLog(*events):
     log = GameLog()
@@ -13,7 +14,7 @@ def makeLog(*events):
         log.add(e)
     return log
 
-class TestGameLogBasics(unittest.TestCase):
+class TestGameLogBasics(SilentTest):
 
     def testAddStoresEvent(self):
         log = GameLog()
@@ -26,7 +27,7 @@ class TestGameLogBasics(unittest.TestCase):
         log.clear()
         self.assertEqual(log.events, [])
 
-class TestToDictEmpty(unittest.TestCase):
+class TestToDictEmpty(SilentTest):
 
     def testEmptyLogReturnsBaseStructure(self):
         data = GameLog().toDict()
@@ -36,9 +37,10 @@ class TestToDictEmpty(unittest.TestCase):
         self.assertEqual(data["board"], [])
         self.assertEqual(data["scores"], [])
 
-class TestToDictGameStart(unittest.TestCase):
+class TestToDictGameStart(SilentTest):
 
     def setUp(self):
+        super().setUp()
         ts = datetime(2026, 5, 18, 21, 47)
         self.data = makeLog(
             GameStartEvent(players=["Matti", "Teppo"], timestamp=ts)
@@ -50,9 +52,10 @@ class TestToDictGameStart(unittest.TestCase):
     def testTimestamp(self):
         self.assertEqual(self.data["timestamp"], "2026-05-18 21:47")
 
-class TestToDictCorrectGuess(unittest.TestCase):
+class TestToDictCorrectGuess(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
             GuessEvent("Matti", "Red or Black", "Red", "2♥", True),
@@ -78,9 +81,10 @@ class TestToDictCorrectGuess(unittest.TestCase):
         self.assertEqual(turn["gaveTo"], "Teppo")
         self.assertEqual(turn["drinks"], 1)
 
-class TestToDictWrongGuess(unittest.TestCase):
+class TestToDictWrongGuess(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
             GuessEvent("Matti", "Red or Black", "Red", "5♠", False),
@@ -103,7 +107,7 @@ class TestToDictWrongGuess(unittest.TestCase):
         turn = self.data["phases"][0]["turns"][0]
         self.assertIsNone(turn["note"])
 
-class TestToDictEdgeCases(unittest.TestCase):
+class TestToDictEdgeCases(SilentTest):
 
     def testSameValueHasNote(self):
         data = makeLog(
@@ -123,9 +127,10 @@ class TestToDictEdgeCases(unittest.TestCase):
         turn = data["phases"][0]["turns"][0]
         self.assertEqual(turn["note"], "on the line")
 
-class TestToDictMultiplePhases(unittest.TestCase):
+class TestToDictMultiplePhases(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
             GuessEvent("Matti", "Red or Black", "Red", "2♥", True),
@@ -147,9 +152,10 @@ class TestToDictMultiplePhases(unittest.TestCase):
         for phase in self.data["phases"]:
             self.assertEqual(len(phase["turns"]), 1)
 
-class TestToDictMultipleTurnsSamePhase(unittest.TestCase):
+class TestToDictMultipleTurnsSamePhase(SilentTest):
 
     def setUp(self):
+        super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
             GuessEvent("Matti", "Red or Black", "Red", "2♥", True),
@@ -168,7 +174,7 @@ class TestToDictMultipleTurnsSamePhase(unittest.TestCase):
         self.assertEqual(turns[0]["player"], "Matti")
         self.assertEqual(turns[1]["player"], "Teppo")
 
-class TestToDictBoard(unittest.TestCase):
+class TestToDictBoard(SilentTest):
 
     def testBoardDrink(self):
         data = makeLog(
@@ -228,7 +234,7 @@ class TestToDictBoard(unittest.TestCase):
         self.assertEqual(data["board"][0]["card"], "7♥")
         self.assertEqual(data["board"][1]["card"], "K♠")
 
-class TestToDictScores(unittest.TestCase):
+class TestToDictScores(SilentTest):
 
     def testScoresFromGameEnd(self):
         data = makeLog(

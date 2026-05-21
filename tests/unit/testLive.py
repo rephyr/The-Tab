@@ -8,6 +8,7 @@ from core.events import (
 )
 from printing.log import GameLog
 from printing.live import LivePrinter
+from tests.testUtils import SilentTest
 
 def makeLog():
     log = GameLog()
@@ -23,7 +24,7 @@ def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gav
     else:
         log.add(DrinkEvent(player, drinks, "wrong guess"))
 
-class TestLivePrinterPhase(unittest.TestCase):
+class TestLivePrinterPhase(SilentTest):
 
     def testPrintsTurnAfterDrinkEvent(self):
         printer = MagicMock()
@@ -53,7 +54,7 @@ class TestLivePrinterPhase(unittest.TestCase):
 
         self.assertEqual(printer.printWith.call_count, 2)
 
-class TestLivePrinterHands(unittest.TestCase):
+class TestLivePrinterHands(SilentTest):
 
     def testPrintsHandsWhenBoardPhaseStarts(self):
         printer = MagicMock()
@@ -67,7 +68,7 @@ class TestLivePrinterHands(unittest.TestCase):
         # 2 turn receipts + 2 hand receipts
         self.assertEqual(printer.printWith.call_count, 4)
 
-class TestLivePrinterBoard(unittest.TestCase):
+class TestLivePrinterBoard(SilentTest):
 
     def testPrintsNoMatchCardImmediately(self):
         printer = MagicMock()
@@ -118,7 +119,7 @@ class TestLivePrinterBoard(unittest.TestCase):
         printer.close.assert_called_once()
 
 
-class TestLivePrinterTaskGameEnd(unittest.TestCase):
+class TestLivePrinterTaskGameEnd(SilentTest):
 
     def testPrintsTaskGameReceiptOnGameEnd(self):
         printer = MagicMock()
@@ -145,7 +146,7 @@ class TestLivePrinterTaskGameEnd(unittest.TestCase):
         self.assertEqual(printer.printWith.call_count, 3)
 
 
-class TestLivePrinterTaskGame(unittest.TestCase):
+class TestLivePrinterTaskGame(SilentTest):
 
     def testPrintsOnTaskDraw(self):
         printer = MagicMock()

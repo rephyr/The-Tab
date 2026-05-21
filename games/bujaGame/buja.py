@@ -7,16 +7,16 @@ from core.deck import Deck
 from core.player import Player
 from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
-    DrinkEvent, GiveEvent, ShareEvent,
+    DrinkEvent, ShareEvent,
     BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
 )
 from dataclasses import dataclass, field
 
 
-def defaultInput(prompt: str) -> str:
+def _defaultInput(prompt: str) -> str:
     answer = input(prompt).strip().lower()
-    if answer == "q":
-        print("Quitting...")
+    if answer == "quit":
+        print("Lopetetaan...")
         exit()
     return answer
 
@@ -27,22 +27,22 @@ class Buja(Game):
     The Buja drinking game. Players go through Red/Black, Higher/Lower,
     Inside/Outside, and Suit phases, then a shared board phase.
     """
-    name: str = "Buja instance"
     gameTitle: str = "Buja"
 
     config: dict = field(default_factory=dict)
     deck: Deck = field(default_factory=Deck)
 
     def __post_init__(self):
-        self.inputFunc = defaultInput
+        self.inputFunc = _defaultInput
         self.deck.deckCount = self._getConfig("deckCount", 1)
+        self.deck.resetDeck()
 
     @staticmethod
     def cardsNeeded(playerCount: int, boardLength: int) -> int:
         """Minimum cards required: 4 phase cards per player + 3 per board row + 1 final card."""
         return 4 * playerCount + boardLength * 3 + 1
 
-    def setInput(self, fn):
+    def _setInput(self, fn):
         self.inputFunc = fn
 
     def playRound(self) -> None:
@@ -82,6 +82,8 @@ class Buja(Game):
         self.emit(PhaseEvent("Lauta", ""))
         self._board()
 
+        self._interactiveGivePhase()
+
         print("\nRyyppytaulu:\n")
         for player in self.players:
             print(f"{player.getName()}: joi {player.getDrinksTaken()} | antoi {player.drinksToGive}")
@@ -106,11 +108,7 @@ class Buja(Game):
 
         if correct:
             print("Oikein!")
-            target = self._chooseTarget(player)
-            print(f"{target.getName()} juo {amount}")
-            target.addDrinks(amount)
-            player.addDrinksToGive(amount)
-            self.emit(GiveEvent(player.getName(), target.getName(), amount))
+            player.pendingGive += amount
         else:
             print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
@@ -142,11 +140,7 @@ class Buja(Game):
 
         if correct:
             print("Oikein!")
-            target = self._chooseTarget(player)
-            print(f"{target.getName()} juo {amount}")
-            target.addDrinks(amount)
-            player.addDrinksToGive(amount)
-            self.emit(GiveEvent(player.getName(), target.getName(), amount))
+            player.pendingGive += amount
         else:
             print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
@@ -187,11 +181,7 @@ class Buja(Game):
 
         if correct:
             print("Oikein!")
-            target = self._chooseTarget(player)
-            print(f"{target.getName()} juo {amount}")
-            target.addDrinks(amount)
-            player.addDrinksToGive(amount)
-            self.emit(GiveEvent(player.getName(), target.getName(), amount))
+            player.pendingGive += amount
         else:
             print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
@@ -222,11 +212,7 @@ class Buja(Game):
 
         if correct:
             print("Oikein!")
-            target = self._chooseTarget(player)
-            print(f"{target.getName()} juo {amount}")
-            target.addDrinks(amount)
-            player.addDrinksToGive(amount)
-            self.emit(GiveEvent(player.getName(), target.getName(), amount))
+            player.pendingGive += amount
         else:
             print(f"Väärin! Juo {amount}")
             player.addDrinks(amount)
@@ -286,11 +272,8 @@ class Buja(Game):
                             self.emit(DrinkEvent(player.getName(), drinks, "lauta"))
 
                         elif action == "jaa":
-                            target = self._chooseTarget(player)
-                            print(f"{target.getName()} saa {drinks}")
-                            target.addDrinks(drinks)
-                            player.addDrinksToGive(drinks)
-                            self.emit(GiveEvent(player.getName(), target.getName(), drinks))
+                            print(f"{player.getName()} antaa {drinks} lopussa")
+                            player.pendingGive += drinks
 
                         elif action == "kippistä":
                             target = self._chooseTarget(player)
@@ -328,28 +311,34 @@ class Buja(Game):
         others = self._listPlayers(player)
 
         print("\nPelaajat:")
-        for p in others:
-            print(f"- {p.getName()}")
+        for i, p in enumerate(others, 1):
+            print(f"  {i}. {p.getName()}")
 
         while True:
-            name = self.inputFunc("Kenelle? ").strip()
-
-            target = next(
-                (p for p in others if p.getName().lower() == name.lower()),
-                None
-            )
-
+            raw = self.inputFunc("Kenelle? (numero tai nimi): ").strip()
+            target = self._findTargetByNameOrNumber(raw, others)
             if target:
                 return target
-
             print("Tuntematon pelaaja, yritä uudelleen")
 
     def _draw(self, player: Player):
         card = self.deck.drawCard()
 
         if card is None:
-            self.deck.resetDeck()
-            card = self.deck.drawCard()
+            print("Virhe: kortit loppuivat kesken pelin!")
+            while True:
+                ans = self.inputFunc("Lisätäänkö yksi pakka? (k/e): ")
+                if ans == "k":
+                    extra = Deck()
+                    extra.buildDeck()
+                    extra.shuffleDeck()
+                    self.deck.cards.extend(extra.cards)
+                    self.deck.deckCount += 1
+                    card = self.deck.drawCard()
+                    break
+                elif ans == "e":
+                    print("Peli lopetetaan.")
+                    exit()
 
         player.addCardToHand(card)
         return card
@@ -359,16 +348,3 @@ class Buja(Game):
 
     def _getConfig(self, key, default):
         return self.config.get(key, default)
-
-    def _handleGive(self, player: Player, drinks: int) -> None:
-        target = self._chooseTarget(player)
-        print(f"{target.getName()} gets {drinks}")
-        target.addDrinks(drinks)
-        player.addDrinksToGive(drinks)
-
-    def _handleShare(self, player: Player, drinks: int) -> None:
-        target = self._chooseTarget(player)
-        print(f"{player.getName()} and {target.getName()} share {drinks}")
-        player.addDrinks(drinks)
-        target.addDrinks(drinks)
-        player.addDrinksToGive(drinks)
