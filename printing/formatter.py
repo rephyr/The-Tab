@@ -3,6 +3,25 @@ Receipt formatter functions. Each one writes to a printer object p using
 p.set(), p.textln(), and p.text(). formatReceipt() runs the full game through all of them.
 """
 
+_W = 24
+
+
+def _wrapText(text: str, width: int = _W) -> list:
+    words = text.split()
+    lines = []
+    current = ""
+    for word in words:
+        if not current:
+            current = word
+        elif len(current) + 1 + len(word) <= width:
+            current += " " + word
+        else:
+            lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines or [""]
+
 
 def formatTurn(phaseName: str, turn: dict, p) -> None:
     """Print one player's turn receipt for a phase."""
@@ -113,8 +132,10 @@ def formatTaskDraw(event, p) -> None:
     p.textln(event.title.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * 24)
-    p.textln("Pelaajat: " + ", ".join(event.targets))
-    p.textln(event.description)
+    for line in _wrapText("Pelaajat: " + ", ".join(event.targets)):
+        p.textln(line)
+    for line in _wrapText(event.description):
+        p.textln(line)
     p.textln("=" * 24)
 
 
