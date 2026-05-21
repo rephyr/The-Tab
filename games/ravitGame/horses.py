@@ -2,15 +2,12 @@
 import random
 
 HORSE_NAMES = [
-    "Ukko", "Tuulikki", "Rauhala", "Pitkämäki",
-    "Laukki", "Talvikki", "Salamaveto", "Pohjantähti",
-    "Myrsky", "Loimu", "Varjo", "Halla", "Aava", "Vauhti", "Arkku",
+    "Ukko", "Tuulikki", "Rauhala", "Pitkämäki","Laukki", "Talvikki", 
+    "Salamaveto", "Myrsky", "Loimu", "Varjo", "Halla", "Aava", "Vauhti", "Arkku",
     "Takuu", "Lehmä", "Mönkiä", "Iso", "Taika", "Velho", "Veto", "Panos",
-    "Kalsarikännit", "Turbovauhti", "Pikaliito", "Brad De Veluwe",
-    "Charme Asserda", "Hurjapää", "Voittamaton", "Häviämätön",
-    "Keisari Suuri", "Tulikavio", "Viesker", "Pata Ässä", "Risti seiska",
-    "Arpa", "Saamaton", "Ahdin", "Lötinä", "Kylae Lôti Së The III", "Täräyttäjä",
-    "Massikeisari", "Târqi Lîz Hepü Nim", "Vetäjä", "Työntö", "Humma Humala"
+    "Turbovauhti", "Pikaliito", "Ässä", "Hurjapää", "Voittamaton", "Häviämätön",
+    "Tulikavio", "Viesker", "Pata", "Risti", "Arpa", "Saamaton", "Ahdin", 
+    "Lötinä", "Täräyttäjä","Massikeisari", "Vetäjä", "Työntö", 
 ]
 
 

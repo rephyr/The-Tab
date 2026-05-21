@@ -84,16 +84,13 @@ class TestHorseMovement(SilentTest):
         game._moveHorse(horse)
         self.assertGreater(horse["position"], 0)
 
-    def testEnduranceBonusInSecondHalf(self):
+    def testHighEnduranceNoSpeedBonusInSecondHalf(self):
         game = makeRavit({"trackLength": 20})
-        positions = []
-        for _ in range(50):
-            h = makeHorse(speed=3, endurance=5)
-            h["position"] = 10
-            with patch("random.randint", return_value=0):
-                game._moveHorse(h)
-            positions.append(h["position"])
-        self.assertTrue(all(p >= 14 for p in positions))
+        h = makeHorse(speed=3, endurance=5)
+        h["position"] = 10
+        with patch("random.randint", return_value=0):
+            game._moveHorse(h)
+        self.assertEqual(h["position"], 13)
 
     def testEndurancePenaltyInSecondHalf(self):
         game = makeRavit({"trackLength": 20})

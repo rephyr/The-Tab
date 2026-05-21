@@ -411,9 +411,7 @@ class RavitGame(Game):
         move = effectiveSpeed + baseRoll
         halfway = trackLength // 2
         if horse["position"] >= halfway:
-            if horse["endurance"] >= 4:
-                move += 1
-            elif horse["endurance"] <= 2:
+            if horse["endurance"] <= 2:
                 move = max(1, move - 1)
 
         horse["position"] = min(horse["position"] + move, trackLength)

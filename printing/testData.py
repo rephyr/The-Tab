@@ -3,8 +3,8 @@ Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
-from printing.receipts.ravit import formatHorseList, formatBettingReceipt, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
-from core.events import TaskDrawEvent, HorseEventFiredEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
+from printing.receipts.ravit import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
+from core.events import TaskDrawEvent, HorseEventFiredEvent, RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 
 TEST_PHASES = [
     ("Red or Black", {
@@ -129,6 +129,20 @@ TEST_RAVIT_SCORES = [
     {"name": "Testi Matti", "drank": 2, "gave": 0},
 ]
 
+TEST_RACE_ROUND_RAVIT = RaceRoundEvent(
+    roundNumber=3,
+    trackLength=40,
+    positions=[
+        {"id": 1, "name": "Ukko",     "position": 24, "status": "racing"},
+        {"id": 2, "name": "Tuulikki", "position": 18, "status": "racing"},
+        {"id": 3, "name": "Laukki",   "position": 9,  "status": "dnf"},
+        {"id": 4, "name": "Myrsky",   "position": 5,  "status": "dead"},
+    ],
+    raceEvents=[
+        {"horseName": "Laukki", "eventType": "death", "detail": "Laukki ei pysty jatkamaan ja poistuu kilpailusta!"},
+    ],
+)
+
 TEST_HORSE_EVENT_RAVIT = HorseEventFiredEvent(
     roundNumber=4, horseId=3, horseName="Laukki",
     eventType="death", detail="Laukki kaatuu ja poistuu kilpailusta!",
@@ -161,7 +175,7 @@ def printTestReceipts(printer, parts=None) -> None:
     """
     if parts is None:
         parts = ["turns", "hands", "board", "tally", "tasks",
-                 "ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]
+                 "ravit-betting", "ravit-rata", "ravit-event", "ravit-tiebreak", "ravit-final"]
 
     if "turns" in parts:
         for phaseName, turn in TEST_PHASES:
@@ -185,6 +199,9 @@ def printTestReceipts(printer, parts=None) -> None:
     if "ravit-betting" in parts:
         printer.printWith(lambda p: formatHorseList(TEST_HORSES_RAVIT, p))
         printer.printWith(lambda p: formatBettingReceipt(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
+
+    if "ravit-rata" in parts:
+        printer.printWith(lambda p, e=TEST_RACE_ROUND_RAVIT: formatRaceRound(e, p))
 
     if "ravit-event" in parts:
         printer.printWith(lambda p, e=TEST_HORSE_EVENT_RAVIT: formatHorseEvent(e, p))

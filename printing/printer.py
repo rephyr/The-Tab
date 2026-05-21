@@ -43,6 +43,9 @@ class ReceiptPrinter:
                     raise RuntimeError("escpos not available")
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
+                font = self.config.get("escposFont", "a")
+                if font != "a":
+                    self._p = FontWrapper(self._p, font)
                 if self.config.get("useCardImages"):
                     self._p = CardAwareWrapper(self._p, self.config)
             except Exception:
@@ -148,6 +151,23 @@ class StdoutPrinter:
 
     def close(self):
         sys.stdout.buffer.flush()
+
+
+class FontWrapper:
+    """Injects a default ESC/POS font into every set() call so formatters don't need to know about it."""
+    def __init__(self, printer, font):
+        self._p = printer
+        self._font = font
+
+    def set(self, **kwargs):
+        kwargs.setdefault("font", self._font)
+        self._p.set(**kwargs)
+
+    def textln(self, text=""):    self._p.textln(text)
+    def text(self, text=""):      self._p.text(text)
+    def image(self, img):         self._p.image(img)
+    def cut(self):                self._p.cut()
+    def close(self):              self._p.close()
 
 
 class CardAwareWrapper:

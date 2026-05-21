@@ -16,8 +16,28 @@ formatRavitFinal       — end of game; standings and drink scores
 Printer API used in this module:
 
 p.set(align, bold, double_width, double_height, invert)
-p.textln(text) — prints one line; use a tab character to split into two columns
+p.textln(text) — prints one line
 """
+
+# Adjust to match how many characters fit across your printer in normal font.
+_W = 32
+
+
+def _wrapText(text: str, width: int = _W) -> list:
+    words = text.split()
+    lines = []
+    current = ""
+    for word in words:
+        if not current:
+            current = word
+        elif len(current) + 1 + len(word) <= width:
+            current += " " + word
+        else:
+            lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines or [""]
 
 
 def formatHorseList(horses: list, p) -> None:
@@ -25,14 +45,14 @@ def formatHorseList(horses: list, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("RAVIT")
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(bold=True)
     p.textln("HEVOSET")
     p.set(bold=False)
-    p.textln("-" * 24)
+    p.textln("-" * _W)
     for h in horses:
-        p.textln(f"#{h['id']} {h['name']}\tkerroin: x{h['odds']}")
-    p.textln("=" * 24)
+        p.textln(f"#{h['id']} {h['name']:<12}kerroin: x{h['odds']}")
+    p.textln("=" * _W)
 
 
 def formatBettingReceipt(horses: list, bets: list, p) -> None:
@@ -40,11 +60,11 @@ def formatBettingReceipt(horses: list, bets: list, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("VEDONLYÖNTI")
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     for bet in bets:
         horseName = next((h["name"] for h in horses if h["id"] == bet["horseId"]), "?")
         p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} x{bet['amount']}")
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatRaceRound(event, p) -> None:
@@ -52,21 +72,22 @@ def formatRaceRound(event, p) -> None:
     p.set(align="center", bold=True)
     p.textln("LÄHTOVIIVA" if event.roundNumber == 0 else f"KIERROS {event.roundNumber}")
     p.set(align="left", bold=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     for pos in event.positions:
         if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
             bar = "-" * barLen + "@" + "-" * (15 - barLen)
-            p.textln(f"{pos['name']}\t[{bar}]")
+            p.textln(f"{pos['name']:<12}[{bar}]")
         else:
-            label = "[KUOLI]" if pos["status"] == "dead" else "[DNF]"
-            p.textln(f"{pos['name']}\t{label}")
+            label = "KUOLI" if pos["status"] == "dead" else "DNF"
+            p.textln(f"{pos['name']:<12}[{label:^16}]")
     if event.raceEvents:
-        p.textln("=" * 24)
+        p.textln("=" * _W)
         for ev in event.raceEvents:
-            p.textln(ev["detail"])
-            p.textln("-" * 24)
-    p.textln("=" * 24)
+            for line in _wrapText(ev["detail"]):
+                p.textln(line)
+            p.textln("-" * _W)
+    p.textln("=" * _W)
 
 
 def formatHorseEvent(event, p) -> None:
@@ -80,26 +101,29 @@ def formatHorseEvent(event, p) -> None:
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
         p.textln(f"R.I.P {event.horseName.upper()}")
         p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
-        p.textln("=" * 24)
-        p.textln(event.detail)
-        p.textln("=" * 24)
+        p.textln("=" * _W)
+        for line in _wrapText(event.detail):
+            p.textln(line)
+        p.textln("=" * _W)
     elif event.eventType == "death":
         p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln(f"DNF {event.horseName.upper()}")
         p.set(align="left", bold=False, double_width=False, double_height=False)
-        p.textln("=" * 24)
-        p.textln(event.detail)
-        p.textln("=" * 24)
+        p.textln("=" * _W)
+        for line in _wrapText(event.detail):
+            p.textln(line)
+        p.textln("=" * _W)
     else:
         p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln(event.horseName.upper())
         p.set(align="left", bold=False, double_width=False, double_height=False)
-        p.textln("=" * 24)
-        p.textln(event.detail)
-        p.textln("=" * 24)
+        p.textln("=" * _W)
+        for line in _wrapText(event.detail):
+            p.textln(line)
+        p.textln("=" * _W)
 
 
-def _hpBar(health, maxHealth, width=14) -> str:
+def _hpBar(health, maxHealth, width=6) -> str:
     filled = int(health / maxHealth * width) if maxHealth > 0 else 0
     filled = max(0, min(width, filled))
     return "=" * filled + "-" * (width - filled)
@@ -111,15 +135,15 @@ def formatTiebreakStart(event, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
     p.textln("TASAPELI!")
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(align="center", bold=True)
     p.textln("LOPPUKAMPPAILU")
     p.set(align="left", bold=False)
-    p.textln("-" * 24)
+    p.textln("-" * _W)
     for c in event.combatants:
         bar = _hpBar(c["health"], c["maxHealth"])
-        p.textln(f"{c['name']:<10}\t[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
-    p.textln("=" * 24)
+        p.textln(f"{c['name']:<12}[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
+    p.textln("=" * _W)
 
 
 def _formatCombatantBars(combatants, p) -> None:
@@ -127,10 +151,10 @@ def _formatCombatantBars(combatants, p) -> None:
         bar = _hpBar(c["health"], c["maxHealth"])
         if c["health"] <= 0:
             p.set(invert=True)
-            p.textln(f"{c['name']:<10}\t[{bar}] [KUOLI]")
+            p.textln(f"{c['name']:<12}[{bar}] [KUOLI]")
             p.set(invert=False)
         else:
-            p.textln(f"{c['name']:<10}\t[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
+            p.textln(f"{c['name']:<12}[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
 
 
 def formatTiebreakRound(event, p) -> None:
@@ -146,9 +170,9 @@ def formatTiebreakRound(event, p) -> None:
         p.set(align="center", bold=True)
         p.textln(f"TAISTELUKIERROS {event.roundNumber}")
         p.set(align="left", bold=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     _formatCombatantBars(event.combatants, p)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatTiebreakElimination(event, p) -> None:
@@ -157,19 +181,19 @@ def formatTiebreakElimination(event, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
     p.textln(f"R.I.P {event.loserName.upper()}")
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     _formatCombatantBars(event.combatants, p)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatTiebreakWinner(event, p) -> None:
     """Print the tiebreak winner announcement."""
     p.set(align="left", bold=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln(f"{event.winnerName.upper()} VOITTAA")
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
 
 
 def formatRavitFinal(data: dict, p) -> None:
@@ -192,33 +216,33 @@ def formatRavitFinal(data: dict, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("RAVIT")
     p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     p.textln(data.get("timestamp", ""))
-    p.textln("=" * 24)
+    p.textln("=" * _W)
     oddsMap = {h["name"]: h["odds"] for h in data.get("horses", [])}
     p.set(bold=True)
     p.textln("SIJOITUKSET")
     p.set(bold=False)
-    p.textln("-" * 24)
+    p.textln("-" * _W)
     _STATUS_ORDER = {"racing": 0, "dnf": 1, "dead": 2}
     for fp in sorted(data.get("finalPositions", []), key=lambda x: (_STATUS_ORDER.get(x["status"], 99), x["place"])):
         name = fp["horseName"]
         odds = oddsMap.get(name, "?")
         if fp["status"] == "dead":
             p.set(invert=True)
-            p.textln(f"KUOLLUT {name}\tkerroin: x{odds}")
+            p.textln(f"RIP {name:<14}x{odds}")
             p.set(invert=False)
         elif fp["status"] == "dnf":
             p.set(invert=True)
-            p.textln(f"DNF {name}\tkerroin: x{odds}")
+            p.textln(f"DNF {name:<14}x{odds}")
             p.set(invert=False)
         else:
-            p.textln(f"{fp['place']}. {name}\tkerroin: x{odds}")
-    p.textln("=" * 24)
+            p.textln(f"{fp['place']}.  {name:<14}x{odds}")
+    p.textln("=" * _W)
     p.set(bold=True)
     p.textln("JUOMAT")
     p.set(bold=False)
-    p.textln("-" * 24)
+    p.textln("-" * _W)
     for s in data.get("scores", []):
         p.textln(f"{s['name']}: joi {s['drank']} | antoi {s['gave']}")
-    p.textln("=" * 24)
+    p.textln("=" * _W)

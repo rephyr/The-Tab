@@ -256,8 +256,9 @@ def showPrintTest(config, debug):
         ("3", "Lautakortit",                     ["board"]),
         ("4", "Loppulasku",                      ["tally"]),
         ("5", "TaskGame-kuitit",                 ["tasks"]),
-        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]),
-        ("7", "Kaikki yllä",                     None),
+        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-rata", "ravit-event", "ravit-tiebreak", "ravit-final"]),
+        ("7", "Ravit-rata",                      ["ravit-rata"]),
+        ("8", "Kaikki yllä",                     None),
     ]
 
     optionMap = {key: parts for key, _, parts in options}
@@ -267,11 +268,11 @@ def showPrintTest(config, debug):
             print("\nTulosta testikuitit:")
             for key, label, _ in options:
                 print(f"{key}. {label}")
-            print("8. Takaisin")
+            print("9. Takaisin")
 
             choice = input("\nValinta: ").strip()
 
-            if choice == "8":
+            if choice == "9":
                 break
             elif choice in optionMap:
                 printTestReceipts(printer, optionMap[choice])
