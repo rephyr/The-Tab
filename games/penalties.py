@@ -66,7 +66,7 @@ PENALTIES = [
     },
     {
         "title": "Puhuttelu",
-        "description": "Aloitat puheesi aina sanoilla 'Arvon kanssa juojat minulla on asiaa' seuraavan 3 kortin ajan",
+        "description": "Aloitat puheesi aina sanoilla 'Arvon kanssajuojat minulla on asiaa' seuraavan 3 kortin ajan",
         "drinks": None,
         "drinkType": "social",
         "duration": 3,
