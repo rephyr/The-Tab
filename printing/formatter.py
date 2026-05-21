@@ -80,7 +80,7 @@ def formatBoardCard(card: dict, p) -> None:
     p.textln(f"{card['action'].upper()} {card['drinks']}")
     if not card["matched"]:
         p.textln("Ei osumia")
-    else:
+    elif card["outcomes"]:
         for outcome in card["outcomes"]:
             if outcome["type"] == "drink":
                 p.textln(f"{outcome['player']} juo {outcome['drinks']}")
@@ -88,6 +88,9 @@ def formatBoardCard(card: dict, p) -> None:
                 p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
             elif outcome["type"] == "share":
                 p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
+    else:
+        for name in card["matched"]:
+            p.textln(name)
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     p.set(align="center", bold=True)
     p.textln("=" * 24)

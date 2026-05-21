@@ -45,7 +45,7 @@ def _assignRelativeOdds(horses: list) -> None:
             base = 3.5
         else:
             t = (total - minT) / (maxT - minT)  # 0 = weakest, 1 = strongest
-            base = 8.0 - t * 6.5                    # weakest → 8.0, strongest → 1.5
+            base = 8.0 - t * 6.5                # weakest → 8.0, strongest → 1.5
         h["odds"] = max(1.5, round(base * random.uniform(0.85, 1.25), 1))
 
 
