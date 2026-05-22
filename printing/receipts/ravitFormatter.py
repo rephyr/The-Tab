@@ -135,7 +135,8 @@ def formatBettorDrink(event, p) -> None:
     p.set(bold=True)
     p.textln(f"{event.playerName} juo {event.amount}")
     p.set(bold=False)
-    p.textln(f"({event.horseName}: {event.reason})")
+    for line in _wrapText(f"{event.horseName}: {event.reason}", _W):
+        p.textln(line)
     p.textln("-" * _W)
     for s in event.scores:
         p.textln(f"{s['name']:<16} {s['drank']} joi")

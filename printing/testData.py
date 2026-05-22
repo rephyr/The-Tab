@@ -8,10 +8,12 @@ from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
     formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner,
+    formatBettorDrink,
 )
 from core.events import (
     TaskDrawEvent, HorseEventFiredEvent,
     RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
+    RavitBettorDrinkEvent,
 )
 
 # ---------------------------------------------------------------------------
@@ -141,6 +143,17 @@ TEST_TIEBREAK_ELIMINATION = TiebreakEliminationEvent(
 
 TEST_TIEBREAK_WINNER = TiebreakWinnerEvent(winnerName="Ukko", health=19, maxHealth=28, strength=4)
 
+TEST_BETTOR_DRINK_RAVIT = RavitBettorDrinkEvent(
+    playerName="Testi Matti",
+    horseName="Laukki",
+    amount=2,
+    reason="hevonen kuoli taistelussa",
+    scores=[
+        {"name": "Testi Tatti", "drank": 0},
+        {"name": "Testi Matti", "drank": 2},
+    ],
+)
+
 # ---------------------------------------------------------------------------
 # Game → parts registry  (used by cli.py to build the two-level menu)
 # ---------------------------------------------------------------------------
@@ -156,11 +169,12 @@ GAMES = {
         ("tasks", "Tehtäväkortit"),
     ],
     "Ravit": [
-        ("ravit-betting",  "Hevoset & Vedonlyönti"),
-        ("ravit-rata",     "Kierros"),
-        ("ravit-event",    "Tapahtuma"),
-        ("ravit-tiebreak", "Tasapeli"),
-        ("ravit-final",    "Lopputulos"),
+        ("ravit-betting",      "Hevoset & Vedonlyönti"),
+        ("ravit-rata",         "Kierros"),
+        ("ravit-event",        "Tapahtuma"),
+        ("ravit-bettor-drink", "Veikkaajan juomat"),
+        ("ravit-tiebreak",     "Tasapeli"),
+        ("ravit-final",        "Lopputulos"),
     ],
 }
 
@@ -199,6 +213,9 @@ def printTestReceipts(printer, parts=None) -> None:
 
     if "ravit-event" in parts:
         printer.printWith(lambda p, e=TEST_HORSE_EVENT_RAVIT: formatHorseEvent(e, p))
+
+    if "ravit-bettor-drink" in parts:
+        printer.printWith(lambda p, e=TEST_BETTOR_DRINK_RAVIT: formatBettorDrink(e, p))
 
     if "ravit-tiebreak" in parts:
         printer.printWith(lambda p, e=TEST_TIEBREAK_START: formatTiebreakStart(e, p))
