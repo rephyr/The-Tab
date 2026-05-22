@@ -208,6 +208,38 @@ def configureGame(gameTitle, configData):
     return overrides
 
 
+def selectPlayers(store):
+    """Enter players for a game, with numbered quick-select from PlayerStore history."""
+    savedNames = store.getAllPlayerNames()
+    players = []
+    existingNames = set()
+
+    print("\nSyötä pelaajat:")
+    if savedNames:
+        print()
+        for i, name in enumerate(savedNames, 1):
+            print(f"  {i}. {name}")
+    print()
+
+    playerId = 1
+    while True:
+        raw = input(f"Pelaaja {playerId} (numero tai nimi, Enter lopettaa): ").strip()
+        if raw == "":
+            break
+        if raw.isdigit() and 1 <= int(raw) <= len(savedNames):
+            name = savedNames[int(raw) - 1]
+        else:
+            name = raw.title()
+        uniqueName = deduplicateName(name, existingNames)
+        if uniqueName != name:
+            print(f"  Nimi on jo käytössä, käytetään '{uniqueName}'")
+        existingNames.add(uniqueName)
+        players.append(Player(playerId, uniqueName))
+        playerId += 1
+
+    return players
+
+
 def deduplicateName(name, existingNames):
     """Return a unique version of name by appending (2), (3), etc. if needed."""
     if name not in existingNames:
@@ -353,22 +385,7 @@ def runCli(adminMode=False, debug=False):
                 print("Virheellinen valinta.")
                 continue
 
-            players = []
-            existingNames = set()
-
-            print("\nSyötä pelaajat (paina Enter aloittaaksesi):")
-            playerId = 1
-
-            while True:
-                name = input(f"Pelaaja {playerId} nimi: ").strip().title()
-                if name == "":
-                    break
-                uniqueName = deduplicateName(name, existingNames)
-                if uniqueName != name:
-                    print(f"  Nimi on jo käytössä, käytetään '{uniqueName}'")
-                existingNames.add(uniqueName)
-                players.append(Player(playerId, uniqueName))
-                playerId += 1
+            players = selectPlayers(store)
 
             if not players:
                 print("Ei pelaajia lisätty.")

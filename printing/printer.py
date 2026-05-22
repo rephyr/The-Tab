@@ -62,6 +62,8 @@ class ReceiptPrinter:
             font = self.config.get("escposFont", "a")
             if font != "a":
                 self._p = FontWrapper(self._p, font)
+            if self.config.get("useCardImages"):
+                self._p = CardAwareWrapper(self._p, self.config)
 
         elif conn == "serial":
             if not ESCPOS_AVAILABLE:
