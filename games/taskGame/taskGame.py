@@ -354,7 +354,7 @@ class TaskGame(Game):
     def _applyPenaltyToLoser(self) -> None:
         """Draw a random penalty and apply it to the player who lost the competition."""
         penalty = drawPenalty()
-        print(f"\n--- RANGAISTUS ---")
+        print("\n--- RANGAISTUS ---")
         print(f">>> {penalty['title']}")
         print(penalty["description"])
 

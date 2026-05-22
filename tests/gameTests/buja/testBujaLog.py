@@ -3,7 +3,7 @@ from unittest.mock import patch
 from core.cards import Card
 from core.deck import Deck
 from core.player import Player
-from core.events import GameStartEvent, GameEndEvent, GuessEvent, DrinkEvent, GiveEvent
+from core.events import GameStartEvent, GameEndEvent, DrinkEvent, GiveEvent
 from games.bujaGame.buja import Buja
 from printing.log import GameLog
 from printing.printer import StdoutPrinter

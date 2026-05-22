@@ -18,6 +18,7 @@ Printer API used in this module:
 p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
+from printing.receipts.textWrapper import wrapText as _wrapText
 
 _W = 32
 
@@ -26,10 +27,6 @@ def configure(config: dict) -> None:
     """Read receiptWidth from printer config. Call once before printing."""
     global _W
     _W = int(config.get("receiptWidth", 32))
-
-
-from printing.receipts.textWrapper import wrapText as _wrapText
-
 
 def formatHorseList(horses: list, p) -> None:
     """Print the horse roster with ids and odds."""
@@ -222,16 +219,6 @@ def formatRavitFinal(data: dict, p) -> None:
     finalPositions — {horseId, horseName, position, place, status}; status racing/dnf/dead
     scores         — {name, drank, gave}
     """
-    trackLength = len(data.get("finalPositions", [])) and max(
-        (fp["position"] for fp in data.get("finalPositions", []) if fp["status"] == "racing"),
-        default=20
-    )
-    # Use horses snapshot to recover trackLength if possible
-    trackLength = 20  # default; horses data doesn't carry trackLength
-    if data.get("horses"):
-        # Not stored, so keep 20 as the display value
-        pass
-
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("RAVIT")
     p.set(align="left", bold=False, double_width=False, double_height=False)

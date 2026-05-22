@@ -7,7 +7,7 @@ immediately via applyToHorse(). Behavioral flags are read by RavitGame during th
   boostMultiplier      — multiplied into boost distance in _eventBoost
 """
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
