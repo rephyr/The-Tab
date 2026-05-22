@@ -697,6 +697,15 @@ class TestBettorDrinks(SilentTest):
         self.assertIn("Testi", names)
         self.assertIn("Matti", names)
 
+    def testDrinkBettorPrintsMessage(self):
+        game, h1, h2, _ = self._makeGameWithBets()
+        with patch("builtins.print") as mockPrint:
+            game._drinkBettorOfHorse(h1, 2, "hevonen kompuroi")
+        printed = " ".join(str(a) for call in mockPrint.call_args_list for a in call.args)
+        self.assertIn("Testi", printed)
+        self.assertIn("2", printed)
+        self.assertIn("Ukko", printed)
+
     def testDrinkBettorNoopIfNoBet(self):
         game, h1, h2, emitted = self._makeGameWithBets()
         orphan = makeHorse(id=99, name="Ghost")

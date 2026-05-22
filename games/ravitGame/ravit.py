@@ -222,6 +222,7 @@ class RavitGame(RavitEventsMixin, Game):
         if not player:
             return
         player.addDrinks(amount)
+        print(f"  >>> {player.getName()} juo {amount}! ({horse.name}: {reason})")
         self.emit(DrinkEvent(player=player.getName(), amount=amount, reason=reason))
         scores = [{"name": p.getName(), "drank": p.getDrinksTaken()} for p in self.players]
         self.emit(RavitBettorDrinkEvent(
