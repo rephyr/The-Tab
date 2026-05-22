@@ -80,10 +80,10 @@ def formatRaceRound(event, p) -> None:
         if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
             bar = "-" * barLen + "@" + "-" * (15 - barLen)
-            p.textln(f"{pos['name']:<12}[{bar}]")
+            p.textln(f"{pos['name']:<12}|{bar}|")
         else:
             label = "KUOLI" if pos["status"] == "dead" else "DNF"
-            p.textln(f"{pos['name']:<12}[{label:^16}]")
+            p.textln(f"{pos['name']:<12}|{label:^16}|")
     if event.raceEvents:
         p.textln("=" * _W)
         for ev in event.raceEvents:
