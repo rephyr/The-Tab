@@ -113,6 +113,7 @@ class ReceiptPrinter:
 
     def _win32DeleteJobs(self, printerName: str, jobs) -> None:
         try:
+            #windows only not on top of the file for that reason 
             import win32print
             handle = win32print.OpenPrinter(printerName)
             try:
