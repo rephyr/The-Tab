@@ -6,7 +6,7 @@ from core.game import Game
 from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, TaskDrinkSummaryEvent, TaskChainStartEvent
 from dataclasses import dataclass, field
 from games.taskGame.tasks import TASKS
-from games.penalties import drawPenalty
+from games.taskGame.penalties import drawPenalty
 import random
 
 # Each task has:
