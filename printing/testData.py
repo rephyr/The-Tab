@@ -2,8 +2,9 @@
 Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
-from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
-from printing.receipts.ravit import (
+from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
+from printing.receipts.taskGameFormatter import formatTaskDraw
+from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
     formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner,
@@ -84,7 +85,6 @@ TEST_BETS_RAVIT = [
     {"player": "Testi Tatti", "horseId": 1, "amount": 3},
     {"player": "Testi Matti", "horseId": 2, "amount": 2},
 ]
-
 TEST_JOCKEYS_RAVIT = [
     {"horseName": "Ukko",     "jockeyName": "Turbo",   "jockeyDescription": "+1 nopeus"},
     {"horseName": "Tuulikki", "jockeyName": "Pelkuri", "jockeyDescription": "Ei osallistu tappeluksiin"},

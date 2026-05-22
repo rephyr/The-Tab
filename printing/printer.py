@@ -43,6 +43,9 @@ class ReceiptPrinter:
                     raise RuntimeError("escpos not available")
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
+                font = self.config.get("escposFont", "a")
+                if font != "a":
+                    self._p = FontWrapper(self._p, font)
                 if self.config.get("useCardImages"):
                     self._p = CardAwareWrapper(self._p, self.config)
             except Exception:
@@ -78,16 +81,68 @@ class ReceiptPrinter:
         """Call fn(p) to write content, then cut the paper."""
         if self._p is None:
             self._connect()
-        fn(self._p)
-        self._p.cut()
-        # win32raw batches everything into one spooler job until close() is called,
-        # so close after each receipt to make it print immediately.
+        try:
+            fn(self._p)
+            self._p.cut()
+        except Exception as e:
+            print(f"[Tulostin: virhe tulostuksessa — {e}]")
+            self._p = None
+            return
+        # win32raw batches everything into one spooler job until close() is called.
+        # Wait briefly for the printer to process the receipt, then purge the whole
+        # queue so offline jobs never accumulate between sessions.
         if self.config.get("connection") == "win32raw":
             self._p.close()
             self._p = None
+            import time
+            time.sleep(self._getWin32PurgDelay())
+            self._win32PurgeAll(self.config.get("printerName"))
         if self._ip is not None:
             fn(self._ip)
             self._ip.cut()
+
+    def _getWin32PurgDelay(self) -> float:
+        return float(self.config.get("win32PurgeDelaySec", 2.0))
+
+    def _win32DeleteJobs(self, printerName: str, jobs) -> None:
+        try:
+            import win32print
+            handle = win32print.OpenPrinter(printerName)
+            try:
+                for job in jobs:
+                    try:
+                        win32print.SetJob(handle, job["JobId"], 0, None, win32print.JOB_CONTROL_PAUSE)
+                    except Exception:
+                        pass
+                    try:
+                        win32print.SetJob(handle, job["JobId"], 0, None, win32print.JOB_CONTROL_DELETE)
+                    except Exception:
+                        pass
+            finally:
+                win32print.ClosePrinter(handle)
+        except Exception:
+            pass
+
+    def _win32PurgeAll(self, printerName: str) -> None:
+        try:
+            import win32print
+            handle = win32print.OpenPrinter(printerName)
+            jobs = win32print.EnumJobs(handle, 0, 99, 1)
+            win32print.ClosePrinter(handle)
+            self._win32DeleteJobs(printerName, jobs)
+        except Exception:
+            pass
+
+    def _win32PurgeStuck(self, printerName: str) -> None:
+        _STUCK = 0x0002 | 0x0020 | 0x0040  # ERROR | OFFLINE | PAPEROUT
+        try:
+            import win32print
+            handle = win32print.OpenPrinter(printerName)
+            jobs = [j for j in win32print.EnumJobs(handle, 0, 99, 1) if j["Status"] & _STUCK]
+            win32print.ClosePrinter(handle)
+            self._win32DeleteJobs(printerName, jobs)
+        except Exception:
+            pass
 
     def close(self) -> None:
         if self._p is not None:
@@ -150,6 +205,23 @@ class StdoutPrinter:
         sys.stdout.buffer.flush()
 
 
+class FontWrapper:
+    """Injects a default ESC/POS font into every set() call so formatters don't need to know about it."""
+    def __init__(self, printer, font):
+        self._p = printer
+        self._font = font
+
+    def set(self, **kwargs):
+        kwargs.setdefault("font", self._font)
+        self._p.set(**kwargs)
+
+    def textln(self, text=""):    self._p.textln(text)
+    def text(self, text=""):      self._p.text(text)
+    def image(self, img):         self._p.image(img)
+    def cut(self):                self._p.cut()
+    def close(self):              self._p.close()
+
+
 class CardAwareWrapper:
     """Wraps a real ESC/POS printer to render card text rows as images instead of Unicode text."""
     def __init__(self, printer, config):
@@ -166,7 +238,7 @@ class CardAwareWrapper:
             from printing.imagePrinter import _parseCards, _buildCardRowImage
             cards = _parseCards(str(text))
             if cards:
-                img = _buildCardRowImage(cards, self._config, self._style.get("invert", False))
+                img = _buildCardRowImage(cards, self._config)
                 if img is not None:
                     self._p.set(invert=False)
                     self._p.image(img)

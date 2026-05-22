@@ -264,6 +264,16 @@ class Buja(Game):
 
                 if not matchedPlayers:
                     print("Ei osumia.")
+                elif action == "kippistä":
+                    for player in matchedPlayers:
+                        target = self._chooseTarget(player)
+                        print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
+                        player.addDrinks(drinks)
+                        target.addDrinks(drinks)
+                        player.addDrinksToGive(drinks)
+                        self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+                    self.emit(BoardCardDoneEvent())
+                    continue
                 else:
                     for player in matchedPlayers:
                         if action == "juo":
@@ -274,14 +284,6 @@ class Buja(Game):
                         elif action == "jaa":
                             print(f"{player.getName()} antaa {drinks} lopussa")
                             player.pendingGive += drinks
-
-                        elif action == "kippistä":
-                            target = self._chooseTarget(player)
-                            print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
-                            player.addDrinks(drinks)
-                            target.addDrinks(drinks)
-                            player.addDrinksToGive(drinks)
-                            self.emit(ShareEvent(player.getName(), target.getName(), drinks))
 
                 self.emit(BoardCardDoneEvent())
 

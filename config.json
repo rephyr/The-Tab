@@ -1,10 +1,12 @@
 {
   "printer": {
+    "receiptWidth": 32,
     "connection": "win32raw",
-    "printerName": "",
+    "printerName": "CK710 Printer",
+    "escposFont": "b",
     "saveImages": true,
     "useCardImages": true,
-    "outputDir": "output",
+    "outputDir": "output",  
     "widthImage": 576,
     "heightImage": 120,
     "rankFont": "fonts/JqkasWild-w1YD6.ttf",

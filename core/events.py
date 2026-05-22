@@ -84,6 +84,17 @@ class TaskDrawEvent:
     targets: list
 
 @dataclass
+class TaskDrinkSummaryEvent:
+    scores: list  # [{"name": str, "drank": int, "toGive": int}, ...]
+
+@dataclass
+class TaskChainStartEvent:
+    drawer: str
+    title: str
+    description: str
+    assignments: list  # [{"name": str, "amount": int, "cascades": [{"name", "amount", "reason"}]}]
+
+@dataclass
 class GameEndEvent:
     scores: list
     timestamp: datetime = field(default_factory=datetime.now)
@@ -101,8 +112,14 @@ class RaceRoundEvent:
 class RaceStartEvent:
     players: list
     horses: list
-    bets: list
     timestamp: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class BetsPlacedEvent:
+    horses: list
+    bets: list
+    jockeys: list = None
 
 
 @dataclass
