@@ -101,6 +101,15 @@ class GameEndEvent:
 
 
 @dataclass
+class RavitBettorDrinkEvent:
+    playerName: str
+    horseName: str
+    amount: int
+    reason: str
+    scores: list  # [{"name": str, "drank": int}, ...]
+
+
+@dataclass
 class RaceRoundEvent:
     roundNumber: int
     trackLength: int
@@ -119,6 +128,8 @@ class RaceStartEvent:
 class BetsPlacedEvent:
     horses: list
     bets: list
+    jockeys: list = field(default_factory=list)
+    jockeys: list = None
 
 
 @dataclass

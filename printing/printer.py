@@ -54,9 +54,14 @@ class ReceiptPrinter:
         elif conn == "usb":
             if not ESCPOS_AVAILABLE:
                 raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
-            vid = int(self.config.get("vendor_id", "0x04b8"), 16)
-            pid = int(self.config.get("product_id", "0x0202"), 16)
-            self._p = Usb(vid, pid)
+            vid = int(self.config.get("vendorId", "0x04b8"), 16)
+            pid = int(self.config.get("productId", "0x0202"), 16)
+            inEp = int(self.config.get("inEp", "0x82"), 16)
+            outEp = int(self.config.get("outEp", "0x01"), 16)
+            self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp)
+            font = self.config.get("escposFont", "a")
+            if font != "a":
+                self._p = FontWrapper(self._p, font)
 
         elif conn == "serial":
             if not ESCPOS_AVAILABLE:
@@ -81,16 +86,68 @@ class ReceiptPrinter:
         """Call fn(p) to write content, then cut the paper."""
         if self._p is None:
             self._connect()
-        fn(self._p)
-        self._p.cut()
-        # win32raw batches everything into one spooler job until close() is called,
-        # so close after each receipt to make it print immediately.
+        try:
+            fn(self._p)
+            self._p.cut()
+        except Exception as e:
+            print(f"[Tulostin: virhe tulostuksessa — {e}]")
+            self._p = None
+            return
+        # win32raw batches everything into one spooler job until close() is called.
+        # Wait briefly for the printer to process the receipt, then purge the whole
+        # queue so offline jobs never accumulate between sessions.
         if self.config.get("connection") == "win32raw":
             self._p.close()
             self._p = None
+            import time
+            time.sleep(self._getWin32PurgDelay())
+            self._win32PurgeAll(self.config.get("printerName"))
         if self._ip is not None:
             fn(self._ip)
             self._ip.cut()
+
+    def _getWin32PurgDelay(self) -> float:
+        return float(self.config.get("win32PurgeDelaySec", 2.0))
+
+    def _win32DeleteJobs(self, printerName: str, jobs) -> None:
+        try:
+            import win32print
+            handle = win32print.OpenPrinter(printerName)
+            try:
+                for job in jobs:
+                    try:
+                        win32print.SetJob(handle, job["JobId"], 0, None, win32print.JOB_CONTROL_PAUSE)
+                    except Exception:
+                        pass
+                    try:
+                        win32print.SetJob(handle, job["JobId"], 0, None, win32print.JOB_CONTROL_DELETE)
+                    except Exception:
+                        pass
+            finally:
+                win32print.ClosePrinter(handle)
+        except Exception:
+            pass
+
+    def _win32PurgeAll(self, printerName: str) -> None:
+        try:
+            import win32print
+            handle = win32print.OpenPrinter(printerName)
+            jobs = win32print.EnumJobs(handle, 0, 99, 1)
+            win32print.ClosePrinter(handle)
+            self._win32DeleteJobs(printerName, jobs)
+        except Exception:
+            pass
+
+    def _win32PurgeStuck(self, printerName: str) -> None:
+        _STUCK = 0x0002 | 0x0020 | 0x0040  # ERROR | OFFLINE | PAPEROUT
+        try:
+            import win32print
+            handle = win32print.OpenPrinter(printerName)
+            jobs = [j for j in win32print.EnumJobs(handle, 0, 99, 1) if j["Status"] & _STUCK]
+            win32print.ClosePrinter(handle)
+            self._win32DeleteJobs(printerName, jobs)
+        except Exception:
+            pass
 
     def close(self) -> None:
         if self._p is not None:

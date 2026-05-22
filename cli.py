@@ -53,32 +53,6 @@ def showSessionResult(scores, title):
     input("Paina Enter jatkaaksesi...")
 
 
-def showSessionHistory(sessionHistory):
-    """Show in-memory sessions from the current run and allow drilling into one."""
-    if not sessionHistory:
-        print("\nEi sessioita tässä ajossa.")
-        input("Paina Enter jatkaaksesi...")
-        return
-
-    print("\n--- Tämän ajon sessiot ---\n")
-    for i, s in enumerate(sessionHistory):
-        players = ", ".join(sc["name"] for sc in s["scores"])
-        print(f"{i + 1}. [{s['timestamp']}] {s['game']} — {players}")
-
-    raw = input("\nSession numero (tai Enter peruuttaaksesi): ").strip()
-    if not raw or not raw.isdigit() or not (1 <= int(raw) <= len(sessionHistory)):
-        return
-
-    s = sessionHistory[int(raw) - 1]
-    print(f"\n[{s['timestamp']}] {s['game']}\n")
-    print(f"{'Nimi':<20} {'Joi':>6} {'Antoi':>6}")
-    print("-" * 34)
-    for sc in sorted(s["scores"], key=lambda x: x["drank"], reverse=True):
-        print(f"{sc['name']:<20} {sc['drank']:>6} {sc['gave']:>6}")
-    print()
-    input("Paina Enter jatkaaksesi...")
-
-
 def showLeaderboard(store):
     """Print the all-time leaderboard ranked by drinks taken."""
     board = store.getLeaderboard()
@@ -245,37 +219,48 @@ def deduplicateName(name, existingNames):
 
 
 def showPrintTest(config, debug):
-    """Sub-menu for printing test receipts with constant data to preview formatting."""
-    from printing.testData import printTestReceipts
+    """Two-level sub-menu: choose game, then choose which part to print."""
+    from printing.testData import printTestReceipts, GAMES
     printerConfig = config.data.get("printer", {})
     printer = ReceiptPrinter(printerConfig, debug=debug)
-
-    options = [
-        ("1", "Vuorokuitit (kaikki 4 vaihetta)", ["turns"]),
-        ("2", "Pelaajien kädet",                 ["hands"]),
-        ("3", "Lautakortit",                     ["board"]),
-        ("4", "Loppulasku",                      ["tally"]),
-        ("5", "TaskGame-kuitit",                 ["tasks"]),
-        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-rata", "ravit-event", "ravit-tiebreak", "ravit-final"]),
-        ("7", "Ravit-rata",                      ["ravit-rata"]),
-        ("8", "Kaikki yllä",                     None),
-    ]
-
-    optionMap = {key: parts for key, _, parts in options}
+    gameNames = list(GAMES.keys())
 
     try:
         while True:
-            print("\nTulosta testikuitit:")
-            for key, label, _ in options:
-                print(f"{key}. {label}")
-            print("9. Takaisin")
+            print("\nTulosta testikuitit — valitse peli:")
+            for i, name in enumerate(gameNames, 1):
+                print(f"{i}. {name}")
+            print(f"{len(gameNames)+1}. Kaikki")
+            print(f"{len(gameNames)+2}. Takaisin")
 
             choice = input("\nValinta: ").strip()
 
-            if choice == "9":
+            if choice == str(len(gameNames)+2):
                 break
-            elif choice in optionMap:
-                printTestReceipts(printer, optionMap[choice])
+            elif choice == str(len(gameNames)+1):
+                printTestReceipts(printer, None)
+            elif choice.isdigit() and 1 <= int(choice) <= len(gameNames):
+                gameName = gameNames[int(choice)-1]
+                gameParts = GAMES[gameName]
+
+                while True:
+                    print(f"\n{gameName} — valitse osio:")
+                    for i, (_, label) in enumerate(gameParts, 1):
+                        print(f"{i}. {label}")
+                    print(f"{len(gameParts)+1}. Kaikki {gameName}")
+                    print(f"{len(gameParts)+2}. Takaisin")
+
+                    partChoice = input("\nValinta: ").strip()
+
+                    if partChoice == str(len(gameParts)+2):
+                        break
+                    elif partChoice == str(len(gameParts)+1):
+                        printTestReceipts(printer, [k for k, _ in gameParts])
+                    elif partChoice.isdigit() and 1 <= int(partChoice) <= len(gameParts):
+                        key = gameParts[int(partChoice)-1][0]
+                        printTestReceipts(printer, [key])
+                    else:
+                        print("Virheellinen valinta.")
             else:
                 print("Virheellinen valinta.")
     except KeyboardInterrupt:
@@ -299,7 +284,6 @@ def runCli(adminMode=False, debug=False):
     store = PlayerStore()
     receiptMode = True
     saveData = True
-    sessionHistory = []
 
     modeLabel = " [ADMIN]" if adminMode else ""
     if debug:
@@ -429,11 +413,6 @@ def runCli(adminMode=False, debug=False):
             game.playRound()
 
             result = log.toDict()
-            sessionHistory.append({
-                "game": game.gameTitle,
-                "timestamp": result["timestamp"],
-                "scores": result["scores"],
-            })
             showSessionResult(result["scores"], game.gameTitle)
     except KeyboardInterrupt:
         print()

@@ -19,15 +19,6 @@ class Game(ABC):
         if self.log is not None:
             self.log.add(event)
 
-    def addPlayer(self, player: Player) -> None:
-        self.players.append(player)
-
-    def removePlayer(self, playerId: int) -> None:
-        self.players = [p for p in self.players if p.id != playerId]
-
-    def getPlayerNames(self) -> List[str]:
-        return [player.name for player in self.players]
-
     def _interactiveGivePhase(self) -> None:
         """Let each player with pending gives choose a target from the numbered player list."""
         pending = [p for p in self.players if p.pendingGive > 0]

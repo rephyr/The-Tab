@@ -19,8 +19,13 @@ p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
 
-# Adjust to match how many characters fit across your printer in normal font.
 _W = 32
+
+
+def configure(config: dict) -> None:
+    """Read receiptWidth from printer config. Call once before printing."""
+    global _W
+    _W = int(config.get("receiptWidth", 32))
 
 
 from printing.receipts.textWrapper import wrapText as _wrapText
@@ -33,11 +38,23 @@ def formatHorseList(horses: list, p) -> None:
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * _W)
     p.set(bold=True)
-    p.textln("HEVOSET")
+    p.textln(f"{'HEVOSET':<16}kerroin")
     p.set(bold=False)
     p.textln("-" * _W)
     for h in horses:
-        p.textln(f"#{h['id']} {h['name']:<12}kerroin: x{h['odds']}")
+        p.textln(f"#{h['id']} {h['name']:<12} x{h['odds']}")
+    p.textln("=" * _W)
+
+
+def formatJockeyList(jockeys: list, p) -> None:
+    """Print each horse's randomly assigned jockey."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("KUSKIT")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * _W)
+    for a in jockeys:
+        p.textln(f"{a['horseName']}: {a['jockeyName']}")
+        p.textln(f"  {a['jockeyDescription']}")
     p.textln("=" * _W)
 
 
@@ -49,7 +66,7 @@ def formatBettingReceipt(horses: list, bets: list, p) -> None:
     p.textln("=" * _W)
     for bet in bets:
         horseName = next((h["name"] for h in horses if h["id"] == bet["horseId"]), "?")
-        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} x{bet['amount']}")
+        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} {bet['amount']}x juomaa")
     p.textln("=" * _W)
 
 
@@ -63,10 +80,10 @@ def formatRaceRound(event, p) -> None:
         if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
             bar = "-" * barLen + "@" + "-" * (15 - barLen)
-            p.textln(f"{pos['name']:<12}[{bar}]")
+            p.textln(f"{pos['name']:<12}|{bar}|")
         else:
             label = "KUOLI" if pos["status"] == "dead" else "DNF"
-            p.textln(f"{pos['name']:<12}[{label:^16}]")
+            p.textln(f"{pos['name']:<12}|{label:^16}|")
     if event.raceEvents:
         p.textln("=" * _W)
         for ev in event.raceEvents:
@@ -107,6 +124,23 @@ def formatHorseEvent(event, p) -> None:
         for line in _wrapText(event.detail, _W):
             p.textln(line)
         p.textln("=" * _W)
+
+
+def formatBettorDrink(event, p) -> None:
+    """Print a mid-race receipt when a bettor drinks due to their horse's misfortune."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("JUOMAT")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * _W)
+    p.set(bold=True)
+    p.textln(f"{event.playerName} juo {event.amount}")
+    p.set(bold=False)
+    for line in _wrapText(f"{event.horseName}: {event.reason}", _W):
+        p.textln(line)
+    p.textln("-" * _W)
+    for s in event.scores:
+        p.textln(f"{s['name']:<16} {s['drank']} joi")
+    p.textln("=" * _W)
 
 
 def _hpBar(health, maxHealth, width=6) -> str:

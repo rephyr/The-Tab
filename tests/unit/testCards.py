@@ -1,46 +1,46 @@
 import unittest
-from core.cards import Cards
+from core.cards import Card
 from tests.testUtils import SilentTest
 
-class TestCards(SilentTest):
+class TestCard(SilentTest):
 
     def testStr(self):
-        self.assertEqual(str(Cards("A", "Hearts")), "♥A")
-        self.assertEqual(str(Cards("10", "Spades")), "♠10")
+        self.assertEqual(str(Card("A", "Hearts")), "♥A")
+        self.assertEqual(str(Card("10", "Spades")), "♠10")
 
     def testValueNumbers(self):
-        self.assertEqual(Cards("2", "Hearts").value(), 2)
-        self.assertEqual(Cards("10", "Hearts").value(), 10)
+        self.assertEqual(Card("2", "Hearts").value(), 2)
+        self.assertEqual(Card("10", "Hearts").value(), 10)
 
-    def testValueFaceCards(self):
-        self.assertEqual(Cards("J", "Hearts").value(), 11)
-        self.assertEqual(Cards("Q", "Hearts").value(), 12)
-        self.assertEqual(Cards("K", "Hearts").value(), 13)
-        self.assertEqual(Cards("A", "Hearts").value(), 14)
+    def testValueFaceCard(self):
+        self.assertEqual(Card("J", "Hearts").value(), 11)
+        self.assertEqual(Card("Q", "Hearts").value(), 12)
+        self.assertEqual(Card("K", "Hearts").value(), 13)
+        self.assertEqual(Card("A", "Hearts").value(), 14)
 
-    def testFaceCardsHaveUniqueValues(self):
-        self.assertGreater(Cards("J", "Hearts").value(), Cards("10", "Hearts").value())
-        self.assertGreater(Cards("Q", "Hearts").value(), Cards("J", "Hearts").value())
-        self.assertGreater(Cards("K", "Hearts").value(), Cards("Q", "Hearts").value())
-        self.assertGreater(Cards("A", "Hearts").value(), Cards("K", "Hearts").value())
+    def testFaceCardHaveUniqueValues(self):
+        self.assertGreater(Card("J", "Hearts").value(), Card("10", "Hearts").value())
+        self.assertGreater(Card("Q", "Hearts").value(), Card("J", "Hearts").value())
+        self.assertGreater(Card("K", "Hearts").value(), Card("Q", "Hearts").value())
+        self.assertGreater(Card("A", "Hearts").value(), Card("K", "Hearts").value())
 
     def testIsRed(self):
-        self.assertTrue(Cards("A", "Hearts").isRed())
-        self.assertTrue(Cards("A", "Diamonds").isRed())
-        self.assertFalse(Cards("A", "Clubs").isRed())
-        self.assertFalse(Cards("A", "Spades").isRed())
+        self.assertTrue(Card("A", "Hearts").isRed())
+        self.assertTrue(Card("A", "Diamonds").isRed())
+        self.assertFalse(Card("A", "Clubs").isRed())
+        self.assertFalse(Card("A", "Spades").isRed())
 
     def testIsBlack(self):
-        self.assertTrue(Cards("A", "Clubs").isBlack())
-        self.assertTrue(Cards("A", "Spades").isBlack())
-        self.assertFalse(Cards("A", "Hearts").isBlack())
+        self.assertTrue(Card("A", "Clubs").isBlack())
+        self.assertTrue(Card("A", "Spades").isBlack())
+        self.assertFalse(Card("A", "Hearts").isBlack())
 
     def testIsFaceCard(self):
-        self.assertTrue(Cards("J", "Hearts").isFaceCard())
-        self.assertTrue(Cards("Q", "Hearts").isFaceCard())
-        self.assertTrue(Cards("K", "Hearts").isFaceCard())
-        self.assertFalse(Cards("A", "Hearts").isFaceCard())
-        self.assertFalse(Cards("10", "Hearts").isFaceCard())
+        self.assertTrue(Card("J", "Hearts").isFaceCard())
+        self.assertTrue(Card("Q", "Hearts").isFaceCard())
+        self.assertTrue(Card("K", "Hearts").isFaceCard())
+        self.assertFalse(Card("A", "Hearts").isFaceCard())
+        self.assertFalse(Card("10", "Hearts").isFaceCard())
 
 
 if __name__ == "__main__":

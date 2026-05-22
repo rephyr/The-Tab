@@ -6,7 +6,7 @@ from core.game import Game
 from core.events import GameStartEvent, GameEndEvent, TaskDrawEvent, RouletteResultEvent, TaskDrinkSummaryEvent, TaskChainStartEvent
 from dataclasses import dataclass, field
 from games.taskGame.tasks import TASKS
-from games.penalties import drawPenalty
+from games.taskGame.penalties import drawPenalty
 import random
 
 # Each task has:
@@ -316,10 +316,11 @@ class TaskGame(Game):
             print(f"  Ketju alkaa! {self.chainStepsLeft} vuoroa jäljellä.")
 
         elif drinkType == "special":
-            if task["title"] == "Immunitetti":
+            key = task.get("key", "")
+            if key == "immunity":
                 self.immunePlayers.append(drawer)
                 print(f"\n{drawer.getName()} on immuuni seuraavalle pakolliselle juomiselle.")
-            elif task["title"] == "Tupla":
+            elif key == "doubleNext":
                 self.doubleNext = True
                 print("\nSeuraavan kortin juomat tuplataan!")
 

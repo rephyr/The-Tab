@@ -12,7 +12,7 @@ SUIT_SYMBOLS = {
 }
 
 @dataclass
-class Cards:
+class Card:
     """A single playing card with a rank and suit."""
     rank: str
     suit: str

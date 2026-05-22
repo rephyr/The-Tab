@@ -1,6 +1,6 @@
 import unittest
 from core.deck import Deck
-from core.cards import Cards
+from core.cards import Card
 from tests.testUtils import SilentTest
 
 class TestDeck(SilentTest):
@@ -10,14 +10,14 @@ class TestDeck(SilentTest):
         self.deck = Deck()
         self.deck.buildDeck()
  
-    def testBuildDeckHas52Cards(self):
+    def testBuildDeckHas52Card(self):
         self.assertEqual(self.deck.cardsRemaining(), 52)
  
     def testBuildDeckHasAllSuitsAndRanks(self):
         suits = {c.suit for c in self.deck.seeDeck()}
         ranks = {c.rank for c in self.deck.seeDeck()}
-        self.assertEqual(suits, set(Cards.SUITS))
-        self.assertEqual(ranks, set(Cards.RANKS))
+        self.assertEqual(suits, set(Card.SUITS))
+        self.assertEqual(ranks, set(Card.RANKS))
  
     def testDrawCardReducesCount(self):
         self.deck.drawCard()
@@ -25,14 +25,14 @@ class TestDeck(SilentTest):
  
     def testDrawCardReturnsCard(self):
         card = self.deck.drawCard()
-        self.assertIsInstance(card, Cards)
+        self.assertIsInstance(card, Card)
  
     def testSeeTopCardDoesNotRemove(self):
         top = self.deck.seeTopCard()
         self.assertEqual(self.deck.cardsRemaining(), 52)
-        self.assertIsInstance(top, Cards)
+        self.assertIsInstance(top, Card)
  
-    def testResetDeckRestores52Cards(self):
+    def testResetDeckRestores52Card(self):
         self.deck.drawCard()
         self.deck.drawCard()
         self.deck.resetDeck()
@@ -45,12 +45,12 @@ class TestDeck(SilentTest):
         self.assertNotEqual(original, shuffled)
         
 class TestMultiDeck(SilentTest):
-    def testTwoDecksBuild104Cards(self):
+    def testTwoDecksBuild104Card(self):
         deck = Deck(deckCount=2)
         deck.buildDeck()
         self.assertEqual(deck.cardsRemaining(), 104)
 
-    def testThreeDecksBuild156Cards(self):
+    def testThreeDecksBuild156Card(self):
         deck = Deck(deckCount=3)
         deck.buildDeck()
         self.assertEqual(deck.cardsRemaining(), 156)
