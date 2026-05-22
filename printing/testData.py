@@ -3,49 +3,36 @@ Editable test data for previewing receipt formatting without playing a game.
 Change the values here to see how different content looks when printed.
 """
 from printing.formatter import formatTurn, formatHand, formatBoardCard, formatTally, formatTaskDraw
-from printing.receipts.ravit import formatBettingSlip, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
-from core.events import TaskDrawEvent, HorseEventFiredEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
+from printing.receipts.ravit import (
+    formatHorseList, formatJockeyList, formatBettingReceipt,
+    formatRaceRound, formatHorseEvent, formatRavitFinal,
+    formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner,
+)
+from core.events import (
+    TaskDrawEvent, HorseEventFiredEvent,
+    RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
+)
+
+# ---------------------------------------------------------------------------
+# Buja
+# ---------------------------------------------------------------------------
 
 TEST_PHASES = [
     ("Red or Black", {
-        "player": "Testi Tatti",
-        "guess": "Red",
-        "card": "♥7",
-        "correct": True,
-        "gaveTo": "Testi Matti",
-        "drinks": 1,
-        "note": None,
-        "handBefore": [],
+        "player": "Testi Tatti", "guess": "Red", "card": "♥7", "correct": True,
+        "gaveTo": "Testi Matti", "drinks": 1, "note": None, "handBefore": [],
     }),
     ("Higher or Lower", {
-        "player": "Testi Matti",
-        "guess": "Higher",
-        "card": "♠J",
-        "correct": False,
-        "gaveTo": None,
-        "drinks": 2,
-        "note": None,
-        "handBefore": ["♥7"],
+        "player": "Testi Matti", "guess": "Higher", "card": "♠J", "correct": False,
+        "gaveTo": None, "drinks": 2, "note": None, "handBefore": ["♥7"],
     }),
     ("Inside or Outside", {
-        "player": "Testi Tatti",
-        "guess": "Inside",
-        "card": "♦8",
-        "correct": True,
-        "gaveTo": "Testi Matti",
-        "drinks": 3,
-        "note": None,
-        "handBefore": ["♥7", "♠J"],
+        "player": "Testi Tatti", "guess": "Inside", "card": "♦8", "correct": True,
+        "gaveTo": "Testi Matti", "drinks": 3, "note": None, "handBefore": ["♥7", "♠J"],
     }),
     ("Suit", {
-        "player": "Testi Matti",
-        "guess": "Hearts",
-        "card": "♣K",
-        "correct": False,
-        "gaveTo": None,
-        "drinks": 4,
-        "note": None,
-        "handBefore": [],
+        "player": "Testi Matti", "guess": "Hearts", "card": "♣K", "correct": False,
+        "gaveTo": None, "drinks": 4, "note": None, "handBefore": [],
     }),
 ]
 
@@ -55,40 +42,13 @@ TEST_HANDS = [
 ]
 
 TEST_BOARD_CARDS = [
-    {
-        "card": "♦Q",
-        "action": "Drink",
-        "drinks": 2,
-        "matched": [],
-        "outcomes": [],
-    },
-    {
-        "card": "♠7",
-        "action": "Drink",
-        "drinks": 2,
-        "matched": ["Testi Tatti"],
-        "outcomes": [
-            {"player": "Testi Tatti", "type": "drink", "drinks": 2},
-        ],
-    },
-    {
-        "card": "♥J",
-        "action": "Give",
-        "drinks": 4,
-        "matched": ["Testi Tatti"],
-        "outcomes": [
-            {"giver": "Testi Tatti", "receiver": "Testi Matti", "type": "give", "drinks": 4},
-        ],
-    },
-    {
-        "card": "♣A",
-        "action": "Share",
-        "drinks": 6,
-        "matched": ["Testi Tatti", "Testi Matti"],
-        "outcomes": [
-            {"player1": "Testi Tatti", "player2": "Testi Matti", "type": "share", "drinks": 6},
-        ],
-    },
+    {"card": "♦Q", "action": "Drink", "drinks": 2, "matched": [], "outcomes": []},
+    {"card": "♠7", "action": "Drink", "drinks": 2, "matched": ["Testi Tatti"],
+     "outcomes": [{"player": "Testi Tatti", "type": "drink", "drinks": 2}]},
+    {"card": "♥J", "action": "Give", "drinks": 4, "matched": ["Testi Tatti"],
+     "outcomes": [{"giver": "Testi Tatti", "receiver": "Testi Matti", "type": "give", "drinks": 4}]},
+    {"card": "♣A", "action": "Share", "drinks": 6, "matched": ["Testi Tatti", "Testi Matti"],
+     "outcomes": [{"player1": "Testi Tatti", "player2": "Testi Matti", "type": "share", "drinks": 6}]},
 ]
 
 TEST_SCORES = [
@@ -96,13 +56,20 @@ TEST_SCORES = [
     {"name": "Testi Matti", "drank": 12, "gave": 3},
 ]
 
+# ---------------------------------------------------------------------------
+# TaskGame
+# ---------------------------------------------------------------------------
+
 TEST_TASK_DRAWS = [
     TaskDrawEvent(drawer="Testi Tatti", title="Juo 3",      description="Juo 3.",                                                                                              targets=["Testi Tatti"]),
     TaskDrawEvent(drawer="Testi Tatti", title="Jaa 3",      description="Jaa 3 juomaa.",                                                                                       targets=["Testi Tatti"]),
     TaskDrawEvent(drawer="Testi Tatti", title="Pari",       description="Teette parin. Aina kun toinen juo, toinen juo myös. Kestää kunnes seuraava parikortti nostetaan.",     targets=["Testi Tatti", "Testi Matti"]),
-    TaskDrawEvent(drawer="Testi Tatti", title="Vesiputous", description="Kaikki alkavat juomaan yhtäikaa. Kukaan ei saa lopettaa ennen kuin oikealla puolella oleva lopettaa.", targets=["Testi Tatti", "Testi Matti"]),
+    TaskDrawEvent(drawer="Testi Tatti", title="Vesiputous", description="Kaikki alkavat juomaan yhtäaikaa. Kukaan ei saa lopettaa ennen kuin oikealla puolella oleva lopettaa.", targets=["Testi Tatti", "Testi Matti"]),
 ]
 
+# ---------------------------------------------------------------------------
+# Ravit
+# ---------------------------------------------------------------------------
 
 TEST_HORSES_RAVIT = [
     {"id": 1, "name": "Ukko",     "speed": 4, "endurance": 5, "luck": 3, "odds": 1.3,
@@ -117,6 +84,28 @@ TEST_BETS_RAVIT = [
     {"player": "Testi Tatti", "horseId": 1, "amount": 3},
     {"player": "Testi Matti", "horseId": 2, "amount": 2},
 ]
+
+TEST_JOCKEYS_RAVIT = [
+    {"horseName": "Ukko",     "jockeyName": "Turbo",   "jockeyDescription": "+1 nopeus"},
+    {"horseName": "Tuulikki", "jockeyName": "Pelkuri", "jockeyDescription": "Ei osallistu tappeluksiin"},
+    {"horseName": "Laukki",   "jockeyName": "Raju",    "jockeyDescription": "Boost vie tuplasti eteenpäin"},
+]
+
+TEST_RACE_ROUND_RAVIT = RaceRoundEvent(
+    roundNumber=3,
+    trackLength=20,
+    positions=[
+        {"id": 1, "name": "Ukko",     "position": 12, "status": "racing",
+         "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0, "motivatedRoundsLeft": 0, "fightRoundsLeft": 0, "confusedRoundsLeft": 0},
+        {"id": 2, "name": "Tuulikki", "position": 8,  "status": "racing",
+         "tiredRoundsLeft": 1, "stumbleRoundsLeft": 0, "motivatedRoundsLeft": 0, "fightRoundsLeft": 0, "confusedRoundsLeft": 0},
+        {"id": 3, "name": "Laukki",   "position": 5,  "status": "dead",
+         "tiredRoundsLeft": 0, "stumbleRoundsLeft": 0, "motivatedRoundsLeft": 0, "fightRoundsLeft": 0, "confusedRoundsLeft": 0},
+    ],
+    raceEvents=[
+        {"horseName": "Laukki", "eventType": "death", "detail": "Laukki kaatuu ja poistuu kilpailusta!"},
+    ],
+)
 
 TEST_RAVIT_FINAL_POSITIONS = [
     {"horseId": 1, "horseName": "Ukko",     "position": 20, "place": 1, "status": "racing"},
@@ -152,16 +141,34 @@ TEST_TIEBREAK_ELIMINATION = TiebreakEliminationEvent(
 
 TEST_TIEBREAK_WINNER = TiebreakWinnerEvent(winnerName="Ukko", health=19, maxHealth=28, strength=4)
 
+# ---------------------------------------------------------------------------
+# Game → parts registry  (used by cli.py to build the two-level menu)
+# ---------------------------------------------------------------------------
+
+GAMES = {
+    "Buja": [
+        ("turns", "Vuorokuitit"),
+        ("hands", "Kädet"),
+        ("board", "Lautakortit"),
+        ("tally", "Loppulasku"),
+    ],
+    "TaskGame": [
+        ("tasks", "Tehtäväkortit"),
+    ],
+    "Ravit": [
+        ("ravit-betting",  "Hevoset & Vedonlyönti"),
+        ("ravit-rata",     "Kierros"),
+        ("ravit-event",    "Tapahtuma"),
+        ("ravit-tiebreak", "Tasapeli"),
+        ("ravit-final",    "Lopputulos"),
+    ],
+}
+
 
 def printTestReceipts(printer, parts=None) -> None:
-    """Print test receipts for the given parts.
-
-    parts: list containing any of "turns", "hands", "board", "tally".
-    Pass None to print all.
-    """
+    """Print test receipts. Pass None to print every part of every game."""
     if parts is None:
-        parts = ["turns", "hands", "board", "tally", "tasks",
-                 "ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]
+        parts = [key for game_parts in GAMES.values() for key, _ in game_parts]
 
     if "turns" in parts:
         for phaseName, turn in TEST_PHASES:
@@ -183,7 +190,12 @@ def printTestReceipts(printer, parts=None) -> None:
             printer.printWith(lambda p, e=event: formatTaskDraw(e, p))
 
     if "ravit-betting" in parts:
-        printer.printWith(lambda p: formatBettingSlip(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
+        printer.printWith(lambda p: formatHorseList(TEST_HORSES_RAVIT, p))
+        printer.printWith(lambda p: formatJockeyList(TEST_JOCKEYS_RAVIT, p))
+        printer.printWith(lambda p: formatBettingReceipt(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
+
+    if "ravit-rata" in parts:
+        printer.printWith(lambda p, e=TEST_RACE_ROUND_RAVIT: formatRaceRound(e, p))
 
     if "ravit-event" in parts:
         printer.printWith(lambda p, e=TEST_HORSE_EVENT_RAVIT: formatHorseEvent(e, p))

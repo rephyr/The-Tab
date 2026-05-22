@@ -245,36 +245,48 @@ def deduplicateName(name, existingNames):
 
 
 def showPrintTest(config, debug):
-    """Sub-menu for printing test receipts with constant data to preview formatting."""
-    from printing.testData import printTestReceipts
+    """Two-level sub-menu: choose game, then choose which part to print."""
+    from printing.testData import printTestReceipts, GAMES
     printerConfig = config.data.get("printer", {})
     printer = ReceiptPrinter(printerConfig, debug=debug)
-
-    options = [
-        ("1", "Vuorokuitit (kaikki 4 vaihetta)", ["turns"]),
-        ("2", "Pelaajien kädet",                 ["hands"]),
-        ("3", "Lautakortit",                     ["board"]),
-        ("4", "Loppulasku",                      ["tally"]),
-        ("5", "TaskGame-kuitit",                 ["tasks"]),
-        ("6", "Ravit-kuitit",                    ["ravit-betting", "ravit-event", "ravit-tiebreak", "ravit-final"]),
-        ("7", "Kaikki yllä",                     None),
-    ]
-
-    optionMap = {key: parts for key, _, parts in options}
+    gameNames = list(GAMES.keys())
 
     try:
         while True:
-            print("\nTulosta testikuitit:")
-            for key, label, _ in options:
-                print(f"{key}. {label}")
-            print("8. Takaisin")
+            print("\nTulosta testikuitit — valitse peli:")
+            for i, name in enumerate(gameNames, 1):
+                print(f"{i}. {name}")
+            print(f"{len(gameNames)+1}. Kaikki")
+            print(f"{len(gameNames)+2}. Takaisin")
 
             choice = input("\nValinta: ").strip()
 
-            if choice == "8":
+            if choice == str(len(gameNames)+2):
                 break
-            elif choice in optionMap:
-                printTestReceipts(printer, optionMap[choice])
+            elif choice == str(len(gameNames)+1):
+                printTestReceipts(printer, None)
+            elif choice.isdigit() and 1 <= int(choice) <= len(gameNames):
+                gameName = gameNames[int(choice)-1]
+                gameParts = GAMES[gameName]
+
+                while True:
+                    print(f"\n{gameName} — valitse osio:")
+                    for i, (_, label) in enumerate(gameParts, 1):
+                        print(f"{i}. {label}")
+                    print(f"{len(gameParts)+1}. Kaikki {gameName}")
+                    print(f"{len(gameParts)+2}. Takaisin")
+
+                    partChoice = input("\nValinta: ").strip()
+
+                    if partChoice == str(len(gameParts)+2):
+                        break
+                    elif partChoice == str(len(gameParts)+1):
+                        printTestReceipts(printer, [k for k, _ in gameParts])
+                    elif partChoice.isdigit() and 1 <= int(partChoice) <= len(gameParts):
+                        key = gameParts[int(partChoice)-1][0]
+                        printTestReceipts(printer, [key])
+                    else:
+                        print("Virheellinen valinta.")
             else:
                 print("Virheellinen valinta.")
     except KeyboardInterrupt:

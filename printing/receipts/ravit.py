@@ -1,6 +1,39 @@
 """Receipt formatters for the Ravit horse-race game."""
 
 
+def formatHorseList(horses: list, p) -> None:
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("HEVOSET")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+    for h in horses:
+        p.textln(f"#{h['id']} {h['name']:<12}  x{h['odds']}")
+        p.textln(f"   nop:{h['speed']} kes:{h['endurance']} tur:{h['luck']}")
+    p.textln("=" * 24)
+
+
+def formatJockeyList(jockeys: list, p) -> None:
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("KUSKIT")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+    for a in jockeys:
+        p.textln(f"{a['horseName']}: {a['jockeyName']}")
+        p.textln(f"  {a['jockeyDescription']}")
+    p.textln("=" * 24)
+
+
+def formatBettingReceipt(horses: list, bets: list, p) -> None:
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("VEDONLYÖNTI")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * 24)
+    for bet in bets:
+        horseName = next((h["name"] for h in horses if h["id"] == bet["horseId"]), "?")
+        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} x{bet['amount']}")
+    p.textln("=" * 24)
+
+
 def formatBettingSlip(horses: list, bets: list, p) -> None:
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln("RAVIT")
