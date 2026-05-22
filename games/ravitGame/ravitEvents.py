@@ -157,6 +157,9 @@ class RavitEventsMixin:
         return f"Juopunut katsoja juoksee radalle! {target.name} törmää häneen ja kaatuu!"
 
     def _shoeFallsOff(self) -> str:
-        target = random.choice([h for h in self.horses if h.status == "racing"])
+        pool = [h for h in self.horses if h.status == "racing"]
+        if not pool:
+            return None
+        target = random.choice(pool)
         target.speed = max(1, target.speed - 1)
         return f"Hevosen kenkä irtosi! {target.name} juoksee hitaammin koko kisan!"

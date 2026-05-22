@@ -119,6 +119,7 @@ class RaceStartEvent:
 class BetsPlacedEvent:
     horses: list
     bets: list
+    jockeys: list = field(default_factory=list)
     jockeys: list = None
 
 
