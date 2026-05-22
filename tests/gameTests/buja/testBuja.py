@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from core.cards import Cards
+from core.cards import Card
 from core.deck import Deck
 from core.player import Player
 from games.bujaGame.buja import Buja
@@ -10,7 +10,7 @@ def makePlayer(id=1, name="Test"):
     return Player(id=id, name=name)
 
 def makeCard(rank, suit="Hearts"):
-    return Cards(rank, suit)
+    return Card(rank, suit)
 
 def makeBuja():
     deck = Deck()

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import List, TYPE_CHECKING
  
 if TYPE_CHECKING:
-    from .cards import Cards
+    from .cards import Card
  
 @dataclass
 class Player:
@@ -14,7 +14,7 @@ class Player:
     drinksTaken: int = 0
     drinksToGive: int = 0
     pendingGive: int = 0
-    hand: List["Cards"] = field(default_factory=list)
+    hand: List["Card"] = field(default_factory=list)
  
     def getName(self) -> str:
         return self.name
@@ -40,7 +40,7 @@ class Player:
     def addDrinksToGive(self, count: int) -> None:
         self.drinksToGive += count
  
-    def addCardToHand(self, card: "Cards") -> None:
+    def addCardToHand(self, card: "Card") -> None:
         self.hand.append(card)
  
     def clearHand(self) -> None:
@@ -50,7 +50,7 @@ class Player:
         """True if the player holds at least one card with this rank."""
         return any(c.rank == rank for c in self.hand)
  
-    def getHand(self) -> List["Cards"]:
+    def getHand(self) -> List["Card"]:
         return self.hand
  
     def __str__(self) -> str:

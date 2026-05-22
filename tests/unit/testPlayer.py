@@ -1,13 +1,13 @@
 import unittest
 from core.player import Player
-from core.cards import Cards
+from core.cards import Card
 from tests.testUtils import SilentTest
 
 def makePlayer(id=1, name="Testi Timo"):
     return Player(id=id, name=name)
 
 def makeCard(rank, suit="Hearts"):
-    return Cards(rank, suit)
+    return Card(rank, suit)
 
 class TestPlayer(SilentTest):
 
