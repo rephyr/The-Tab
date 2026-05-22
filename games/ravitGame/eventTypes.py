@@ -13,6 +13,10 @@ SLIP_FALL = "slipFall"
 CONFUSED = "confused"
 LIGHTNING = "lightning"
 
+DRUNK_FAN = "drunkFan"
+HORSE_KICK = "horseKick"
+HORSE_SHOE = "horseShoe"
+
 # Fight events
 FIGHT_START = "fight_start"
 FIGHT_WIN = "fight_win"

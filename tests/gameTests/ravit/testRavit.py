@@ -256,10 +256,36 @@ class TestRandomEvents(SilentTest):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
         game._roundNumber = 2
         h = makeHorse(luck=3)
-        with patch("random.random", return_value=0.5), \
-             patch("random.choices", return_value=["lightning"]):
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["lightning"]), \
+             patch("random.randint", return_value=2):
             game._tryFireEvent(h)
         self.assertEqual(h.status, "dead")
+
+    def testLightningSurvivalReducesStats(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(speed=3, endurance=3, luck=3)
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["lightning"]), \
+             patch("random.randint", return_value=0):
+            game._tryFireEvent(h)
+        self.assertEqual(h.status, "racing")
+        self.assertEqual(h.speed, 2)
+        self.assertEqual(h.endurance, 2)
+        self.assertEqual(h.luck, 2)
+
+    def testLightningSurvivalFloorAtOne(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(speed=1, endurance=1, luck=1)
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["lightning"]), \
+             patch("random.randint", return_value=0):
+            game._tryFireEvent(h)
+        self.assertEqual(h.speed, 1)
+        self.assertEqual(h.endurance, 1)
+        self.assertEqual(h.luck, 1)
 
     def testOvertakeJumpsAheadOfNearbyHorse(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
@@ -301,6 +327,162 @@ class TestRandomEvents(SilentTest):
         lowChance = 0.15 * ((6 - 1) / 3.0)
         highChance = 0.15 * ((6 - 5) / 3.0)
         self.assertGreater(lowChance, highChance)
+
+    def testDrunkFanStumblesRandomHorse(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        game.horses = [h1, h2]
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["drunkFan"]), \
+             patch("random.choice", return_value=h2):
+            game._tryFireEvent(h1)
+        self.assertEqual(h2.stumbleRoundsLeft, 1)
+
+    def testHorseKickStumblesHorseBehind(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.position = 10
+        h2.position = 5
+        game.horses = [h1, h2]
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["horseKick"]), \
+             patch("random.choice", return_value=h2), \
+             patch("random.randint", return_value=1):
+            game._tryFireEvent(h1)
+        self.assertEqual(h2.stumbleRoundsLeft, 1)
+        self.assertEqual(h2.position, 4)
+
+    def testHorseKickFizzlesIfNoBehind(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.position = 3
+        h2.position = 10
+        game.horses = [h1, h2]
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["horseKick"]):
+            game._tryFireEvent(h1)
+        self.assertEqual(h2.stumbleRoundsLeft, 0)
+
+    def testHorseShoeFallsReducesSpeed(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(id=1, name="Ukko", luck=1, speed=3)
+        game.horses = [h]
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["horseShoe"]), \
+             patch("random.choice", return_value=h):
+            game._tryFireEvent(h)
+        self.assertEqual(h.speed, 2)
+
+    def testHorseShoeFallsSpeedFloorAtOne(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(id=1, name="Ukko", luck=1, speed=1)
+        game.horses = [h]
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["horseShoe"]), \
+             patch("random.choice", return_value=h):
+            game._tryFireEvent(h)
+        self.assertEqual(h.speed, 1)
+
+    def testDrunkFanCanHitAnyRacingHorse(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        game.horses = [h1, h2]
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["drunkFan"]), \
+             patch("random.choice", return_value=h1):
+            game._tryFireEvent(h1)
+        self.assertEqual(h1.stumbleRoundsLeft, 1)
+
+
+class TestEventGuard(SilentTest):
+    def testHorseGetsAtMostOneEventPerRound(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(id=1, name="Ukko", luck=3)
+        game.horses = [h]
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["boost"]):
+            game._tryFireEvent(h)
+        posAfterFirst = h.position
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["boost"]):
+            game._tryFireEvent(h)
+        self.assertEqual(h.position, posAfterFirst)
+
+    def testEventedThisRoundResetEachRound(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(id=1, name="Ukko", luck=3)
+        game.horses = [h]
+        game._eventedThisRound.add(h.id)
+        game._eventedThisRound = set()
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["boost"]):
+            game._tryFireEvent(h)
+        self.assertGreater(h.position, 0)
+
+    def testDrunkFanSkipsAlreadyEventedHorse(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        game.horses = [h1, h2]
+        game._eventedThisRound.add(h2.id)
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["drunkFan"]):
+            game._tryFireEvent(h1)
+        self.assertEqual(h2.stumbleRoundsLeft, 0)
+
+    def testDrunkFanFizzlesIfAllHorsesEvented(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        game.horses = [h1, h2]
+        game._eventedThisRound.add(h2.id)
+        game._eventedThisRound.add(h1.id)
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["drunkFan"]):
+            game._tryFireEvent(h1)
+        self.assertEqual(h2.stumbleRoundsLeft, 0)
+
+    def testHorseKickSkipsAlreadyEventedHorse(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko", luck=1)
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.position = 10
+        h2.position = 5
+        game.horses = [h1, h2]
+        game._eventedThisRound.add(h2.id)
+        with patch("random.random", return_value=0.5), \
+             patch("random.choices", return_value=["horseKick"]):
+            game._tryFireEvent(h1)
+        self.assertEqual(h2.stumbleRoundsLeft, 0)
+
+    def testFightStartMarksHorsesAsEvented(self):
+        game = makeRavit({"trackLength": 20, "fightChance": 1.0, "eventChance": 0.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko")
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.position = 10
+        h2.position = 10
+        game.horses = [h1, h2]
+        with patch("random.random", return_value=0.0), \
+             patch("random.randint", return_value=2):
+            game._checkNewFights()
+        self.assertIn(h1.id, game._eventedThisRound)
+        self.assertIn(h2.id, game._eventedThisRound)
 
 
 class TestFightMechanics(SilentTest):

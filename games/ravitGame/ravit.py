@@ -22,8 +22,8 @@ import games.ravitGame.eventTypes as ET
 
 _POS_EVENTS  = [ET.BOOST, ET.MOTIVATED, ET.OVERTAKE]
 _POS_WEIGHTS = [4, 4, 3]
-_NEG_EVENTS  = [ET.DEATH, ET.BACKWARDS, ET.STUMBLE, ET.SLIP_FALL, ET.CONFUSED, ET.LIGHTNING]
-_NEG_WEIGHTS = [1, 3, 3, 3, 2, 2]
+_NEG_EVENTS  = [ET.DEATH, ET.BACKWARDS, ET.STUMBLE, ET.SLIP_FALL, ET.CONFUSED, ET.LIGHTNING, ET.DRUNK_FAN, ET.HORSE_KICK, ET.HORSE_SHOE]
+_NEG_WEIGHTS = [1, 3, 3, 3, 2, 2, 2, 3, 2]
 
 
 @dataclass
@@ -32,10 +32,11 @@ class RavitGame(Game):
 
     gameTitle: str = "Ravit"
     config: dict = field(default_factory=dict)
-    horses: list = field(default_factory=list)
-    bets: list = field(default_factory=list)
+    horses: list[Horse] = field(default_factory=list)
+    bets: list[dict] = field(default_factory=list)
     _roundNumber: int = field(default=0, init=False, repr=False)
     _roundEvents: list = field(default_factory=list, init=False, repr=False)
+    _eventedThisRound: set = field(default_factory=set, init=False, repr=False)
 
     def playRound(self) -> None:
         self.emit(GameStartEvent([p.getName() for p in self.players]))
@@ -111,6 +112,7 @@ class RavitGame(Game):
 
     def _runOneRound(self) -> None:
         self._roundEvents = []
+        self._eventedThisRound = set()
         self._resolveFights()
         self._checkNewFights()
         for horse in self.horses:
@@ -158,6 +160,8 @@ class RavitGame(Game):
                     h2.fightOpponent = h1.id
                     fighting.add(h1.id)
                     fighting.add(h2.id)
+                    self._eventedThisRound.add(h1.id)
+                    self._eventedThisRound.add(h2.id)
                     detail = f"{h1.name} ja {h2.name} tappelevat!"
                     print(f"  *** {detail}")
                     self._roundEvents.append({"horseName": h1.name, "eventType": ET.FIGHT_START, "detail": detail})
@@ -181,6 +185,8 @@ class RavitGame(Game):
             horse.fightRoundsLeft -= 1
             opponent.fightRoundsLeft -= 1
             if horse.fightRoundsLeft <= 0:
+                self._eventedThisRound.add(horse.id)
+                self._eventedThisRound.add(opponent.id)
                 if opponent.status != "racing":
                     horse.fightOpponent = None
                 else:
@@ -432,7 +438,7 @@ class RavitGame(Game):
 
     def _tryFireEvent(self, horse: Horse) -> None:
         """Roll for a random event; positive events scale with luck, negative events scale inversely."""
-        if self._roundNumber <= 1:
+        if self._roundNumber <= 1 or horse.id in self._eventedThisRound:
             return
         baseChance = self._getConfig("eventChance", 0.15)
         posChance = min(baseChance * (horse.luck / 3.0), 0.95)
@@ -450,6 +456,7 @@ class RavitGame(Game):
         if detail is None:
             return
 
+        self._eventedThisRound.add(horse.id)
         print(f"  *** {detail}")
         self._roundEvents.append({"horseName": horse.name, "eventType": eventType, "detail": detail})
         self.emit(HorseEventFiredEvent(
@@ -473,6 +480,9 @@ class RavitGame(Game):
             ET.SLIP_FALL: lambda: self._eventSlipFall(horse),
             ET.CONFUSED:  lambda: self._eventConfused(horse),
             ET.LIGHTNING: lambda: self._eventLightning(horse),
+            ET.DRUNK_FAN:  lambda: self._eventDrunkFan(),
+            ET.HORSE_KICK: lambda: self._eventHorseKick(horse),
+            ET.HORSE_SHOE: lambda: self._shoeFallsOff(),
         }
         fn = dispatch.get(eventType)
         return fn() if fn else None
@@ -521,9 +531,39 @@ class RavitGame(Game):
         return f"{horse.name} eksyy ja juoksee väärään suuntaan: {rounds} kierrosta!"
 
     def _eventLightning(self, horse: Horse) -> str:
-        horse.status = "dead"
-        return f"Salama iskee hevoseen! {horse.name} ei selvinnyt hengissä."
+        # 1/3 chance
+        if random.randint(0, 2) == 2:
+            horse.status = "dead"
+            return f"Salama iskee hevoseen! {horse.name} ei selvinnyt hengissä."
+        horse.speed = max(1, horse.speed - 1)
+        horse.endurance = max(1, horse.endurance - 1)
+        horse.luck = max(1, horse.luck - 1)
+        return f"Salama viuhuu läheltä! {horse.name} selvisi hengissä mutta on järkyttynyt."
 
+    def _eventHorseKick(self, horse: Horse) -> str:
+        behind = [h for h in self.horses if h.status == "racing" and h.id != horse.id and h.position < horse.position and h.id not in self._eventedThisRound]
+        if not behind:
+            return None
+        target = random.choice(behind)
+        target.stumbleRoundsLeft = 1
+        # cannot go behind starting line
+        target.position = max(0, target.position - random.randint(1, 2))
+        return f"{horse.name} potkaisee takajalalla! {target.name} saa osuman ja kaatuu!"
+
+    def _eventDrunkFan(self) -> str:
+        pool = [h for h in self.horses if h.status == "racing" and h.id not in self._eventedThisRound]
+        if not pool:
+            return None
+        target = random.choice(pool)
+        target.stumbleRoundsLeft = 1
+        return f"Juopunut katsoja juoksee radalle! {target.name} törmää häneen ja kaatuu!"
+    
+    def _shoeFallsOff(self) -> str:
+        target = random.choice([h for h in self.horses if h.status == "racing"])
+        # horse speed canot be negative
+        target.speed = max(1, target.speed - 1)
+        return f"Hevosen kenkä irtosi! {target.name} juoksee hitaammin koko kisan!"
+        
     def _printTrack(self) -> None:
         trackLength = self._getConfig("trackLength", 20)
         print(f"\n=== KIERROS {self._roundNumber} ===")

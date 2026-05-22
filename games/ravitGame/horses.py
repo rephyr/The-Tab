@@ -90,7 +90,7 @@ def _assignRelativeOdds(horses: list) -> None:
         h.odds = max(1.5, round(base * random.uniform(0.85, 1.25), 1))
 
 
-def generateHorses(count: int) -> list:
+def generateHorses(count: int) -> list[Horse]:
     count = min(count, len(HORSE_NAMES))
     names = random.sample(HORSE_NAMES, count)
     horses = [_generateHorse(i + 1, name) for i, name in enumerate(names)]
