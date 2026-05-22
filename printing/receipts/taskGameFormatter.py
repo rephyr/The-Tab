@@ -10,10 +10,14 @@ p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
 
-# Adjust to match how many characters fit across your printer in normal font.
 _W = 32
 
 from printing.receipts.textWrapper import wrapText as _wrapText
+
+
+def configure(config: dict) -> None:
+    global _W
+    _W = int(config.get("receiptWidth", 32))
 
 
 def formatTaskDraw(event, p) -> None:
