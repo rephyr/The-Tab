@@ -220,4 +220,5 @@ __marimo__/
 output/
 players.json
 docs/
+config.json
 pytest.ini 
