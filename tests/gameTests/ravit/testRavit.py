@@ -5,6 +5,7 @@ from tests.testUtils import SilentTest
 from core.player import Player
 from core.events import DrinkEvent, GiveEvent, GameEndEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 from games.ravitGame.horses import Horse, _generateHorse, generateHorses, _assignRelativeOdds
+from games.ravitGame.jockeys import Jockey, JOCKEYS, dealJockeys
 from games.ravitGame.ravit import RavitGame
 
 
@@ -650,6 +651,74 @@ class TestDrinkResolution(SilentTest):
              patch("builtins.print"):
             game._drinkResolution()
         self.assertIsInstance(emitted[-1], GameEndEvent)
+
+
+class TestJockeys(SilentTest):
+    def testDealJockeysReturnsRequestedCount(self):
+        dealt = dealJockeys(2)
+        self.assertEqual(len(dealt), 2)
+
+    def testDealJockeysNoDuplicates(self):
+        dealt = dealJockeys(4)
+        names = [j.name for j in dealt]
+        self.assertEqual(len(names), len(set(names)))
+
+    def testApplyToHorseStatBonus(self):
+        h = makeHorse(speed=3, endurance=3, luck=3)
+        Jockey("Test", "", speedBonus=1, enduranceBonus=1, luckBonus=1).applyToHorse(h)
+        self.assertEqual(h.speed, 4)
+        self.assertEqual(h.endurance, 4)
+        self.assertEqual(h.luck, 4)
+
+    def testApplyToHorseStatCap(self):
+        h = makeHorse(speed=5, endurance=5, luck=5)
+        Jockey("Test", "", speedBonus=2, enduranceBonus=2, luckBonus=2).applyToHorse(h)
+        self.assertEqual(h.speed, 5)
+        self.assertEqual(h.endurance, 5)
+        self.assertEqual(h.luck, 5)
+
+    def testApplyToHorseStartPosition(self):
+        h = makeHorse()
+        Jockey("Terävä", "", startPositionBonus=2).applyToHorse(h)
+        self.assertEqual(h.position, 2)
+
+    def testOnnekasReducesEventChance(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(id=1, luck=3)
+        game.horses = [h]
+        game._jockeyMap[h.id] = Jockey("Onnekas", "", eventChanceMultiplier=0.0)
+        with patch("random.random", return_value=0.5):
+            game._tryFireEvent(h)
+        self.assertEqual(h.position, 0)
+        self.assertNotIn(h.id, game._eventedThisRound)
+
+    def testPelkuriPreventsHorseFromFighting(self):
+        game = makeRavit({"trackLength": 20, "fightChance": 1.0, "eventChance": 0.0})
+        game._roundNumber = 2
+        h1 = makeHorse(id=1, name="Ukko")
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.position = 10
+        h2.position = 10
+        game.horses = [h1, h2]
+        game._jockeyMap[h1.id] = Jockey("Pelkuri", "", immuneToFights=True)
+        with patch("random.random", return_value=0.0), \
+             patch("random.randint", return_value=2):
+            game._checkNewFights()
+        self.assertEqual(h1.fightRoundsLeft, 0)
+        self.assertEqual(h2.fightRoundsLeft, 0)
+
+    def testRajuDoublesBoostDistance(self):
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game._roundNumber = 2
+        h = makeHorse(id=1, luck=3)
+        h.position = 5
+        game.horses = [h]
+        game._jockeyMap[h.id] = Jockey("Raju", "", boostMultiplier=2.0)
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["boost"]):
+            game._tryFireEvent(h)
+        self.assertEqual(h.position, 11)
 
 
 if __name__ == "__main__":

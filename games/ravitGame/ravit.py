@@ -18,6 +18,7 @@ from core.events import (
     TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
 )
 from games.ravitGame.horses import generateHorses, Horse
+from games.ravitGame.jockeys import Jockey, dealJockeys
 import games.ravitGame.eventTypes as ET
 
 _POS_EVENTS  = [ET.BOOST, ET.MOTIVATED, ET.OVERTAKE]
@@ -37,6 +38,7 @@ class RavitGame(Game):
     _roundNumber: int = field(default=0, init=False, repr=False)
     _roundEvents: list = field(default_factory=list, init=False, repr=False)
     _eventedThisRound: set = field(default_factory=set, init=False, repr=False)
+    _jockeyMap: dict = field(default_factory=dict, init=False, repr=False)
 
     def playRound(self) -> None:
         self.emit(GameStartEvent([p.getName() for p in self.players]))
@@ -50,26 +52,43 @@ class RavitGame(Game):
         count = self._getConfig("horseCount", 4)
         self.horses = generateHorses(count)
 
-    def _bettingPhase(self) -> None:
-        print("\n=== VEDONLYÖNTI ===\n")
-        debug = self._getConfig("debug", False)
-        nw = self._nameWidth()
-        print(f"{'':>{3 + nw}}  kerroin")
-        for h in self.horses:
-            stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck} voi:{h.fightStrength} hp:{h.fightMaxHealth}]" if debug else ""
-            print(f"{h.id}. {h.name:<{nw}}  x{h.odds}{stats}")
-        print()
+    def _jockeyForHorse(self, horse: Horse) -> Jockey | None:
+        return self._jockeyMap.get(horse.id)
 
+    def _bettingPhase(self) -> None:
         self.emit(RaceStartEvent(
             players=[p.getName() for p in self.players],
             horses=[h.toDict() for h in self.horses],
         ))
 
+        debug = self._getConfig("debug", False)
+        nw = self._nameWidth()
         maxBet = self._getConfig("maxBet", 5)
+
         for player in self.players:
-            print(f"{player.getName()}n panos:")
+            # --- jockey selection ---
+            dealt = dealJockeys(2)
+            print(f"\n=== {player.getName().upper()} ===")
+            print("\nValitse jockey:")
+            for i, j in enumerate(dealt, 1):
+                print(f"  {i}. {j.name:<12} {j.description}")
             while True:
-                raw = input(f"  Hevonen (1–{len(self.horses)}): ").strip()
+                raw = input("  Valinta (1/2): ").strip()
+                if raw in ("1", "2"):
+                    jockey = dealt[int(raw) - 1]
+                    break
+                print("  Virheellinen valinta.")
+
+            # --- horse + bet selection ---
+            print(f"\nHevoset:")
+            print(f"{'':>{3 + nw}}  kerroin")
+            for h in self.horses:
+                j = self._jockeyMap.get(h.id)
+                jStr = f"  [{j.name}]" if j else ""
+                stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck}]" if debug else ""
+                print(f"  {h.id}. {h.name:<{nw}}  x{h.odds}{jStr}{stats}")
+            while True:
+                raw = input(f"\n  Hevonen (1–{len(self.horses)}): ").strip()
                 if raw.isdigit() and 1 <= int(raw) <= len(self.horses):
                     horseId = int(raw)
                     break
@@ -80,6 +99,12 @@ class RavitGame(Game):
                     amount = int(raw)
                     break
                 print("  Virheellinen arvo.")
+
+            # assign jockey to the horse this player bet on
+            horse = self._getHorseById(horseId)
+            self._jockeyMap[horseId] = jockey
+            jockey.applyToHorse(horse)
+            print(f"  {jockey.name} ratsastaa {horse.name}:lla!")
             self.bets.append({"player": player.getName(), "horseId": horseId, "amount": amount})
             print()
 
@@ -152,7 +177,10 @@ class RavitGame(Game):
             for h2 in free[i + 1:]:
                 if h2.id in fighting:
                     continue
-                if abs(h1.position - h2.position) <= 1 and random.random() < fightChance:
+                j1 = self._jockeyForHorse(h1)
+                j2 = self._jockeyForHorse(h2)
+                if abs(h1.position - h2.position) <= 1 and random.random() < fightChance \
+                        and not (j1 and j1.immuneToFights) and not (j2 and j2.immuneToFights):
                     rounds = random.randint(1, 3)
                     h1.fightRoundsLeft = rounds
                     h1.fightOpponent = h2.id
@@ -440,7 +468,8 @@ class RavitGame(Game):
         """Roll for a random event; positive events scale with luck, negative events scale inversely."""
         if self._roundNumber <= 1 or horse.id in self._eventedThisRound:
             return
-        baseChance = self._getConfig("eventChance", 0.15)
+        jockey = self._jockeyForHorse(horse)
+        baseChance = self._getConfig("eventChance", 0.15) * (jockey.eventChanceMultiplier if jockey else 1.0)
         posChance = min(baseChance * (horse.luck / 3.0), 0.95)
         negChance = min(baseChance * ((6 - horse.luck) / 3.0), 0.95)
 
@@ -488,8 +517,10 @@ class RavitGame(Game):
         return fn() if fn else None
 
     def _eventBoost(self, horse: Horse, trackLength: int) -> str:
-        horse.position = min(horse.position + 3, trackLength)
-        return f"{horse.name} saa toiseen tuuleen ja kirii kovaa eteenpäin!"
+        jockey = self._jockeyForHorse(horse)
+        dist = int(3 * (jockey.boostMultiplier if jockey else 1.0))
+        horse.position = min(horse.position + dist, trackLength)
+        return f"{horse.name} juoksee myötätuuleen (toisin kuin muut) ja kirii kovaa eteenpäin!"
 
     def _eventMotivated(self, horse: Horse) -> str:
         rounds = random.randint(1, 3)
@@ -510,7 +541,7 @@ class RavitGame(Game):
 
     def _eventDeath(self, horse: Horse) -> str:
         horse.status = "dnf"
-        return f"{horse.name} ei pysty jatkamaan ja poistuu kilpailusta!"
+        return f"{horse.name} kaatui ja loukkaantui niin pahasti, ettei pysty jatkamaan!"
 
     def _eventBackwards(self, horse: Horse) -> str:
         horse.position = max(0, horse.position - random.randint(2, 3))
@@ -531,7 +562,7 @@ class RavitGame(Game):
         return f"{horse.name} eksyy ja juoksee väärään suuntaan: {rounds} kierrosta!"
 
     def _eventLightning(self, horse: Horse) -> str:
-        # 1/3 chance
+        # 1/3 chance to die
         if random.randint(0, 2) == 2:
             horse.status = "dead"
             return f"Salama iskee hevoseen! {horse.name} ei selvinnyt hengissä."
