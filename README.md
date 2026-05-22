@@ -56,15 +56,15 @@ Edit `config.json` to set up the printer and adjust game settings.
 
 **Printer options** (`connection` field):
 
-* `stdout` — prints receipts to terminal, no hardware needed
-* `win32raw` — Windows thermal printer over USB; set `printerName` to match your printer
+* `stdout`: prints receipts to terminal, no hardware needed
+* `win32raw`: Windows thermal printer over USB; set `printerName` to match your printer
 
 **Printer settings:**
 
-* `receiptWidth` — characters per line (default: 32); adjust to match your printer
-* `printerName` — printer name as it appears in Windows (win32raw only)
-* `saveImages` — save rendered card images to `output/` folder
-* `useCardImages` — render card images using fonts instead of plain text
+* `receiptWidth`: characters per line (default: 32); adjust to match your printer
+* `printerName`: printer name as it appears in Windows (win32raw only)
+* `saveImages`: save rendered card images to `output/` folder
+* `useCardImages`: render card images using fonts instead of plain text
 
 ## Games
 
@@ -81,11 +81,11 @@ Then everyone plays a shared board phase where cards are revealed one by one. Ea
 
 **Buja settings** (`config.json`):
 
-* `boardLength` — number of rows in the board phase
-* `boardStartDrinks` — drinks on the first board row
-* `boardIncrement` — drinks added per row
-* `drinkAmount` — drinks for a wrong guess in the phase rounds
-* `deckCount` — number of decks to use
+* `boardLength`: number of rows in the board phase
+* `boardStartDrinks`: drinks on the first board row
+* `boardIncrement`: drinks added per row
+* `drinkAmount`: drinks for a wrong guess in the phase rounds
+* `deckCount`: number of decks to use
 
 Settings can be adjusted before each game from the CLI without editing the config file.
 
@@ -97,12 +97,12 @@ A turn-based task card game. Players take turns drawing a random task from a shu
 
 **Task types:**
 
-* `take` — drawer takes a fixed number of drinks
-* `give` — drawer gives drinks to a chosen player
-* `social` — open-ended challenge; game master logs drinks manually as `Name:N` pairs
-* `link` — creates a persistent link (Pari, Huora); linked players share drinks automatically
-* `special` — ongoing effect with no immediate drinks (Sääntö, Kysymysmestari, Immunitetti, Tupla)
-* `roulette` — sequential pulls with one guaranteed hit; hit player drinks
+* `take`: drawer takes a fixed number of drinks
+* `give`: drawer gives drinks to a chosen player
+* `social`: open-ended challenge; game master logs drinks manually as `Name:N` pairs
+* `link`: creates a persistent link (Pari, Huora); linked players share drinks automatically
+* `special`: ongoing effect with no immediate drinks (Sääntö, Kysymysmestari, Immunitetti, Tupla)
+* `roulette`: sequential pulls with one guaranteed hit; hit player drinks
 
 **During the game:**
 
@@ -111,8 +111,8 @@ A turn-based task card game. Players take turns drawing a random task from a shu
 
 **TaskGame settings** (`config.json`):
 
-* `commonCount` — how many copies of common cards go in the deck (default: 4)
-* `specialCount` — how many copies of special/rare cards go in the deck (default: 2)
+* `commonCount`: how many copies of common cards go in the deck (default: 4)
+* `specialCount`: how many copies of special/rare cards go in the deck (default: 2)
 
 Settings can be adjusted before each game from the CLI without editing the config file.
 
@@ -142,10 +142,10 @@ If two or more horses cross the finish line within 1 tile of each other a tiebre
 
 **Ravit settings** (`config.json`):
 
-* `horseCount` — number of horses in the race (default: 8)
-* `trackLength` — tiles to the finish line (default: 40)
+* `horseCount`: number of horses in the race (default: 8)
+* `trackLength`: tiles to the finish line (default: 40)
 * `maxBet` — maximum drinks a player can bet (default: 5)
-* `eventChance` — base probability of a random event per horse per round (default: 0.20)
-* `fightChance` — probability of a fight starting between two nearby horses (default: 0.05)
+* `eventChance`: base probability of a random event per horse per round (default: 0.20)
+* `fightChance`: probability of a fight starting between two nearby horses (default: 0.05)
 
 Settings can be adjusted before each game from the CLI without editing the config file.
