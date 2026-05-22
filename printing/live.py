@@ -6,7 +6,7 @@ Register it with: log.on(LivePrinter(printer).hook)
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatRouletteResult, formatEndReceipt as formatBujaReceipt
 from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw, formatDrinkSummary, formatChainDraw
-from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, configure as _configureRavitFormatter
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, configure as _configureRavitFormatter
 
 
 class LivePrinter:
@@ -82,6 +82,8 @@ class LivePrinter:
 
         elif isinstance(event, BetsPlacedEvent):
             self._ravitBets = event.bets
+            if event.jockeys:
+                self._printer.printWith(lambda p, j=event.jockeys: formatJockeyList(j, p))
             self._printer.printWith(lambda p, h=event.horses, b=event.bets: formatBettingReceipt(h, b, p))
 
         elif isinstance(event, RaceRoundEvent):

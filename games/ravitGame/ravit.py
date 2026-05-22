@@ -43,6 +43,7 @@ class RavitGame(Game):
     def playRound(self) -> None:
         self.emit(GameStartEvent([p.getName() for p in self.players]))
         self._setupHorses()
+        self._assignJockeys()
         self._bettingPhase()
         self._raceLoop()
         self._resolveFinish()
@@ -51,6 +52,12 @@ class RavitGame(Game):
     def _setupHorses(self) -> None:
         count = self._getConfig("horseCount", 4)
         self.horses = generateHorses(count)
+
+    def _assignJockeys(self) -> None:
+        jockeys = dealJockeys(len(self.horses))
+        for horse, jockey in zip(self.horses, jockeys):
+            self._jockeyMap[horse.id] = jockey
+            jockey.applyToHorse(horse)
 
     def _jockeyForHorse(self, horse: Horse) -> Jockey | None:
         return self._jockeyMap.get(horse.id)
@@ -65,30 +72,19 @@ class RavitGame(Game):
         nw = self._nameWidth()
         maxBet = self._getConfig("maxBet", 5)
 
-        for player in self.players:
-            # --- jockey selection ---
-            dealt = dealJockeys(2)
-            print(f"\n=== {player.getName().upper()} ===")
-            print("\nValitse jockey:")
-            for i, j in enumerate(dealt, 1):
-                print(f"  {i}. {j.name:<12} {j.description}")
-            while True:
-                raw = input("  Valinta (1/2): ").strip()
-                if raw in ("1", "2"):
-                    jockey = dealt[int(raw) - 1]
-                    break
-                print("  Virheellinen valinta.")
+        print(f"\n=== VEDONLYÖNTI ===\n")
+        print(f"{'':>{3 + nw}}  kerroin  jockey")
+        for h in self.horses:
+            j = self._jockeyMap.get(h.id)
+            jStr = f"  [{j.name}]" if j else ""
+            stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck}]" if debug else ""
+            print(f"  {h.id}. {h.name:<{nw}}  x{h.odds}{jStr}{stats}")
+        print()
 
-            # --- horse + bet selection ---
-            print(f"\nHevoset:")
-            print(f"{'':>{3 + nw}}  kerroin")
-            for h in self.horses:
-                j = self._jockeyMap.get(h.id)
-                jStr = f"  [{j.name}]" if j else ""
-                stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck}]" if debug else ""
-                print(f"  {h.id}. {h.name:<{nw}}  x{h.odds}{jStr}{stats}")
+        for player in self.players:
+            print(f"{player.getName()}n panos:")
             while True:
-                raw = input(f"\n  Hevonen (1–{len(self.horses)}): ").strip()
+                raw = input(f"  Hevonen (1–{len(self.horses)}): ").strip()
                 if raw.isdigit() and 1 <= int(raw) <= len(self.horses):
                     horseId = int(raw)
                     break
@@ -99,18 +95,18 @@ class RavitGame(Game):
                     amount = int(raw)
                     break
                 print("  Virheellinen arvo.")
-
-            # assign jockey to the horse this player bet on
-            horse = self._getHorseById(horseId)
-            self._jockeyMap[horseId] = jockey
-            jockey.applyToHorse(horse)
-            print(f"  {jockey.name} ratsastaa {horse.name}:lla!")
             self.bets.append({"player": player.getName(), "horseId": horseId, "amount": amount})
             print()
 
+        jockeyAssignments = [
+            {"horseName": h.name, "jockeyName": j.name, "jockeyDescription": j.description}
+            for h in self.horses
+            if (j := self._jockeyMap.get(h.id))
+        ]
         self.emit(BetsPlacedEvent(
             horses=[h.toDict() for h in self.horses],
             bets=list(self.bets),
+            jockeys=jockeyAssignments,
         ))
 
     def _raceLoop(self) -> None:

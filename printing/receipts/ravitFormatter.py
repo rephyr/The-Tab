@@ -46,6 +46,18 @@ def formatHorseList(horses: list, p) -> None:
     p.textln("=" * _W)
 
 
+def formatJockeyList(jockeys: list, p) -> None:
+    """Print each horse's randomly assigned jockey."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("KUSKIT")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * _W)
+    for a in jockeys:
+        p.textln(f"{a['horseName']}: {a['jockeyName']}")
+        p.textln(f"  {a['jockeyDescription']}")
+    p.textln("=" * _W)
+
+
 def formatBettingReceipt(horses: list, bets: list, p) -> None:
     """Print each player's bet — horse id, name, and amount."""
     p.set(align="center", bold=True, double_width=True, double_height=True)
@@ -54,7 +66,7 @@ def formatBettingReceipt(horses: list, bets: list, p) -> None:
     p.textln("=" * _W)
     for bet in bets:
         horseName = next((h["name"] for h in horses if h["id"] == bet["horseId"]), "?")
-        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} x{bet['amount']}")
+        p.textln(f"{bet['player']}: #{bet['horseId']} {horseName} {bet['amount']}x juomaa")
     p.textln("=" * _W)
 
 

@@ -4,7 +4,7 @@ Change the values here to see how different content looks when printed.
 """
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
 from printing.receipts.taskGameFormatter import formatTaskDraw
-from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner
 from core.events import TaskDrawEvent, HorseEventFiredEvent, RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
 
 TEST_PHASES = [
@@ -118,6 +118,11 @@ TEST_BETS_RAVIT = [
     {"player": "Testi Tatti", "horseId": 1, "amount": 3},
     {"player": "Testi Matti", "horseId": 2, "amount": 2},
 ]
+TEST_JOCKEYS_RAVIT = [
+    {"horseName": "Ukko",     "jockeyName": "Turbo",   "jockeyDescription": "+1 nopeus"},
+    {"horseName": "Tuulikki", "jockeyName": "Pelkuri", "jockeyDescription": "Ei osallistu tappeluksiin"},
+    {"horseName": "Laukki",   "jockeyName": "Raju",    "jockeyDescription": "Boost vie tuplasti eteenpäin"},
+]
 
 TEST_RAVIT_FINAL_POSITIONS = [
     {"horseId": 1, "horseName": "Ukko",     "position": 20, "place": 1, "status": "racing"},
@@ -199,6 +204,7 @@ def printTestReceipts(printer, parts=None) -> None:
 
     if "ravit-betting" in parts:
         printer.printWith(lambda p: formatHorseList(TEST_HORSES_RAVIT, p))
+        printer.printWith(lambda p: formatJockeyList(TEST_JOCKEYS_RAVIT, p))
         printer.printWith(lambda p: formatBettingReceipt(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
 
     if "ravit-rata" in parts:
