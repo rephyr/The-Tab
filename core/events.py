@@ -119,6 +119,7 @@ class RaceStartEvent:
 class BetsPlacedEvent:
     horses: list
     bets: list
+    jockeys: list = None
 
 
 @dataclass
