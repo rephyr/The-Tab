@@ -54,7 +54,6 @@ def formatJockeyList(jockeys: list, p) -> None:
     p.textln("=" * _W)
     for a in jockeys:
         p.textln(f"{a['horseName']}: {a['jockeyName']}")
-        p.textln(f"  {a['jockeyDescription']}")
     p.textln("=" * _W)
 
 
