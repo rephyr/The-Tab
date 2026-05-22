@@ -1,8 +1,11 @@
 {
   "printer": {
     "receiptWidth": 32,
-    "connection": "win32raw",
-    "printerName": "CK710 Printer",
+    "connection": "usb",
+    "vendor_id": "0x4b43",
+    "product_id": "0x3830",
+    "in_ep": "0x81",
+    "out_ep": "0x03",
     "escposFont": "b",
     "saveImages": true,
     "useCardImages": true,
