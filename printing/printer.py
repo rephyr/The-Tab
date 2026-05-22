@@ -54,11 +54,11 @@ class ReceiptPrinter:
         elif conn == "usb":
             if not ESCPOS_AVAILABLE:
                 raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
-            vid = int(self.config.get("vendor_id", "0x04b8"), 16)
-            pid = int(self.config.get("product_id", "0x0202"), 16)
-            in_ep = int(self.config.get("in_ep", "0x82"), 16)
-            out_ep = int(self.config.get("out_ep", "0x01"), 16)
-            self._p = Usb(vid, pid, in_ep=in_ep, out_ep=out_ep)
+            vid = int(self.config.get("vendorId", "0x04b8"), 16)
+            pid = int(self.config.get("productId", "0x0202"), 16)
+            inEp = int(self.config.get("inEp", "0x82"), 16)
+            outEp = int(self.config.get("outEp", "0x01"), 16)
+            self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp)
             font = self.config.get("escposFont", "a")
             if font != "a":
                 self._p = FontWrapper(self._p, font)
