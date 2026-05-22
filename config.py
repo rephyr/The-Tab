@@ -7,7 +7,14 @@ class Config:
         self.data = self.load()
 
     def load(self):
-        with open(self.path, "r", encoding="utf-8") as file:
+        path = Path(self.path)
+        if not path.exists():
+            fallback = Path("config.example.json")
+            if fallback.exists():
+                with open(fallback, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return {}
+        with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
 
     def save(self):
