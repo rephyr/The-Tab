@@ -26,6 +26,7 @@ class ReceiptPrinter:
         self.debug = debug
         self._p = None
         self._ip = None
+        self._spoolerPurged = False
         if self.config.get("saveImages") and self.debug:
             from printing.imagePrinter import ImagePrinter
             self._ip = ImagePrinter(self.config, outputDir=self.config.get("outputDir", "output"))
@@ -41,6 +42,15 @@ class ReceiptPrinter:
             try:
                 if not ESCPOS_AVAILABLE:
                     raise RuntimeError("escpos not available")
+                if not self._spoolerPurged:
+                    try:
+                        import win32print
+                        handle = win32print.OpenPrinter(self.config.get("printerName"))
+                        win32print.SetPrinter(handle, 0, None, win32print.PRINTER_CONTROL_PURGE)
+                        win32print.ClosePrinter(handle)
+                    except Exception:
+                        pass
+                    self._spoolerPurged = True
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
                 font = self.config.get("escposFont", "a")
