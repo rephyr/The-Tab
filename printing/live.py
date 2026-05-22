@@ -3,10 +3,10 @@ LivePrinter listens to game events and prints receipts in real time as the game 
 
 Register it with: log.on(LivePrinter(printer).hook)
 """
-from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
+from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatRouletteResult, formatEndReceipt as formatBujaReceipt, configure as _configureBujaFormatter
 from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw, formatDrinkSummary, formatChainDraw, configure as _configureTaskGameFormatter
-from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, configure as _configureRavitFormatter
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
 
 
 class LivePrinter:
@@ -95,6 +95,9 @@ class LivePrinter:
         elif isinstance(event, HorseEventFiredEvent):
             if event.eventType in ("death", "backwards", "lightning", "fightDeath"):
                 self._printer.printWith(lambda p, e=event: formatHorseEvent(e, p))
+
+        elif isinstance(event, RavitBettorDrinkEvent):
+            self._printer.printWith(lambda p, e=event: formatBettorDrink(e, p))
 
         elif isinstance(event, RaceFinishedEvent):
             self._ravitFinalPositions = event.finalPositions

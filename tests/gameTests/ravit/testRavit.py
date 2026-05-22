@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 from tests.testUtils import SilentTest
 from core.player import Player
-from core.events import DrinkEvent, GiveEvent, GameEndEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent
+from core.events import DrinkEvent, GiveEvent, GameEndEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
 from games.ravitGame.horses import Horse, _generateHorse, generateHorses, _assignRelativeOdds
 from games.ravitGame.jockeys import Jockey, JOCKEYS, dealJockeys
 from games.ravitGame.ravit import RavitGame
@@ -651,6 +651,91 @@ class TestDrinkResolution(SilentTest):
              patch("builtins.print"):
             game._drinkResolution()
         self.assertIsInstance(emitted[-1], GameEndEvent)
+
+
+class TestBettorDrinks(SilentTest):
+    def _makeGameWithBets(self):
+        game = makeRavit({})
+        h1 = makeHorse(id=1, name="Ukko")
+        h2 = makeHorse(id=2, name="Myrsky")
+        game.horses = [h1, h2]
+        game.bets = [
+            {"player": "Testi", "horseId": 1, "amount": 2},
+            {"player": "Matti",  "horseId": 2, "amount": 3},
+        ]
+        emitted = []
+        game.log = type("Log", (), {"add": lambda self, e: emitted.append(e)})()
+        return game, h1, h2, emitted
+
+    def testDrinkBettorAddsToPlayerDrinks(self):
+        game, h1, h2, _ = self._makeGameWithBets()
+        game._drinkBettorOfHorse(h1, 2, "testi")
+        self.assertEqual(game.players[0].getDrinksTaken(), 2)
+
+    def testDrinkBettorEmitsDrinkEvent(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        game._drinkBettorOfHorse(h1, 2, "testi")
+        drinkEvents = [e for e in emitted if isinstance(e, DrinkEvent)]
+        self.assertEqual(len(drinkEvents), 1)
+        self.assertEqual(drinkEvents[0].player, "Testi")
+        self.assertEqual(drinkEvents[0].amount, 2)
+
+    def testDrinkBettorEmitsBettorDrinkEvent(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        game._drinkBettorOfHorse(h1, 2, "testi")
+        bettorEvents = [e for e in emitted if isinstance(e, RavitBettorDrinkEvent)]
+        self.assertEqual(len(bettorEvents), 1)
+        self.assertEqual(bettorEvents[0].playerName, "Testi")
+        self.assertEqual(bettorEvents[0].horseName, "Ukko")
+        self.assertEqual(bettorEvents[0].amount, 2)
+
+    def testDrinkBettorScoresCarryAllPlayers(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        game._drinkBettorOfHorse(h1, 2, "testi")
+        ev = next(e for e in emitted if isinstance(e, RavitBettorDrinkEvent))
+        names = [s["name"] for s in ev.scores]
+        self.assertIn("Testi", names)
+        self.assertIn("Matti", names)
+
+    def testDrinkBettorNoopIfNoBet(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        orphan = makeHorse(id=99, name="Ghost")
+        game._drinkBettorOfHorse(orphan, 2, "testi")
+        self.assertEqual(len(emitted), 0)
+
+    def testStumbleEventDrinksOneBettor(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        game._eventStumble(h1)
+        drinkEvents = [e for e in emitted if isinstance(e, DrinkEvent)]
+        self.assertEqual(drinkEvents[0].player, "Testi")
+        self.assertEqual(drinkEvents[0].amount, 1)
+
+    def testConfusedEventDrinksOneBettor(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        with patch("random.randint", return_value=1):
+            game._eventConfused(h1)
+        drinkEvents = [e for e in emitted if isinstance(e, DrinkEvent)]
+        self.assertEqual(drinkEvents[0].player, "Testi")
+        self.assertEqual(drinkEvents[0].amount, 1)
+
+    def testDrunkFanEventDrinksTwoBettor(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        with patch("random.choice", return_value=h2):
+            game._eventDrunkFan()
+        drinkEvents = [e for e in emitted if isinstance(e, DrinkEvent)]
+        self.assertEqual(drinkEvents[0].player, "Matti")
+        self.assertEqual(drinkEvents[0].amount, 2)
+
+    def testFightDeathDrinksTwoBettor(self):
+        game, h1, h2, emitted = self._makeGameWithBets()
+        h1.fightStrength = 10
+        h2.fightStrength = 1
+        with patch("random.random", return_value=0.0), \
+             patch("builtins.print"):
+            game._resolveFightBetween(h1, h2)
+        drinkEvents = [e for e in emitted if isinstance(e, DrinkEvent)]
+        loserDrink = next(e for e in drinkEvents if e.player == "Matti")
+        self.assertEqual(loserDrink.amount, 2)
 
 
 class TestJockeys(SilentTest):

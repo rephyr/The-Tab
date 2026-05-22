@@ -16,7 +16,7 @@ from core.events import (
     DrinkEvent,
     RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, RaceFinishedEvent,
     TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
-    HorseEventFiredEvent,
+    HorseEventFiredEvent, RavitBettorDrinkEvent,
 )
 from games.ravitGame.horses import generateHorses, Horse
 from games.ravitGame.jockeys import Jockey, dealJockeys
@@ -213,6 +213,25 @@ class RavitGame(RavitEventsMixin, Game):
                 else:
                     self._resolveFightBetween(horse, opponent)
 
+    def _drinkBettorOfHorse(self, horse: Horse, amount: int, reason: str) -> None:
+        """Find the bettor of a horse, assign drinks, and emit bettor drink events."""
+        bet = next((b for b in self.bets if b["horseId"] == horse.id), None)
+        if not bet:
+            return
+        player = self._findPlayer(bet["player"])
+        if not player:
+            return
+        player.addDrinks(amount)
+        self.emit(DrinkEvent(player=player.getName(), amount=amount, reason=reason))
+        scores = [{"name": p.getName(), "drank": p.getDrinksTaken()} for p in self.players]
+        self.emit(RavitBettorDrinkEvent(
+            playerName=player.getName(),
+            horseName=horse.name,
+            amount=amount,
+            reason=reason,
+            scores=scores,
+        ))
+
     def _resolveFightBetween(self, h1: Horse, h2: Horse) -> None:
         """Determine fight winner by strength ratio; loser dies, winner loses 1 in all stats."""
         total = h1.fightStrength + h2.fightStrength
@@ -235,6 +254,7 @@ class RavitGame(RavitEventsMixin, Game):
             eventType=ET.FIGHT_DEATH,
             detail=detail,
         ))
+        self._drinkBettorOfHorse(loser, 2, "hevonen kuoli taistelussa")
 
     def _tiebreakFight(self, tied: list) -> Horse:
         """Run interactive multi-round combat between tied finishers; returns the winner or None if all die."""

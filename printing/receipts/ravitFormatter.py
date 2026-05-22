@@ -126,6 +126,22 @@ def formatHorseEvent(event, p) -> None:
         p.textln("=" * _W)
 
 
+def formatBettorDrink(event, p) -> None:
+    """Print a mid-race receipt when a bettor drinks due to their horse's misfortune."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln("JUOMAT")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * _W)
+    p.set(bold=True)
+    p.textln(f"{event.playerName} juo {event.amount}")
+    p.set(bold=False)
+    p.textln(f"({event.horseName}: {event.reason})")
+    p.textln("-" * _W)
+    for s in event.scores:
+        p.textln(f"{s['name']:<16} {s['drank']} joi")
+    p.textln("=" * _W)
+
+
 def _hpBar(health, maxHealth, width=6) -> str:
     filled = int(health / maxHealth * width) if maxHealth > 0 else 0
     filled = max(0, min(width, filled))

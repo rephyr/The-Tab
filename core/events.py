@@ -101,6 +101,15 @@ class GameEndEvent:
 
 
 @dataclass
+class RavitBettorDrinkEvent:
+    playerName: str
+    horseName: str
+    amount: int
+    reason: str
+    scores: list  # [{"name": str, "drank": int}, ...]
+
+
+@dataclass
 class RaceRoundEvent:
     roundNumber: int
     trackLength: int

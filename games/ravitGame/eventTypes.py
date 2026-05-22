@@ -18,6 +18,6 @@ HORSE_KICK = "horseKick"
 HORSE_SHOE = "horseShoe"
 
 # Fight events
-FIGHT_START = "fight_start"
-FIGHT_WIN = "fight_win"
+FIGHT_START = "fightStart"
+FIGHT_WIN = "fightWin"
 FIGHT_DEATH = "fightDeath"

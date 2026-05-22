@@ -113,6 +113,7 @@ class RavitEventsMixin:
 
     def _eventStumble(self, horse: Horse) -> str:
         horse.stumbleRoundsLeft = 1
+        self._drinkBettorOfHorse(horse, 1, "hevonen kompuroi")
         return f"{horse.name} kompuroi. {horse.name} ottaa lepiä maassa!"
 
     def _eventSlipFall(self, horse: Horse) -> str:
@@ -123,6 +124,7 @@ class RavitEventsMixin:
     def _eventConfused(self, horse: Horse) -> str:
         rounds = random.randint(1, 2)
         horse.confusedRoundsLeft = rounds
+        self._drinkBettorOfHorse(horse, 1, "hevonen eksyi")
         return f"{horse.name} eksyy ja juoksee väärään suuntaan: {rounds} kierrosta!"
 
     def _eventLightning(self, horse: Horse) -> str:
@@ -154,6 +156,7 @@ class RavitEventsMixin:
             return None
         target = random.choice(pool)
         target.stumbleRoundsLeft = 1
+        self._drinkBettorOfHorse(target, 2, "juopunut katsoja kaatoi hevosen")
         return f"Juopunut katsoja juoksee radalle! {target.name} törmää häneen ja kaatuu!"
 
     def _shoeFallsOff(self) -> str:
