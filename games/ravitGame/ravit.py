@@ -76,6 +76,12 @@ class RavitGame(RavitEventsMixin, Game):
             jStr = f"  [{j.name}]" if j else ""
             stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck}]" if debug else ""
             print(f"  {h.id}. {h.name:<{nw}}  x{h.odds}{jStr}{stats}")
+
+        print()
+        for h in self.horses:
+            j = self._jockeyMap.get(h.id)
+            if j:
+                print(f"  {j.name}: {j.description}")
         print()
 
         for player in self.players:

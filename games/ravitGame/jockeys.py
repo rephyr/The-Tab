@@ -33,14 +33,14 @@ class Jockey:
 
 
 JOCKEYS: list[Jockey] = [
-    Jockey("Turbo",      "+1 nopeus",                    speedBonus=1),
-    Jockey("Sitkeä",     "+1 kestävyys",                 enduranceBonus=1),
-    Jockey("Tuuri",      "+1 tuuri",                     luckBonus=1),
-    Jockey("Taistelija", "+2 taisteluvoimaa",            fightStrengthBonus=2),
-    Jockey("Terävä",     "Lähtee 2 ruutua edellä",       startPositionBonus=2),
-    Jockey("Pelkuri",    "Ei osallistu tappeluksiin",    immuneToFights=True),
-    Jockey("Onnekas",    "Puolet vähemmän tapahtumia",   eventChanceMultiplier=0.5),
-    Jockey("Raju",       "Boost vie tuplasti eteenpäin", boostMultiplier=2.0),
+    Jockey("Turbo",      "Saa hevoset laukkaamaan nopeammin",       speedBonus=1),
+    Jockey("Sitkeä",     "Saa hevosen väsymään hitaammin",          enduranceBonus=1),
+    Jockey("Tuuri",      "On hyvin onnekas",                        luckBonus=1),
+    Jockey("Taistelija", "Auttaa tappeluissa",                      fightStrengthBonus=2),
+    Jockey("Terävä",     "Saa hevosen liikkumaan muita nopeammin",  startPositionBonus=2),
+    Jockey("Pelkuri",    "Ei osallistu tappeluihin",                immuneToFights=True),
+    Jockey("Onnekas",    "Vähemmän huonoja tapahtumia",             eventChanceMultiplier=0.5),
+    Jockey("Raju",       "Nopeuttaa hevosta boostin aikana",        boostMultiplier=2.0),
 ]
 
 
