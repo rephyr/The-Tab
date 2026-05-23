@@ -54,24 +54,28 @@ class Buja(Game):
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._redOrBlack(player)
+            self._interactiveGivePhase()
 
         print("\nIsompi vai pienempi?\n")
         for player in self.players:
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Isompi vai pienempi?", player.getName()))
             self._higherOrLower(player)
+            self._interactiveGivePhase()
 
         print("\nVälistä vai ulkoa?\n")
         for player in self.players:
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Välistä vai ulkoa?", player.getName()))
             self._insideOrOutside(player)
+            self._interactiveGivePhase()
 
         print("\nMikä maa?\n")
         for player in self.players:
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._suit(player)
+            self._interactiveGivePhase()
 
         print("\nKädet:\n")
         for player in self.players:
@@ -81,7 +85,6 @@ class Buja(Game):
         print("\nSeuraavana lauta!\n")
         self.emit(PhaseEvent("Lauta", ""))
         self._board()
-
         self._interactiveGivePhase()
 
         print("\nRyyppytaulu:\n")
@@ -266,6 +269,7 @@ class Buja(Game):
                     print("Ei osumia.")
                 elif action == "kippistä":
                     for player in matchedPlayers:
+                        print(f"{player.getName()} osui! Kenen kanssa kippistää?")
                         target = self._chooseTarget(player)
                         print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
                         player.addDrinks(drinks)
@@ -298,6 +302,7 @@ class Buja(Game):
             print("Ei osumia.")
         else:
             for player in matchedPlayers:
+                print(f"{player.getName()} osui! Kenen kanssa kippistää?")
                 target = self._chooseTarget(player)
                 print(f"{player.getName()} ja {target.getName()} kippistää {finalDrinks}")
                 player.addDrinks(finalDrinks)

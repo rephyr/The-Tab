@@ -306,6 +306,7 @@ class RavitGame(RavitEventsMixin, Game):
             self.emit(TiebreakRoundEvent(roundNumber=roundNum, combatants=allState))
 
             for loser in eliminated:
+                loser.status = "dead"
                 print(f"\n  *** {loser.name} kuoli!")
                 self.emit(TiebreakEliminationEvent(
                     loserName=loser.name,

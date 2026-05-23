@@ -50,7 +50,11 @@ def formatJockeyList(jockeys: list, p) -> None:
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * _W)
     for a in jockeys:
+        p.set(bold=True)
         p.textln(f"{a['horseName']}: {a['jockeyName']}")
+        p.set(bold=False)
+        for line in _wrapText(a.get("jockeyDescription", ""), _W):
+            p.textln(f"  {line}")
     p.textln("=" * _W)
 
 
@@ -72,6 +76,12 @@ def formatRaceRound(event, p) -> None:
     p.textln("LÄHTOVIIVA" if event.roundNumber == 0 else f"KIERROS {event.roundNumber}")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
+    if event.raceEvents:
+        for ev in event.raceEvents:
+            for line in _wrapText(ev["detail"], _W):
+                p.textln(line)
+            p.textln("-" * _W)
+        p.textln("=" * _W)
     for pos in event.positions:
         if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
@@ -80,12 +90,6 @@ def formatRaceRound(event, p) -> None:
         else:
             label = "KUOLI" if pos["status"] == "dead" else "DNF"
             p.textln(f"{pos['name']:<12}|{label:^16}|")
-    if event.raceEvents:
-        p.textln("=" * _W)
-        for ev in event.raceEvents:
-            for line in _wrapText(ev["detail"], _W):
-                p.textln(line)
-            p.textln("-" * _W)
     p.textln("=" * _W)
 
 
@@ -96,7 +100,7 @@ def formatHorseEvent(event, p) -> None:
     death (DNF)             — normal DNF header
     other events            — normal horse name header
     """
-    if event.eventType in ("lightning", "fightDeath"):
+    if event.eventType in ("lightningDeath", "fightDeath"):
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
         p.textln(f"R.I.P {event.horseName.upper()}")
         p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
@@ -133,13 +137,10 @@ def formatBettorDrink(event, p) -> None:
     p.set(bold=False)
     for line in _wrapText(f"{event.horseName}: {event.reason}", _W):
         p.textln(line)
-    p.textln("-" * _W)
-    for s in event.scores:
-        p.textln(f"{s['name']:<16} {s['drank']} joi")
     p.textln("=" * _W)
 
 
-def _hpBar(health, maxHealth, width=6) -> str:
+def _hpBar(health, maxHealth, width=10) -> str:
     filled = int(health / maxHealth * width) if maxHealth > 0 else 0
     filled = max(0, min(width, filled))
     return "=" * filled + "-" * (width - filled)
@@ -158,7 +159,7 @@ def formatTiebreakStart(event, p) -> None:
     p.textln("-" * _W)
     for c in event.combatants:
         bar = _hpBar(c["health"], c["maxHealth"])
-        p.textln(f"{c['name']:<12}[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
+        p.textln(f"{c['name']:<12}[{bar}] {c['health']}/{c['maxHealth']}")
     p.textln("=" * _W)
 
 
@@ -170,7 +171,7 @@ def _formatCombatantBars(combatants, p) -> None:
             p.textln(f"{c['name']:<12}[{bar}] [KUOLI]")
             p.set(invert=False)
         else:
-            p.textln(f"{c['name']:<12}[{bar}] {c['health']}/{c['maxHealth']} v:{c['strength']}")
+            p.textln(f"{c['name']:<12}[{bar}] {c['health']}/{c['maxHealth']}")
 
 
 def formatTiebreakRound(event, p) -> None:

@@ -1,7 +1,8 @@
 import unittest
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatRouletteResult
+from printing.receipts.ravitFormatter import formatRaceRound, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
-from core.events import TaskDrawEvent, RouletteResultEvent
+from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
 from tests.testUtils import SilentTest
 
 class MockPrinter:
@@ -225,6 +226,109 @@ class TestFormatRouletteResult(SilentTest):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
         self.assertFalse(any("OSUMA!" in line for line in p.lines))
+
+
+class TestFormatRaceRoundEvents(SilentTest):
+    def _makeEvent(self, raceEvents):
+        positions = [{"name": "Ukko", "status": "racing", "position": 10}]
+        return RaceRoundEvent(roundNumber=1, trackLength=20, positions=positions, raceEvents=raceEvents)
+
+    def testEventsAppearsBeforeTrackWhenPresent(self):
+        p = MockPrinter()
+        event = self._makeEvent([{"detail": "Salama iski!"}])
+        formatRaceRound(event, p)
+        event_idx = next(i for i, line in enumerate(p.lines) if "Salama iski!" in line)
+        horse_idx = next(i for i, line in enumerate(p.lines) if "Ukko" in line)
+        self.assertLess(event_idx, horse_idx)
+
+    def testNoExtraSeparatorWhenNoEvents(self):
+        p = MockPrinter()
+        event = self._makeEvent([])
+        formatRaceRound(event, p)
+        separators = [line for line in p.lines if set(line.strip()) == {"="}]
+        self.assertEqual(len(separators), 2)
+
+    def testEventTextPrinted(self):
+        p = MockPrinter()
+        event = self._makeEvent([{"detail": "Hevonen kaatui!"}])
+        formatRaceRound(event, p)
+        self.assertTrue(any("Hevonen kaatui!" in line for line in p.lines))
+
+
+class TestFormatBettorDrink(SilentTest):
+    def _makeEvent(self):
+        return RavitBettorDrinkEvent(
+            playerName="Testi",
+            horseName="Ukko",
+            amount=2,
+            reason="hevonen kompuroi",
+            scores=[{"name": "Testi", "drank": 2}, {"name": "Matti", "drank": 0}],
+        )
+
+    def testDrinkerNameShown(self):
+        p = MockPrinter()
+        formatBettorDrink(self._makeEvent(), p)
+        self.assertTrue(any("Testi" in line for line in p.lines))
+
+    def testNonDrinkerNotShown(self):
+        p = MockPrinter()
+        formatBettorDrink(self._makeEvent(), p)
+        self.assertFalse(any("Matti" in line for line in p.lines))
+
+    def testAmountAndHorseShown(self):
+        p = MockPrinter()
+        formatBettorDrink(self._makeEvent(), p)
+        self.assertTrue(any("2" in line for line in p.lines))
+        self.assertTrue(any("Ukko" in line for line in p.lines))
+
+
+class TestFormatJockeyList(SilentTest):
+    def testDescriptionShown(self):
+        p = MockPrinter()
+        jockeys = [{"horseName": "Ukko", "jockeyName": "Turbo", "jockeyDescription": "+1 nopeus"}]
+        formatJockeyList(jockeys, p)
+        self.assertTrue(any("+1 nopeus" in line for line in p.lines))
+
+    def testNameShown(self):
+        p = MockPrinter()
+        jockeys = [{"horseName": "Ukko", "jockeyName": "Turbo", "jockeyDescription": "+1 nopeus"}]
+        formatJockeyList(jockeys, p)
+        self.assertTrue(any("Turbo" in line for line in p.lines))
+
+    def testHorseNameShown(self):
+        p = MockPrinter()
+        jockeys = [{"horseName": "Ukko", "jockeyName": "Turbo", "jockeyDescription": "desc"}]
+        formatJockeyList(jockeys, p)
+        self.assertTrue(any("Ukko" in line for line in p.lines))
+
+
+class TestTiebreakDisplay(SilentTest):
+    def _startEvent(self):
+        return TiebreakStartEvent(combatants=[
+            {"id": 1, "name": "Ukko", "odds": 2.0, "health": 20, "maxHealth": 20, "strength": 4},
+        ])
+
+    def _roundEvent(self, health=20):
+        return TiebreakRoundEvent(roundNumber=1, combatants=[
+            {"name": "Ukko", "health": health, "maxHealth": 20, "strength": 4},
+        ])
+
+    def testNoVColonInTiebreakStart(self):
+        p = MockPrinter()
+        formatTiebreakStart(self._startEvent(), p)
+        self.assertFalse(any("v:" in line for line in p.lines))
+
+    def testNoVColonInTiebreakRound(self):
+        p = MockPrinter()
+        formatTiebreakRound(self._roundEvent(), p)
+        self.assertFalse(any("v:" in line for line in p.lines))
+
+    def testHealthbarIsWiderThanSix(self):
+        p = MockPrinter()
+        formatTiebreakRound(self._roundEvent(), p)
+        bar_line = next(line for line in p.lines if "Ukko" in line and "[" in line)
+        bar = bar_line[bar_line.index("[") + 1: bar_line.index("]")]
+        self.assertGreater(len(bar), 6)
 
 
 if __name__ == "__main__":
