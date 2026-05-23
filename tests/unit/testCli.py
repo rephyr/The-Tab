@@ -56,10 +56,10 @@ class TestShowDailyLeaderboard(SilentTest):
         with patch("builtins.print", side_effect=lambda *a: printed.append(" ".join(str(x) for x in a))), \
              patch("builtins.input", side_effect=["1", ""]):
             showDailyLeaderboard(store)
-        date_lines = [l for l in printed if "2026-05-" in l and any(c.isdigit() for c in l)]
-        dates_in_order = [l for l in date_lines if "2026-05-21" in l or "2026-05-20" in l or "2026-05-19" in l]
-        first = next(l for l in dates_in_order if "2026-05-21" in l)
-        last = next(l for l in dates_in_order if "2026-05-19" in l)
+        date_lines = [line for line in printed if "2026-05-" in line and any(c.isdigit() for c in line)]
+        dates_in_order = [line for line in date_lines if "2026-05-21" in line or "2026-05-20" in line or "2026-05-19" in line]
+        first = next(line for line in dates_in_order if "2026-05-21" in line)
+        last = next(line for line in dates_in_order if "2026-05-19" in line)
         self.assertLess(dates_in_order.index(first), dates_in_order.index(last))
 
     def testEmptyInputCancels(self):
@@ -112,7 +112,7 @@ class TestShowDailyLeaderboard(SilentTest):
         with patch("builtins.print", side_effect=lambda *a: printed.append(" ".join(str(x) for x in a))), \
              patch("builtins.input", side_effect=["1", ""]):
             showDailyLeaderboard(store)
-        date_lines = [l for l in printed if "2026-05-20" in l and "1." in l]
+        date_lines = [line for line in printed if "2026-05-20" in line and "1." in line]
         self.assertEqual(len(date_lines), 1)
 
 
