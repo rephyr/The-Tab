@@ -58,7 +58,8 @@ class ReceiptPrinter:
             pid = int(self.config.get("productId", "0x0202"), 16)
             inEp = int(self.config.get("inEp", "0x82"), 16)
             outEp = int(self.config.get("outEp", "0x01"), 16)
-            self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp)
+            profile = self.config.get("escposProfile", "default")
+            self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp, profile=profile)
             font = self.config.get("escposFont", "a")
             if font != "a":
                 self._p = FontWrapper(self._p, font)
@@ -70,7 +71,8 @@ class ReceiptPrinter:
                 raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
             port = self.config.get("port", "COM1")
             baud = int(self.config.get("baudrate", 9600))
-            self._p = Serial(port, baudrate=baud)
+            profile = self.config.get("escposProfile", "default")
+            self._p = Serial(port, baudrate=baud, profile=profile)
 
         elif conn == "file":
             self._p = FilePrinter(self.config.get("path", "receipt.txt"))

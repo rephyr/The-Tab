@@ -250,6 +250,40 @@ def deduplicateName(name, existingNames):
     return f"{name} ({counter})"
 
 
+def showDailyLeaderboard(store):
+    """Show a numbered list of dates with sessions; display the chosen day's leaderboard."""
+    sessions = store.getSessions()
+    dates = sorted({s["timestamp"][:10] for s in sessions}, reverse=True)
+
+    if not dates:
+        print("\nEi sessioita tallennettu.\n")
+        input("Paina Enter jatkaaksesi...")
+        return
+
+    print("\n--- Päivän tulostaulukko ---\n")
+    for i, d in enumerate(dates, 1):
+        print(f"  {i}. {d}")
+
+    raw = input("\nValitse päivä (numero tai Enter peruuttaaksesi): ").strip()
+    if not raw:
+        return
+    if not raw.isdigit() or not (1 <= int(raw) <= len(dates)):
+        print("Virheellinen numero.")
+        return
+
+    date = dates[int(raw) - 1]
+    board = store.getDailyLeaderboard(date)
+
+    print(f"\n--- {date} ---\n")
+    print(f"{'#':<4} {'Nimi':<20} {'Joi':>6} {'Antoi':>6} {'Pelit':>6}")
+    print("-" * 46)
+    for i, p in enumerate(board):
+        print(f"{i + 1:<4} {p['name']:<20} {p['totalDrinksTaken']:>6} {p['totalDrinksGiven']:>6} {p['gamesPlayed']:>6}")
+
+    print()
+    input("Paina Enter jatkaaksesi...")
+
+
 def showPrintTest(config, debug):
     """Two-level sub-menu: choose game, then choose which part to print."""
     from printing.testData import printTestReceipts, GAMES
@@ -328,11 +362,10 @@ def runCli(adminMode=False, debug=False):
             for i, gameClass in enumerate(gamesList):
                 print(f"{i + 1}. {gameClass.gameTitle}")
             print("\nL - Tulostaulukko")
+            print("P - Päivän tulostaulukko" if not debug else "P - Testi tulostus")
             print("S - Sessiot")
             if adminMode:
                 print("M - Hallitse dataa")
-            if debug:
-                print("P - Testi tulostus")
             print(f"T - Tulostustila: kuitit [{receiptLabel}]")
             print(f"D - Tallenna pelin tiedot [{saveLabel}]")
             print('\n(kirjoita "quit" poistuaksesi)')
@@ -352,6 +385,10 @@ def runCli(adminMode=False, debug=False):
 
             if userInput.lower() == "m" and adminMode:
                 manageData(store)
+                continue
+
+            if userInput.lower() == "p" and not debug:
+                showDailyLeaderboard(store)
                 continue
 
             if userInput.lower() == "p" and debug:
