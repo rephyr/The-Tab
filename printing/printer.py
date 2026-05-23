@@ -88,14 +88,14 @@ class ReceiptPrinter:
 
     def printWith(self, fn) -> None:
         """Call fn(p) to write content, then cut the paper."""
-        if self._p is None:
-            self._connect()
         try:
+            if self._p is None:
+                self._connect()
             fn(self._p)
             self._p.cut()
         except Exception as e:
             print(f"[Tulostin: virhe tulostuksessa — {e}]")
-            self._p = None
+            self._p = self._fallback()
             return
         # win32raw batches everything into one spooler job until close() is called.
         # Wait briefly for the printer to process the receipt, then purge the whole
@@ -250,9 +250,12 @@ class CardAwareWrapper:
             if cards:
                 img = _buildCardRowImage(cards, self._config)
                 if img is not None:
-                    self._p.set(invert=False)
-                    self._p.image(img)
-                    return
+                    try:
+                        self._p.set(invert=False)
+                        self._p.image(img)
+                        return
+                    except Exception:
+                        pass
         self._p.textln(text)
 
     def text(self, text=""):

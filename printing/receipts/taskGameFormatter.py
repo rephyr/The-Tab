@@ -38,9 +38,6 @@ def formatChainDraw(event, p) -> None:
     p.textln(event.title.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * _W)
-    for line in _wrapText(event.description, _W):
-        p.textln(line)
-    p.textln("-" * _W)
     for a in event.assignments:
         p.textln(f"{a['name']}: {a['amount']}")
         for c in a.get("cascades", []):
