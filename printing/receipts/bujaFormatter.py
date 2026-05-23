@@ -225,7 +225,7 @@ def formatEndReceipt(data: dict, p) -> None:
                     if outcome["type"] == "drink":
                         p.textln(f"{outcome['player']} juo {outcome['drinks']}")
                     elif outcome["type"] == "give":
-                        p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
+                        p.textln(f"{outcome['giver']} antaa {outcome['receiver']} juo {outcome['drinks']}")
                     elif outcome["type"] == "share":
                         p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
             p.textln("-" * _W)
