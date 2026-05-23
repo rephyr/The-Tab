@@ -175,45 +175,52 @@ class TestBujaGivePhaseTiming(SilentTest):
         game._interactiveGivePhase = lambda: call_count.__setitem__(0, call_count[0] + 1)
         game._board = lambda: None
 
-        # 2 players × 4 phases = 8 per-player calls + 1 post-board = 9 total
+        # 2 players × 4 phases = 8 per-player calls, no post-board call
         inputs = ["r", "b", "h", "l", "i", "o", "h", "s"]
         with patch.object(game.deck, "drawCard", return_value=makeCard("A", "Hearts")), \
              patch("builtins.input", side_effect=inputs):
             game.playRound()
 
-        self.assertEqual(call_count[0], 9)
+        self.assertEqual(call_count[0], 8)
 
-    def testBoardJaaGiveIsDistributed(self):
-        """pendingGive from a board 'jaa' card should be distributed after the board."""
+    def testBoardJaaGivesImmediately(self):
+        """Board 'jaa' card asks for a target immediately; pendingGive stays 0."""
         game = makeBuja()
+        testiMatti = game.players[0]
+        testiTimo = game.players[1]
 
-        # Track whether give phase finds pending drinks after the board
-        gave_after_board = [False]
-
-        def spy_give(self_game):
-            if any(p.pendingGive > 0 for p in self_game.players):
-                gave_after_board[0] = True
-            # call real implementation but skip interaction
-            for p in self_game.players:
-                p.pendingGive = 0
-
-        game._interactiveGivePhase = lambda: spy_give(game)
-
-        # Board: 3 rows of 3 cards + 1 final; all matching player1's rank ("A")
-        # action cycle: juo, jaa, kippistä → second card is "jaa"
-        board_cards = [makeCard("2"), makeCard("A"), makeCard("3"),  # row1: jaa hits player1
+        # All phase draws are "A Hearts" so both players hold rank "A".
+        # Board jaa card is also "A" → both players match and both choose targets.
+        board_cards = [makeCard("2"), makeCard("A"), makeCard("3"),
                        makeCard("4"), makeCard("5"), makeCard("6"),
                        makeCard("7"), makeCard("8"), makeCard("9"),
-                       makeCard("10")]  # final
-        phase_inputs = ["r", "b", "h", "l", "i", "o", "h", "s"]
-        board_inputs = [""] * 15
+                       makeCard("10")]
+
+        # Full input sequence:
+        # ph1: Matti "r" (correct→give→"1"), Timo "b" (wrong)
+        # ph2: Matti "h" (same value), Timo "l" (same value)
+        # ph3: Matti "i" (boundary), Timo "o" (boundary)
+        # ph4: Matti "h" (correct→give→"1"), Timo "s" (wrong)
+        # board: Enter×2 then "1"+"1" for both jaa targets, then Enter×8
+        all_inputs = [
+            "r", "1", "b",        # phase 1
+            "h", "l",             # phase 2
+            "i", "o",             # phase 3
+            "h", "1", "s",        # phase 4
+            "", "",               # reveal juo card, reveal jaa card
+            "1", "1",             # Matti→Timo, Timo→Matti (jaa immediate)
+            "", "", "", "", "", "", "", "",  # remaining board reveals
+        ]
 
         with patch.object(game.deck, "drawCard", side_effect=(
             [makeCard("A", "Hearts")] * 8 + board_cards
-        )), patch("builtins.input", side_effect=phase_inputs + board_inputs):
+        )), patch("builtins.input", side_effect=all_inputs), \
+             patch("builtins.print"):
             game.playRound()
 
-        self.assertTrue(gave_after_board[0])
+        self.assertEqual(testiMatti.pendingGive, 0)
+        self.assertEqual(testiTimo.pendingGive, 0)
+        self.assertGreater(testiMatti.drinksToGive, 0)
 
 
 if __name__ == "__main__":

@@ -362,7 +362,8 @@ class RavitGame(RavitEventsMixin, Game):
             if len(closeFinish) > 1:
                 winner = self._tiebreakFight(closeFinish)
                 if winner is not None:
-                    aliveHorses = [winner] + [h for h in aliveHorses if h.id != winner.id]
+                    aliveHorses = [winner] + [h for h in aliveHorses if h.id != winner.id and h.status == "racing"]
+                    outHorses = [h for h in self.horses if h.status != "racing"]
 
         finalPositions = []
         for place, horse in enumerate(aliveHorses, start=1):

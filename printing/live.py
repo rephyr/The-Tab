@@ -4,8 +4,8 @@ LivePrinter listens to game events and prints receipts in real time as the game 
 Register it with: log.on(LivePrinter(printer).hook)
 """
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
-from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatRouletteResult, formatEndReceipt as formatBujaReceipt, configure as _configureBujaFormatter
-from printing.receipts.taskGameFormatter import formatReceipt as formatTaskGameReceipt, formatTaskDraw, formatDrinkSummary, formatChainDraw, configure as _configureTaskGameFormatter
+from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatBoardCardReveal, formatBoardCardOutcome, formatTally, formatRouletteResult, configure as _configureBujaFormatter
+from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSummary, formatChainDraw, formatTally as formatTaskTally, configure as _configureTaskGameFormatter
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
 
 
@@ -58,13 +58,16 @@ class LivePrinter:
 
         elif isinstance(event, BoardCardEvent) and self._inBoard:
             self._boardCardCount += 1
+            reveal = {"card": event.card, "action": event.action, "drinks": event.drinks, "matched": event.matched}
+            self._printer.printWith(lambda p, r=reveal: formatBoardCardReveal(r, p))
 
         elif isinstance(event, BoardCardDoneEvent):
             data = log.toDict()
             idx = self._boardCardCount - 1
             if idx >= 0 and idx < len(data["board"]):
                 card = data["board"][idx]
-                self._printer.printWith(lambda p, c=card: formatBoardCard(c, p))
+                if card["outcomes"]:
+                    self._printer.printWith(lambda p, c=card: formatBoardCardOutcome(c, p))
                 self._printedBoardCards.add(idx)
 
         elif isinstance(event, TaskDrawEvent):
@@ -118,9 +121,9 @@ class LivePrinter:
         elif isinstance(event, GameEndEvent):
             data = log.toDict()
             if self._gameTitle == "TaskGame":
-                self._printer.printWith(lambda p, d=data: formatTaskGameReceipt(d, p))
+                self._printer.printWith(lambda p, s=data["scores"]: formatTaskTally(s, p))
             elif self._gameTitle == "Buja":
-                self._printer.printWith(lambda p, d=data: formatBujaReceipt(d, p))
+                self._printer.printWith(lambda p, s=data["scores"]: formatTally(s, p))
             elif self._gameTitle == "Ravit":
                 ravitData = {
                     "players": data["players"],

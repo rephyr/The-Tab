@@ -49,32 +49,34 @@ def formatChainDraw(event, p) -> None:
 
 
 def formatDrinkSummary(event, p) -> None:
-    """Print a mid-game drink tally card after each turn."""
-    active = [s for s in event.scores if s["drank"] > 0 or s["toGive"] > 0]
-    if not active:
+    """Print a per-round drink summary — only players who drank this turn, with this turn's amounts."""
+    if not event.scores:
         return
     p.set(align="center", bold=True)
-    p.textln("LASKURI")
+    p.textln("JUOMAT")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    for s in active:
-        p.textln(f"{s['name']}: joi {s['drank']} | antaa {s['toGive']}")
+    for s in event.scores:
+        parts = []
+        if s["drank"] > 0:
+            parts.append(f"juo {s['drank']}")
+        if s["toGive"] > 0:
+            parts.append(f"antaa {s['toGive']}")
+        p.textln(f"{s['name']}: {' | '.join(parts)}")
     p.textln("=" * _W)
 
 
-def formatReceipt(data: dict, p) -> None:
-    """Print the end-of-game summary: title, timestamp, players, and drink scores."""
-    p.set(align="center", bold=True, double_width=True, double_height=True)
-    p.textln("TASKGAME")
-    p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * _W)
-    p.textln(data["timestamp"])
-    p.textln(", ".join(data["players"]))
-    p.textln("=" * _W)
+def formatTally(scores: list, p) -> None:
+    """Print the final drink tally."""
     p.set(align="center", bold=True)
     p.textln("LOPPUSALDO")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    for score in data["scores"]:
-        p.textln(f"{score['name']}: joi {score['drank']} | antoi {score['gave']}")
+    for s in scores:
+        p.textln(f"{s['name']}: joi {s['drank']} | antoi {s['gave']}")
     p.textln("=" * _W)
+
+
+def formatReceipt(data: dict, p) -> None:
+    """Print the end-of-game tally."""
+    formatTally(data["scores"], p)

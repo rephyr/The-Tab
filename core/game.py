@@ -72,11 +72,13 @@ class Game(ABC):
                 continue
 
             amountRaw = input(f"  Montako {target.getName()}lle? ").strip()
-            if not amountRaw.isdigit() or int(amountRaw) <= 0:
+            try:
+                amount = int(amountRaw)
+                if amount <= 0:
+                    raise ValueError
+            except ValueError:
                 print("  Virheellinen määrä.")
                 continue
-
-            amount = int(amountRaw)
             if remaining is not None and amount > remaining:
                 print(f"  Liikaa! Voit antaa enintään {remaining} juomaa.")
                 continue
