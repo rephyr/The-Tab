@@ -10,6 +10,7 @@ from cli.sessions import showLeaderboard, showDailyLeaderboard, showSession
 from cli.dataManager import manageData
 from cli.gameRunner import configureGame, runGame, showSessionResult
 from cli.printTest import showPrintTest
+from cli.rules import showRules
 
 
 def listGames() -> list[type]:
@@ -65,7 +66,8 @@ def runCli(adminMode: bool = False, debug: bool = False) -> None:
             print(f"\nPelit{modeLabel}:\n")
             for i, gameClass in enumerate(gamesList):
                 print(f"{i + 1}. {gameClass.gameTitle}")
-            print("\nL - Tulostaulukko")
+            print("\nR - Säännöt")
+            print("L - Tulostaulukko")
             print("P - Päivän tulostaulukko" if not debug else "P - Testi tulostus")
             print("S - Sessiot")
             if adminMode:
@@ -78,6 +80,9 @@ def runCli(adminMode: bool = False, debug: bool = False) -> None:
 
             if userInput.lower() == "quit":
                 break
+            if userInput.lower() == "r":
+                showRules()
+                continue
             if userInput.lower() == "l":
                 showLeaderboard(store)
                 continue
