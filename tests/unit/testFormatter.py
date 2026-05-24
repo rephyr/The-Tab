@@ -32,46 +32,46 @@ class TestFormatTurn(SilentTest):
     def testShowsPlayerName(self):
         p = MockPrinter()
         formatTurn("Red or Black", makeTurn(player="Testi Matti"), p)
-        self.assertTrue(any("Testi Matti" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in ln for ln in p.lines))
 
     def testShowsGuess(self):
         p = MockPrinter()
         formatTurn("Red or Black", makeTurn(guess="Red"), p)
-        self.assertTrue(any("Red" in l for l in p.lines))
+        self.assertTrue(any("Red" in ln for ln in p.lines))
 
     def testShowsCard(self):
         p = MockPrinter()
         formatTurn("Red or Black", makeTurn(card="♥A"), p)
-        self.assertTrue(any("♥A" in l for l in p.lines))
+        self.assertTrue(any("♥A" in ln for ln in p.lines))
 
     def testShowsGaveToOnCorrect(self):
         p = MockPrinter()
         formatTurn("Red or Black", makeTurn(gaveTo="Testi Timo", drinks=1), p)
-        self.assertTrue(any("Testi Timo" in l for l in p.lines))
+        self.assertTrue(any("Testi Timo" in ln for ln in p.lines))
 
     def testShowsDrinksOnWrong(self):
         p = MockPrinter()
         turn = makeTurn(gaveTo=None, drinks=2, note=None, correct=False)
         formatTurn("Red or Black", turn, p)
-        self.assertTrue(any("2" in l for l in p.lines))
+        self.assertTrue(any("2" in ln for ln in p.lines))
 
     def testShowsNoteWhenPresent(self):
         p = MockPrinter()
         turn = makeTurn(gaveTo=None, drinks=2, note="on the line", correct=None)
         formatTurn("Red or Black", turn, p)
-        self.assertTrue(any("on the line" in l for l in p.lines))
+        self.assertTrue(any("on the line" in ln for ln in p.lines))
 
     def testHigherOrLowerShowsBothCards(self):
         p = MockPrinter()
         turn = makeTurn(card="♥9", handBefore=["♥5"])
         formatTurn("Isompi vai pienempi?", turn, p)
-        self.assertTrue(any("♥5" in l and "♥9" in l for l in p.lines))
+        self.assertTrue(any("♥5" in ln and "♥9" in ln for ln in p.lines))
 
     def testInsideOrOutsideShowsHand(self):
         p = MockPrinter()
         turn = makeTurn(handBefore=["♥3", "♥9"])
         formatTurn("Välistä vai ulkoa?", turn, p)
-        self.assertTrue(any("♥3" in l for l in p.lines))
+        self.assertTrue(any("♥3" in ln for ln in p.lines))
 
     def testNoCutInsideTurn(self):
         p = MockPrinter()
@@ -83,12 +83,12 @@ class TestFormatHand(SilentTest):
     def testShowsPlayerName(self):
         p = MockPrinter()
         formatHand("Testi Matti", ["♥A", "♦K"], p)
-        self.assertTrue(any("TESTI MATTI" in l for l in p.lines))
+        self.assertTrue(any("TESTI MATTI" in ln for ln in p.lines))
 
     def testShowsAllCardsSideBySide(self):
         p = MockPrinter()
         formatHand("Testi Matti", ["♥A", "♦K", "♣Q"], p)
-        self.assertTrue(any("♥A" in l and "♦K" in l and "♣Q" in l for l in p.lines))
+        self.assertTrue(any("♥A" in ln and "♦K" in ln and "♣Q" in ln for ln in p.lines))
 
     def testNoCut(self):
         p = MockPrinter()
@@ -100,12 +100,12 @@ class TestFormatBoardCard(SilentTest):
     def testShowsCard(self):
         p = MockPrinter()
         formatBoardCard({"card": "♥A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
-        self.assertTrue(any("♥A" in l for l in p.lines))
+        self.assertTrue(any("♥A" in ln for ln in p.lines))
 
     def testShowsNoMatchWhenEmpty(self):
         p = MockPrinter()
         formatBoardCard({"card": "♥A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
-        self.assertTrue(any("Ei osumia" in l for l in p.lines))
+        self.assertTrue(any("Ei osumia" in ln for ln in p.lines))
 
     def testShowsDrinkOutcome(self):
         p = MockPrinter()
@@ -115,7 +115,7 @@ class TestFormatBoardCard(SilentTest):
             "outcomes": [{"type": "drink", "player": "Testi Matti", "drinks": 4}],
         }
         formatBoardCard(card, p)
-        self.assertTrue(any("Testi Matti" in l and "4" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in ln and "4" in ln for ln in p.lines))
 
     def testShowsGiveOutcome(self):
         p = MockPrinter()
@@ -125,7 +125,7 @@ class TestFormatBoardCard(SilentTest):
             "outcomes": [{"type": "give", "giver": "Testi Matti", "receiver": "Testi Timo", "drinks": 4}],
         }
         formatBoardCard(card, p)
-        self.assertTrue(any("Testi Matti" in l and "Testi Timo" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in ln and "Testi Timo" in ln for ln in p.lines))
 
     def testShowsShareOutcome(self):
         p = MockPrinter()
@@ -135,20 +135,20 @@ class TestFormatBoardCard(SilentTest):
             "outcomes": [{"type": "share", "player1": "Testi Matti", "player2": "Testi Timo", "drinks": 4}],
         }
         formatBoardCard(card, p)
-        self.assertTrue(any("Testi Matti" in l and "Testi Timo" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in ln and "Testi Timo" in ln for ln in p.lines))
 
 class TestFormatTally(SilentTest):
 
     def testShowsEachPlayer(self):
         p = MockPrinter()
         formatTally([{"name": "Testi Matti", "drank": 5, "gave": 3}, {"name": "Testi Timo", "drank": 2, "gave": 7}], p)
-        self.assertTrue(any("Testi Matti" in l for l in p.lines))
-        self.assertTrue(any("Testi Timo" in l for l in p.lines))
+        self.assertTrue(any("Testi Matti" in ln for ln in p.lines))
+        self.assertTrue(any("Testi Timo" in ln for ln in p.lines))
 
     def testShowsDrankAndGave(self):
         p = MockPrinter()
         formatTally([{"name": "Testi Matti", "drank": 5, "gave": 3}], p)
-        self.assertTrue(any("5" in l and "3" in l for l in p.lines))
+        self.assertTrue(any("5" in ln and "3" in ln for ln in p.lines))
 
 class TestFormatReceipt(SilentTest):
 
@@ -186,17 +186,17 @@ class TestFormatTaskDraw(SilentTest):
     def testShowsTitle(self):
         p = MockPrinter()
         formatTaskDraw(TaskDrawEvent(drawer="Teppo", title="Luuppi", description="Huuda luuppi.", targets=["Teppo"]), p)
-        self.assertTrue(any("LUUPPI" in l for l in p.lines))
+        self.assertTrue(any("LUUPPI" in ln for ln in p.lines))
 
     def testShowsAllTargets(self):
         p = MockPrinter()
         formatTaskDraw(TaskDrawEvent(drawer="Teppo", title="Pari", description="...", targets=["Teppo", "Matti"]), p)
-        self.assertTrue(any("Teppo" in l and "Matti" in l for l in p.lines))
+        self.assertTrue(any("Teppo" in ln and "Matti" in ln for ln in p.lines))
 
     def testShowsDescription(self):
         p = MockPrinter()
         formatTaskDraw(TaskDrawEvent(drawer="Teppo", title="X", description="Do something.", targets=["Teppo"]), p)
-        self.assertTrue(any("Do something." in l for l in p.lines))
+        self.assertTrue(any("Do something." in ln for ln in p.lines))
 
 
 class TestFormatRouletteResult(SilentTest):
@@ -204,27 +204,27 @@ class TestFormatRouletteResult(SilentTest):
     def testShowsPlayerName(self):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
-        self.assertTrue(any("TEPPO" in l for l in p.lines))
+        self.assertTrue(any("TEPPO" in ln for ln in p.lines))
 
     def testShowsOsumaOnHit(self):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=True, drinks=10), p)
-        self.assertTrue(any("OSUMA!" in l for l in p.lines))
+        self.assertTrue(any("OSUMA!" in ln for ln in p.lines))
 
     def testShowsDrinksOnHit(self):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=True, drinks=10), p)
-        self.assertTrue(any("10" in l for l in p.lines))
+        self.assertTrue(any("10" in ln for ln in p.lines))
 
     def testShowsOhiOnMiss(self):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
-        self.assertTrue(any("OHI!" in l for l in p.lines))
+        self.assertTrue(any("OHI!" in ln for ln in p.lines))
 
     def testNoOsumaOnMiss(self):
         p = MockPrinter()
         formatRouletteResult(RouletteResultEvent(player="Teppo", hit=False, drinks=10), p)
-        self.assertFalse(any("OSUMA!" in l for l in p.lines))
+        self.assertFalse(any("OSUMA!" in ln for ln in p.lines))
 
 
 if __name__ == "__main__":

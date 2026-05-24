@@ -17,7 +17,6 @@ p.textln(text) — prints one line
 
 _W = 32
 
-from printing.receipts.textWrapper import wrapText as _wrapText
 
 
 def configure(config: dict) -> None:

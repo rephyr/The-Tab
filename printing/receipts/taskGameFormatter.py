@@ -10,9 +10,9 @@ p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
 
-_W = 32
-
 from printing.receipts.textWrapper import wrapText as _wrapText
+
+_W = 32
 
 
 def configure(config: dict) -> None:

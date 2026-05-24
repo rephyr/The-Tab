@@ -288,7 +288,7 @@ class Buja(Game):
                 self.emit(BoardCardDoneEvent())
 
         print(f"\n=== LOPPU | {finalDrinks} ryyppyä | KIPPISTÄ ===")
-        input(f"\nPaina Enter paljastaaksesi")
+        input("\nPaina Enter paljastaaksesi")
         print(f"Kortti: {finalCard} | Toiminto: KIPPISTÄ")
 
         matchedPlayers = [p for p in self.players if p.hasRank(finalCard.rank)]

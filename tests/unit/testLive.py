@@ -1,12 +1,10 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
-    DrinkEvent, GiveEvent, ShareEvent,
-    BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
+    DrinkEvent, GiveEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
     TaskDrawEvent, RouletteResultEvent,
-    RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent,
-    TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
+    RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
 )
 from printing.log import GameLog
 from printing.live import LivePrinter

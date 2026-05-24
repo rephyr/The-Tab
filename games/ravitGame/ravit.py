@@ -69,7 +69,7 @@ class RavitGame(RavitEventsMixin, Game):
         nw = self._nameWidth()
         maxBet = self._getConfig("maxBet", 5)
 
-        print(f"\n=== VEDONLYÖNTI ===\n")
+        print("\n=== VEDONLYÖNTI ===\n")
         print(f"{'':>{3 + nw}}  kerroin  jockey")
         for h in self.horses:
             j = self._jockeyMap.get(h.id)

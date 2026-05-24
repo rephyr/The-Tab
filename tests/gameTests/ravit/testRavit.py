@@ -5,7 +5,7 @@ from tests.testUtils import SilentTest
 from core.player import Player
 from core.events import DrinkEvent, GiveEvent, GameEndEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
 from games.ravitGame.horses import Horse, _generateHorse, generateHorses, _assignRelativeOdds
-from games.ravitGame.jockeys import Jockey, JOCKEYS, dealJockeys
+from games.ravitGame.jockeys import Jockey, dealJockeys
 from games.ravitGame.ravit import RavitGame
 
 
