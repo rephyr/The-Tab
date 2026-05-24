@@ -5,8 +5,10 @@ Receipts are printed in this order during a game:
 
 formatHorseList        — before betting; lists horses and odds
 formatBettingReceipt   — after all bets are placed
-formatRaceRound        — every round (roundNumber 0 = starting line)
+formatRaceEvents       — per round, only when events fired that round
+formatRaceTrack        — per round, current horse positions on the track
 formatHorseEvent       — per horse when a notable event fires
+formatRavitWinner      — when the race finishes; winner horse and winning bettors
 formatTiebreakStart    — when tied horses enter sudden-death combat
 formatTiebreakRound    — each combat round
 formatTiebreakElimination — when a combatant is eliminated (3+ fighters only)
@@ -70,18 +72,25 @@ def formatBettingReceipt(horses: list, bets: list, p) -> None:
     p.textln("=" * _W)
 
 
-def formatRaceRound(event, p) -> None:
+def formatRaceEvents(event, p) -> None:
+    """Print the events that fired in one round. Only called when raceEvents is non-empty."""
+    p.set(align="center", bold=True)
+    p.textln(f"KIERROS {event.roundNumber}")
+    p.set(align="left", bold=False)
+    p.textln("=" * _W)
+    for ev in event.raceEvents:
+        for line in _wrapText(ev["detail"], _W):
+            p.textln(line)
+        p.textln("-" * _W)
+    p.textln("=" * _W)
+
+
+def formatRaceTrack(event, p) -> None:
     """Print the track state for one round. roundNumber 0 prints as the starting line."""
     p.set(align="center", bold=True)
     p.textln("LÄHTOVIIVA" if event.roundNumber == 0 else f"KIERROS {event.roundNumber}")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    if event.raceEvents:
-        for ev in event.raceEvents:
-            for line in _wrapText(ev["detail"], _W):
-                p.textln(line)
-            p.textln("-" * _W)
-        p.textln("=" * _W)
     for pos in event.positions:
         if pos["status"] == "racing":
             barLen = int(pos["position"] / event.trackLength * 15)
@@ -137,6 +146,23 @@ def formatBettorDrink(event, p) -> None:
     p.set(bold=False)
     for line in _wrapText(f"{event.horseName}: {event.reason}", _W):
         p.textln(line)
+    p.textln("=" * _W)
+
+
+def formatRavitWinner(data: dict, p) -> None:
+    """Print the race winner slip.
+
+    data keys: horseName, odds, bettors [{player, amount}]
+    """
+    p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+    p.textln(f"{data['horseName'].upper()} VOITTAA")
+    p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+    p.textln("=" * _W)
+    p.textln(f"Kerroin: x{data['odds']}")
+    if data.get("bettors"):
+        p.textln("-" * _W)
+        for b in data["bettors"]:
+            p.textln(f"{b['player']}: {b['amount']}x juomaa")
     p.textln("=" * _W)
 
 
