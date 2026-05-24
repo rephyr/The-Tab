@@ -5,6 +5,7 @@ Change the values here to see how different content looks when printed.
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
 from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
+from printing.receipts.ketjuFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
 from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
@@ -17,6 +18,10 @@ from core.events import (
     RavitBettorDrinkEvent,
 )
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
+from games.ketjuGame.ketjuEvents import (
+    KetjuCardDrawnEvent, KetjuEqualCardEvent, KetjuDoubleOrDoubleEvent,
+    KetjuExitEvent, KetjuLinkResolvedEvent,
+)
 
 # ---------------------------------------------------------------------------
 # Buja
@@ -195,6 +200,46 @@ TEST_MEXICO_SCORES = [
 ]
 
 # ---------------------------------------------------------------------------
+# Ketju
+# ---------------------------------------------------------------------------
+
+TEST_KETJU_CARD_CORRECT = KetjuCardDrawnEvent(
+    player="Testi Tatti", card="♠J", previousCard="♦7",
+    guess="korkeampi", correct=True, streak=3, pot=3, multiplier=1,
+)
+
+TEST_KETJU_CARD_WRONG = KetjuCardDrawnEvent(
+    player="Testi Matti", card="♣3", previousCard="♦7",
+    guess="korkeampi", correct=False, streak=2, pot=2, multiplier=2,
+)
+
+TEST_KETJU_EQUAL = KetjuEqualCardEvent(
+    player="Testi Tatti", card="♥7", previousCard="♦7",
+    penalty=3, multiplier=2, total=6,
+)
+
+TEST_KETJU_DOUBLE_CORRECT = KetjuDoubleOrDoubleEvent(
+    player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
+    guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
+)
+
+TEST_KETJU_DOUBLE_WRONG = KetjuDoubleOrDoubleEvent(
+    player="Testi Matti", challengeCard="♣2", previousCard="♦7",
+    guess="korkeampi", correct=False, pot=10, multiplier=1, amount=20,
+)
+
+TEST_KETJU_EXIT = KetjuExitEvent(player="Testi Tatti", pot=3, streak=3)
+
+TEST_KETJU_LINK = KetjuLinkResolvedEvent(
+    linkedPlayer="Testi Tatti", triggerPlayer="Testi Matti", amount=4,
+)
+
+TEST_KETJU_SCORES = [
+    {"name": "Testi Tatti", "drank": 6, "gave": 3},
+    {"name": "Testi Matti", "drank": 20, "gave": 0},
+]
+
+# ---------------------------------------------------------------------------
 # Game → parts registry  (used by cli.py to build the two-level menu)
 # ---------------------------------------------------------------------------
 
@@ -213,6 +258,13 @@ GAMES = {
     "TaskGame": [
         ("tasks", "Tehtäväkortit"),
     ],
+    "Ketju": [
+        ("ketju-card",   "Kortit"),
+        ("ketju-double", "Double or Double"),
+        ("ketju-exit",   "Poistuminen"),
+        ("ketju-link",   "Linkki"),
+        ("ketju-tally",  "Loppusaldo"),
+    ],
     "Ravit": [
         ("ravit-betting",      "Hevoset & Vedonlyönti"),
         ("ravit-rata",         "Kierros"),
@@ -228,6 +280,24 @@ def printTestReceipts(printer, parts=None) -> None:
     """Print test receipts. Pass None to print every part of every game."""
     if parts is None:
         parts = [key for game_parts in GAMES.values() for key, _ in game_parts]
+
+    if "ketju-card" in parts:
+        printer.printWith(lambda p, e=TEST_KETJU_CARD_CORRECT: formatKetjuCardDraw(e, p))
+        printer.printWith(lambda p, e=TEST_KETJU_CARD_WRONG: formatKetjuCardDraw(e, p))
+        printer.printWith(lambda p, e=TEST_KETJU_EQUAL: formatKetjuEqualCard(e, p))
+
+    if "ketju-double" in parts:
+        printer.printWith(lambda p, e=TEST_KETJU_DOUBLE_CORRECT: formatKetjuDouble(e, p))
+        printer.printWith(lambda p, e=TEST_KETJU_DOUBLE_WRONG: formatKetjuDouble(e, p))
+
+    if "ketju-exit" in parts:
+        printer.printWith(lambda p, e=TEST_KETJU_EXIT: formatKetjuExit(e, p))
+
+    if "ketju-link" in parts:
+        printer.printWith(lambda p, e=TEST_KETJU_LINK: formatKetjuLink(e, p))
+
+    if "ketju-tally" in parts:
+        printer.printWith(lambda p: formatKetjuTally(TEST_KETJU_SCORES, p))
 
     if "mexico-accept" in parts:
         printer.printWith(lambda p, e=TEST_MEXICO_ACCEPT: formatMexicoAccept(e, p))

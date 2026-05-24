@@ -3,8 +3,10 @@ from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardC
 from printing.receipts.ravitFormatter import formatRaceRound, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
+from printing.receipts.ketjuFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
 from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
+from games.ketjuGame.ketjuEvents import KetjuCardDrawnEvent, KetjuEqualCardEvent, KetjuDoubleOrDoubleEvent, KetjuExitEvent, KetjuLinkResolvedEvent
 from tests.testUtils import SilentTest
 
 class MockPrinter:
@@ -424,6 +426,200 @@ class TestFormatMexicoAccept(SilentTest):
         p = MockPrinter()
         formatMexicoAccept(self._makeEvent(claimed=1000), p)
         self.assertTrue(any("Mexico" in line for line in p.lines))
+
+
+class TestFormatKetjuCardDraw(SilentTest):
+
+    def _correct(self, streak=3, multiplier=1):
+        return KetjuCardDrawnEvent(
+            player="Testi Tatti", card="♠J", previousCard="♦7",
+            guess="korkeampi", correct=True, streak=streak, pot=3, multiplier=multiplier,
+        )
+
+    def _wrong(self, streak=2, multiplier=2):
+        return KetjuCardDrawnEvent(
+            player="Testi Matti", card="♣3", previousCard="♦7",
+            guess="korkeampi", correct=False, streak=streak, pot=2, multiplier=multiplier,
+        )
+
+    def testPlayerNameShown(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._correct(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testStreakShownOnCorrect(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._correct(streak=3), p)
+        self.assertTrue(any("3" in line for line in p.lines))
+
+    def testDrinksShownOnWrong(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._wrong(streak=2, multiplier=2), p)
+        self.assertTrue(any("4" in line for line in p.lines))
+
+    def testVaarinShownOnWrong(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._wrong(), p)
+        self.assertTrue(any("VÄÄRIN" in line for line in p.lines))
+
+    def testMultiplierShownWhenAboveOne(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._correct(multiplier=4), p)
+        self.assertTrue(any("4" in line for line in p.lines))
+
+    def testCardsShown(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._correct(), p)
+        self.assertTrue(any("♠J" in line for line in p.lines))
+        self.assertTrue(any("♦7" in line for line in p.lines))
+
+
+class TestFormatKetjuEqualCard(SilentTest):
+
+    def _event(self, multiplier=2):
+        return KetjuEqualCardEvent(
+            player="Testi Tatti", card="♥7", previousCard="♦7",
+            penalty=3, multiplier=multiplier, total=3 * multiplier,
+        )
+
+    def testPlayerShown(self):
+        p = MockPrinter()
+        formatKetjuEqualCard(self._event(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testTotalDrinksShown(self):
+        p = MockPrinter()
+        formatKetjuEqualCard(self._event(multiplier=2), p)
+        self.assertTrue(any("6" in line for line in p.lines))
+
+    def testTasainenShown(self):
+        p = MockPrinter()
+        formatKetjuEqualCard(self._event(), p)
+        self.assertTrue(any("TASAINEN" in line for line in p.lines))
+
+    def testBothCardsShown(self):
+        p = MockPrinter()
+        formatKetjuEqualCard(self._event(), p)
+        self.assertTrue(any("♥7" in line for line in p.lines))
+        self.assertTrue(any("♦7" in line for line in p.lines))
+
+
+class TestFormatKetjuDoubleOrDouble(SilentTest):
+
+    def _correct(self):
+        return KetjuDoubleOrDoubleEvent(
+            player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
+            guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
+        )
+
+    def _wrong(self):
+        return KetjuDoubleOrDoubleEvent(
+            player="Testi Matti", challengeCard="♣2", previousCard="♦7",
+            guess="korkeampi", correct=False, pot=10, multiplier=1, amount=20,
+        )
+
+    def testPlayerShown(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._correct(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testOikeinOnCorrect(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._correct(), p)
+        self.assertTrue(any("OIKEIN" in line for line in p.lines))
+
+    def testPayoutShownOnCorrect(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._correct(), p)
+        self.assertTrue(any("40" in line for line in p.lines))
+
+    def testVaarinOnWrong(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._wrong(), p)
+        self.assertTrue(any("VÄÄRIN" in line for line in p.lines))
+
+    def testDrinksShownOnWrong(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._wrong(), p)
+        self.assertTrue(any("20" in line for line in p.lines))
+
+    def testChallengeCardShown(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._correct(), p)
+        self.assertTrue(any("♠A" in line for line in p.lines))
+
+
+class TestFormatKetjuExit(SilentTest):
+
+    def _event(self):
+        return KetjuExitEvent(player="Testi Tatti", pot=3, streak=3)
+
+    def testPlayerShown(self):
+        p = MockPrinter()
+        formatKetjuExit(self._event(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testPotShown(self):
+        p = MockPrinter()
+        formatKetjuExit(self._event(), p)
+        self.assertTrue(any("3" in line for line in p.lines))
+
+    def testLinkitettyShown(self):
+        p = MockPrinter()
+        formatKetjuExit(self._event(), p)
+        self.assertTrue(any("LINKITETTY" in line for line in p.lines))
+
+    def testStreakShown(self):
+        p = MockPrinter()
+        formatKetjuExit(self._event(), p)
+        self.assertTrue(any("3" in line for line in p.lines))
+
+
+class TestFormatKetjuLinkResolved(SilentTest):
+
+    def _event(self):
+        return KetjuLinkResolvedEvent(linkedPlayer="Testi Tatti", triggerPlayer="Testi Matti", amount=4)
+
+    def testLinkedPlayerShown(self):
+        p = MockPrinter()
+        formatKetjuLink(self._event(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testTriggerPlayerShown(self):
+        p = MockPrinter()
+        formatKetjuLink(self._event(), p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testAmountShown(self):
+        p = MockPrinter()
+        formatKetjuLink(self._event(), p)
+        self.assertTrue(any("4" in line for line in p.lines))
+
+    def testLinkHeaderShown(self):
+        p = MockPrinter()
+        formatKetjuLink(self._event(), p)
+        self.assertTrue(any("LINKKI" in line for line in p.lines))
+
+
+class TestFormatKetjuTally(SilentTest):
+
+    def testAllPlayersShown(self):
+        p = MockPrinter()
+        scores = [{"name": "Testi Tatti", "drank": 6}, {"name": "Testi Matti", "drank": 20}]
+        formatKetjuTally(scores, p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testDrinkCountsShown(self):
+        p = MockPrinter()
+        scores = [{"name": "Testi Tatti", "drank": 6}]
+        formatKetjuTally(scores, p)
+        self.assertTrue(any("6" in line for line in p.lines))
+
+    def testLoppusaltoShown(self):
+        p = MockPrinter()
+        formatKetjuTally([{"name": "X", "drank": 1}], p)
+        self.assertTrue(any("LOPPUSALDO" in line for line in p.lines))
 
 
 if __name__ == "__main__":
