@@ -24,6 +24,7 @@ def showPrintTest(config: Config, debug: bool) -> None:
                 break
             elif choice == str(len(gameNames) + 1):
                 printTestReceipts(printer, None)
+                input("\nTulostettu. Paina Enter jatkaaksesi...")
             elif choice.isdigit() and 1 <= int(choice) <= len(gameNames):
                 gameName = gameNames[int(choice) - 1]
                 gameParts = GAMES[gameName]
@@ -42,9 +43,11 @@ def showPrintTest(config: Config, debug: bool) -> None:
                         break
                     elif partChoice == str(len(gameParts) + 1):
                         printTestReceipts(printer, [k for k, _ in gameParts])
+                        input("\nTulostettu. Paina Enter jatkaaksesi...")
                     elif partChoice.isdigit() and 1 <= int(partChoice) <= len(gameParts):
                         key = gameParts[int(partChoice) - 1][0]
                         printTestReceipts(printer, [key])
+                        input("\nTulostettu. Paina Enter jatkaaksesi...")
                     else:
                         print("Virheellinen valinta.")
             else:

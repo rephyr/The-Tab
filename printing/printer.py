@@ -18,6 +18,33 @@ try:
 except ImportError:
     ESCPOS_AVAILABLE = False
 
+# Characters that don't survive ESC/POS codepages → safe fallbacks
+_PRINTER_SUBSTITUTIONS = {
+    "❤︎⁠": "♥",  # ❤︎⁠ (heavy heart + variation selector + word joiner)
+    "❤︎": "♥",  # ❤︎ (heavy heart + variation selector)
+    "❤": "♥",  # ❤ (bare heavy heart)
+}
+
+
+def _sanitize(text: str) -> str:
+    for src, dst in _PRINTER_SUBSTITUTIONS.items():
+        text = text.replace(src, dst)
+    return text
+
+
+class EscposSanitizerWrapper:
+    """Sanitizes Unicode text to printer-safe equivalents before forwarding."""
+    def __init__(self, printer):
+        self._p = printer
+
+    def set(self, **kwargs):       self._p.set(**kwargs)
+    def textln(self, text=""):     self._p.textln(_sanitize(str(text)))
+    def text(self, text=""):       self._p.text(_sanitize(str(text)))
+    def image(self, img):          self._p.image(img)
+    def cut(self):                 self._p.cut()
+    def close(self):               self._p.close()
+    def charcode(self, code):      self._p.charcode(code)
+
 
 class ReceiptPrinter:
     """Connects to a printer backend and exposes printWith() for sending receipts."""
@@ -43,6 +70,7 @@ class ReceiptPrinter:
                     raise RuntimeError("escpos not available")
                 self._p = Win32Raw(self.config.get("printerName"))
                 self._p.open()
+                self._p = EscposSanitizerWrapper(self._p)
                 font = self.config.get("escposFont", "a")
                 if font != "a":
                     self._p = FontWrapper(self._p, font)
@@ -60,6 +88,7 @@ class ReceiptPrinter:
             outEp = int(self.config.get("outEp", "0x01"), 16)
             profile = self.config.get("escposProfile", "default")
             self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp, profile=profile)
+            self._p = EscposSanitizerWrapper(self._p)
             font = self.config.get("escposFont", "a")
             if font != "a":
                 self._p = FontWrapper(self._p, font)
@@ -73,6 +102,7 @@ class ReceiptPrinter:
             baud = int(self.config.get("baudrate", 9600))
             profile = self.config.get("escposProfile", "default")
             self._p = Serial(port, baudrate=baud, profile=profile)
+            self._p = EscposSanitizerWrapper(self._p)
 
         elif conn == "file":
             self._p = FilePrinter(self.config.get("path", "receipt.txt"))

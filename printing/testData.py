@@ -24,16 +24,16 @@ from games.diceGame.diceEvents import MexicanChallengeEvent
 
 TEST_PHASES = [
     ("Red or Black", {
-        "player": "Testi Tatti", "guess": "Red", "card": "♥7", "correct": True,
+        "player": "Testi Tatti", "guess": "Red", "card": "❤︎⁠7", "correct": True,
         "gaveTo": "Testi Matti", "drinks": 1, "note": None, "handBefore": [],
     }),
     ("Higher or Lower", {
         "player": "Testi Matti", "guess": "Higher", "card": "♠J", "correct": False,
-        "gaveTo": None, "drinks": 2, "note": None, "handBefore": ["♥7"],
+        "gaveTo": None, "drinks": 2, "note": None, "handBefore": ["❤︎⁠7"],
     }),
     ("Inside or Outside", {
         "player": "Testi Tatti", "guess": "Inside", "card": "♦8", "correct": True,
-        "gaveTo": "Testi Matti", "drinks": 3, "note": None, "handBefore": ["♥7", "♠J"],
+        "gaveTo": "Testi Matti", "drinks": 3, "note": None, "handBefore": ["❤︎⁠7", "♠J"],
     }),
     ("Suit", {
         "player": "Testi Matti", "guess": "Hearts", "card": "♣K", "correct": False,
@@ -42,15 +42,15 @@ TEST_PHASES = [
 ]
 
 TEST_HANDS = [
-    ("Testi Tatti", ["♥7", "♠J", "♦8", "♣K"]),
-    ("Testi Matti", ["♥Q", "♣5", "♠A", "♦3"]),
+    ("Testi Tatti", ["❤︎⁠7", "♠J", "♦8", "♣K"]),
+    ("Testi Matti", ["❤︎⁠Q", "♣5", "♠A", "♦3"]),
 ]
 
 TEST_BOARD_CARDS = [
     {"card": "♦Q", "action": "Drink", "drinks": 2, "matched": [], "outcomes": []},
     {"card": "♠7", "action": "Drink", "drinks": 2, "matched": ["Testi Tatti"],
      "outcomes": [{"player": "Testi Tatti", "type": "drink", "drinks": 2}]},
-    {"card": "♥J", "action": "Give", "drinks": 4, "matched": ["Testi Tatti"],
+    {"card": "❤︎⁠J", "action": "Give", "drinks": 4, "matched": ["Testi Tatti"],
      "outcomes": [{"giver": "Testi Tatti", "receiver": "Testi Matti", "type": "give", "drinks": 4}]},
     {"card": "♣A", "action": "Share", "drinks": 6, "matched": ["Testi Tatti", "Testi Matti"],
      "outcomes": [{"player1": "Testi Tatti", "player2": "Testi Matti", "type": "share", "drinks": 6}]},
