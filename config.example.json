@@ -1,12 +1,18 @@
 {
+
   "printer": {
-    "receiptWidth": 32,
     "connection": "usb",
     "vendorId": "0x0000",
     "productId": "0x0000",
     "inEp": "0x81",
-    "outEp": "0x01",
-    "escposFont": "a",
+    "outEp": "0x03",
+    "_disabled_win32raw": {
+      "connection": "win32raw",
+      "printerName": "Your Printer Name Here"
+    },
+    "receiptWidth": 32,
+    "escposFont": "b",
+    "escposProfile": "POS-5890",
     "saveImages": false,
     "useCardImages": false,
     "outputDir": "output",
@@ -17,8 +23,7 @@
     "receiptFont": "fonts/timesbd.ttf",
     "rankFontSize": "80",
     "suitFontSize": "90",
-    "imageCardScale": 0.8,
-    "escposProfile": "POS-5890"
+    "imageCardScale": 0.8
   },
   "taskgame": {
     "commonCount": 4,

@@ -79,7 +79,7 @@ A card guessing game. Players go through four phases:
 1. Red or Black
 2. Higher or Lower
 3. Inside or Outside
-4. Suit
+4. SuitTest (#11)
 
 Then everyone plays a shared board phase where cards are revealed one by one. Each card has an action (drink, give, or share). Players who have a matching rank in hand must perform the action. The final card is always share and worth double the last row.
 
@@ -95,6 +95,7 @@ Settings can be adjusted before each game from the CLI without editing the confi
 
 ![Buja](assets/buja.png)
 
+<<<<<<< HEAD
 ---
 
 ### Mexico
@@ -120,11 +121,13 @@ A dice bluffing game. Players take turns rolling two dice and announcing a score
 
 Settings can be adjusted before each game from the CLI without editing the config file.
 
+=======
+>>>>>>> main
 ---
 
 ### Mexico
 
-A dice bluffing game. Players take turns rolling two dice and announcing a score — truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
+A dice bluffing game. Players take turns rolling two dice and announcing a score either truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
 
 **Scoring:**
 
@@ -202,7 +205,7 @@ If two or more horses cross the finish line within 1 tile of each other a tiebre
 
 * `horseCount`: number of horses in the race (default: 8)
 * `trackLength`: tiles to the finish line (default: 40)
-* `maxBet` — maximum drinks a player can bet (default: 5)
+* `maxBet`: maximum drinks a player can bet (default: 5)
 * `eventChance`: base probability of a random event per horse per round (default: 0.20)
 * `fightChance`: probability of a fight starting between two nearby horses (default: 0.05)
 
