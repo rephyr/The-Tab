@@ -46,17 +46,34 @@ def formatChallenge(event, p) -> None:
 
     if event.loser == event.claimer:
         verdict = f"{event.claimer} valehteli!".upper()
+        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+        p.textln(verdict)
+        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
     else:
         verdict = f"{event.challenger} haastoi turhaan!".upper()
-
-    p.set(align="center", bold=True, invert=True)
-    p.textln(verdict)
-    p.set(align="left", bold=False, invert=False)
+        p.set(align="center", bold=True, double_width=True, double_height=True)
+        p.textln(verdict)
+        p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("")
     p.set(bold=True)
     for line in _wrapText(f"{event.loser} juo {event.drinks}!", _W):
         p.textln(line)
     p.set(bold=False)
+    p.textln("=" * _W)
+
+
+def formatAccept(event, p) -> None:
+    """Print the current claim when a challenge is passed — shows what must be beaten next."""
+    p.set(align="center", bold=True)
+    p.textln("MEXICO")
+    p.set(align="left", bold=False)
+    p.textln("=" * _W)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(_displayClaimScore(event.claimed))
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("-" * _W)
+    for line in _wrapText(f"{event.accepter} hyväksyi", _W):
+        p.textln(line)
     p.textln("=" * _W)
 
 

@@ -4,7 +4,7 @@ Change the values here to see how different content looks when printed.
 """
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
 from printing.receipts.taskGameFormatter import formatTaskDraw
-from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
+from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
 from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
@@ -16,7 +16,7 @@ from core.events import (
     RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
     RavitBettorDrinkEvent,
 )
-from games.diceGame.diceEvents import MexicanChallengeEvent
+from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
 
 # ---------------------------------------------------------------------------
 # Buja
@@ -184,6 +184,11 @@ TEST_MEXICO_CHALLENGE_MEXICO = MexicanChallengeEvent(
     wasMexico=True,
 )
 
+TEST_MEXICO_ACCEPT = MexicanAcceptEvent(
+    accepter="Testi Matti",
+    claimed=65,
+)
+
 TEST_MEXICO_SCORES = [
     {"name": "Testi Tatti", "drank": 3, "gave": 0},
     {"name": "Testi Matti", "drank": 1, "gave": 0},
@@ -195,8 +200,9 @@ TEST_MEXICO_SCORES = [
 
 GAMES = {
     "Mexico": [
+        ("mexico-accept",    "Hyväksytty"),
         ("mexico-challenge", "Haaste"),
-        ("mexico-tally", "Loppusaldo"),
+        ("mexico-tally",     "Loppusaldo"),
     ],
     "Buja": [
         ("turns", "Vuorokuitit"),
@@ -222,6 +228,9 @@ def printTestReceipts(printer, parts=None) -> None:
     """Print test receipts. Pass None to print every part of every game."""
     if parts is None:
         parts = [key for game_parts in GAMES.values() for key, _ in game_parts]
+
+    if "mexico-accept" in parts:
+        printer.printWith(lambda p, e=TEST_MEXICO_ACCEPT: formatMexicoAccept(e, p))
 
     if "mexico-challenge" in parts:
         printer.printWith(lambda p, e=TEST_MEXICO_CHALLENGE: formatMexicoChallenge(e, p))

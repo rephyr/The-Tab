@@ -2,9 +2,9 @@ import unittest
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatRouletteResult
 from printing.receipts.ravitFormatter import formatRaceRound, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
-from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
+from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
 from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
-from games.diceGame.diceEvents import MexicanChallengeEvent
+from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
 from tests.testUtils import SilentTest
 
 class MockPrinter:
@@ -404,6 +404,26 @@ class TestFormatMexicoTally(SilentTest):
         p = MockPrinter()
         formatMexicoTally([{"name": "X", "drank": 1, "gave": 0}], p)
         self.assertEqual(p.cuts, 0)
+
+
+class TestFormatMexicoAccept(SilentTest):
+    def _makeEvent(self, claimed=65):
+        return MexicanAcceptEvent(accepter="Testi Matti", claimed=claimed)
+
+    def testClaimShown(self):
+        p = MockPrinter()
+        formatMexicoAccept(self._makeEvent(), p)
+        self.assertTrue(any("65" in line for line in p.lines))
+
+    def testAccepterShown(self):
+        p = MockPrinter()
+        formatMexicoAccept(self._makeEvent(), p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testMexicoClaimDisplayed(self):
+        p = MockPrinter()
+        formatMexicoAccept(self._makeEvent(claimed=1000), p)
+        self.assertTrue(any("Mexico" in line for line in p.lines))
 
 
 if __name__ == "__main__":

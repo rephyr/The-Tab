@@ -7,8 +7,8 @@ from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCard
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatBoardCardReveal, formatBoardCardOutcome, formatTally, formatRouletteResult, configure as _configureBujaFormatter
 from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSummary, formatChainDraw, formatTally as formatTaskTally, configure as _configureTaskGameFormatter
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
-from games.diceGame.diceEvents import MexicanChallengeEvent
-from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
+from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
+from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatAccept as _formatMexicoAccept, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
 
 
 class LivePrinter:
@@ -120,6 +120,9 @@ class LivePrinter:
 
         elif isinstance(event, TiebreakWinnerEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakWinner(e, p))
+
+        elif isinstance(event, MexicanAcceptEvent):
+            self._printer.printWith(lambda p, e=event: _formatMexicoAccept(e, p))
 
         elif isinstance(event, MexicanChallengeEvent):
             self._printer.printWith(lambda p, e=event: _formatMexicoChallenge(e, p))
