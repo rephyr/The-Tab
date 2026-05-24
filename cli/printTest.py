@@ -5,7 +5,7 @@ from cli.utils import _clearScreen
 
 def showPrintTest(config: Config, debug: bool) -> None:
     from printing.testData import printTestReceipts, GAMES
-    printerConfig = config.data.get("printer", {})
+    printerConfig = {**config.data.get("printer", {}), "saveImages": True}
     printer = ReceiptPrinter(printerConfig, debug=debug)
     gameNames = list(GAMES.keys())
 

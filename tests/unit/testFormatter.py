@@ -1,6 +1,6 @@
 import unittest
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatRouletteResult
-from printing.receipts.ravitFormatter import formatRaceRound, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
+from printing.receipts.ravitFormatter import formatRaceEvents, formatRaceTrack, formatRavitWinner, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
 from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
@@ -235,26 +235,70 @@ class TestFormatRaceRoundEvents(SilentTest):
         positions = [{"name": "Ukko", "status": "racing", "position": 10}]
         return RaceRoundEvent(roundNumber=1, trackLength=20, positions=positions, raceEvents=raceEvents)
 
-    def testEventsAppearsBeforeTrackWhenPresent(self):
-        p = MockPrinter()
+    def testEventsAndTrackPrintedSeparately(self):
         event = self._makeEvent([{"detail": "Salama iski!"}])
-        formatRaceRound(event, p)
-        event_idx = next(i for i, line in enumerate(p.lines) if "Salama iski!" in line)
-        horse_idx = next(i for i, line in enumerate(p.lines) if "Ukko" in line)
-        self.assertLess(event_idx, horse_idx)
+        pe = MockPrinter()
+        formatRaceEvents(event, pe)
+        pt = MockPrinter()
+        formatRaceTrack(event, pt)
+        self.assertTrue(any("Salama iski!" in line for line in pe.lines))
+        self.assertFalse(any("Salama iski!" in line for line in pt.lines))
+        self.assertTrue(any("Ukko" in line for line in pt.lines))
+        self.assertFalse(any("Ukko" in line for line in pe.lines))
 
-    def testNoExtraSeparatorWhenNoEvents(self):
-        p = MockPrinter()
+    def testTrackHasTwoSeparatorsWhenNoEvents(self):
         event = self._makeEvent([])
-        formatRaceRound(event, p)
+        p = MockPrinter()
+        formatRaceTrack(event, p)
         separators = [line for line in p.lines if set(line.strip()) == {"="}]
         self.assertEqual(len(separators), 2)
 
     def testEventTextPrinted(self):
         p = MockPrinter()
         event = self._makeEvent([{"detail": "Hevonen kaatui!"}])
-        formatRaceRound(event, p)
+        formatRaceEvents(event, p)
         self.assertTrue(any("Hevonen kaatui!" in line for line in p.lines))
+
+
+class TestFormatRavitWinner(SilentTest):
+    def _makeData(self, bettors=None):
+        return {
+            "horseName": "Ukko",
+            "odds": 1.3,
+            "bettors": bettors if bettors is not None else [{"player": "Testi Tatti", "amount": 3}],
+        }
+
+    def testHorseNameShown(self):
+        p = MockPrinter()
+        formatRavitWinner(self._makeData(), p)
+        self.assertTrue(any("UKKO" in line for line in p.lines))
+
+    def testOddsShown(self):
+        p = MockPrinter()
+        formatRavitWinner(self._makeData(), p)
+        self.assertTrue(any("1.3" in line for line in p.lines))
+
+    def testBettorNameAndAmountShown(self):
+        p = MockPrinter()
+        formatRavitWinner(self._makeData(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+        self.assertTrue(any("3" in line for line in p.lines))
+
+    def testNoBettorSeparatorWhenNoBettors(self):
+        p = MockPrinter()
+        formatRavitWinner(self._makeData(bettors=[]), p)
+        separators = [line for line in p.lines if set(line.strip()) == {"-"}]
+        self.assertEqual(len(separators), 0)
+
+    def testMultipleBettorsAllShown(self):
+        p = MockPrinter()
+        data = self._makeData(bettors=[
+            {"player": "Testi Tatti", "amount": 3},
+            {"player": "Testi Matti", "amount": 1},
+        ])
+        formatRavitWinner(data, p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
 
 
 class TestFormatBettorDrink(SilentTest):

@@ -6,7 +6,7 @@ Register it with: log.on(LivePrinter(printer).hook)
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatBoardCardReveal, formatBoardCardOutcome, formatTally, formatRouletteResult, configure as _configureBujaFormatter
 from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSummary, formatChainDraw, formatTally as formatTaskTally, configure as _configureTaskGameFormatter
-from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
+from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceEvents, formatRaceTrack, formatHorseEvent, formatRavitWinner, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
 from games.diceGame.diceEvents import MexicanChallengeEvent
 from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
 
@@ -96,7 +96,9 @@ class LivePrinter:
             self._printer.printWith(lambda p, h=event.horses, b=event.bets: formatBettingReceipt(h, b, p))
 
         elif isinstance(event, RaceRoundEvent):
-            self._printer.printWith(lambda p, e=event: formatRaceRound(e, p))
+            if event.raceEvents:
+                self._printer.printWith(lambda p, e=event: formatRaceEvents(e, p))
+            self._printer.printWith(lambda p, e=event: formatRaceTrack(e, p))
 
         elif isinstance(event, HorseEventFiredEvent):
             if event.eventType in ("death", "backwards", "lightning", "lightningDeath", "fightDeath"):
@@ -107,6 +109,12 @@ class LivePrinter:
 
         elif isinstance(event, RaceFinishedEvent):
             self._ravitFinalPositions = event.finalPositions
+            winner = next((fp for fp in event.finalPositions if fp["place"] == 1 and fp["status"] == "racing"), None)
+            if winner:
+                odds = next((h["odds"] for h in self._ravitHorses if h["id"] == winner["horseId"]), "?")
+                bettors = [{"player": b["player"], "amount": b["amount"]} for b in self._ravitBets if b["horseId"] == winner["horseId"]]
+                winnerData = {"horseName": winner["horseName"], "odds": odds, "bettors": bettors}
+                self._printer.printWith(lambda p, d=winnerData: formatRavitWinner(d, p))
 
         elif isinstance(event, TiebreakStartEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakStart(e, p))

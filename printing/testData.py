@@ -7,7 +7,7 @@ from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
 from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
-    formatRaceRound, formatHorseEvent, formatRavitFinal,
+    formatRaceEvents, formatRaceTrack, formatHorseEvent, formatRavitWinner, formatRavitFinal,
     formatTiebreakStart, formatTiebreakElimination, formatTiebreakWinner,
     formatBettorDrink,
 )
@@ -213,6 +213,7 @@ GAMES = {
         ("ravit-event",        "Tapahtuma"),
         ("ravit-bettor-drink", "Veikkaajan juomat"),
         ("ravit-tiebreak",     "Tasapeli"),
+        ("ravit-winner",       "Voittaja"),
         ("ravit-final",        "Lopputulos"),
     ],
 }
@@ -255,13 +256,24 @@ def printTestReceipts(printer, parts=None) -> None:
         printer.printWith(lambda p: formatBettingReceipt(TEST_HORSES_RAVIT, TEST_BETS_RAVIT, p))
 
     if "ravit-rata" in parts:
-        printer.printWith(lambda p, e=TEST_RACE_ROUND_RAVIT: formatRaceRound(e, p))
+        if TEST_RACE_ROUND_RAVIT.raceEvents:
+            printer.printWith(lambda p, e=TEST_RACE_ROUND_RAVIT: formatRaceEvents(e, p))
+        printer.printWith(lambda p, e=TEST_RACE_ROUND_RAVIT: formatRaceTrack(e, p))
 
     if "ravit-event" in parts:
         printer.printWith(lambda p, e=TEST_HORSE_EVENT_RAVIT: formatHorseEvent(e, p))
 
     if "ravit-bettor-drink" in parts:
         printer.printWith(lambda p, e=TEST_BETTOR_DRINK_RAVIT: formatBettorDrink(e, p))
+
+    if "ravit-winner" in parts:
+        winner = TEST_RAVIT_FINAL_POSITIONS[0]
+        winnerData = {
+            "horseName": winner["horseName"],
+            "odds": next(h["odds"] for h in TEST_HORSES_RAVIT if h["id"] == winner["horseId"]),
+            "bettors": [{"player": b["player"], "amount": b["amount"]} for b in TEST_BETS_RAVIT if b["horseId"] == winner["horseId"]],
+        }
+        printer.printWith(lambda p, d=winnerData: formatRavitWinner(d, p))
 
     if "ravit-tiebreak" in parts:
         printer.printWith(lambda p, e=TEST_TIEBREAK_START: formatTiebreakStart(e, p))
