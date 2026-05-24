@@ -79,7 +79,7 @@ A card guessing game. Players go through four phases:
 1. Red or Black
 2. Higher or Lower
 3. Inside or Outside
-4. SuitTest (#11)
+4. Suit
 
 Then everyone plays a shared board phase where cards are revealed one by one. Each card has an action (drink, give, or share). Players who have a matching rank in hand must perform the action. The final card is always share and worth double the last row.
 
