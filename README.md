@@ -99,7 +99,7 @@ Settings can be adjusted before each game from the CLI without editing the confi
 
 ### Mexico
 
-A dice bluffing game. Players take turns rolling two dice and announcing a score — truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
+A dice bluffing game. Players take turns rolling two dice and announcing a score truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
 
 **Scoring:**
 
@@ -124,7 +124,7 @@ Settings can be adjusted before each game from the CLI without editing the confi
 
 ### Mexico
 
-A dice bluffing game. Players take turns rolling two dice and announcing a score — truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
+A dice bluffing game. Players take turns rolling two dice and announcing a score truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
 
 **Scoring:**
 
