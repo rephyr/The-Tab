@@ -58,7 +58,7 @@ class TestToDictCorrectGuess(SilentTest):
         super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
-            GuessEvent("Matti", "Red or Black", "Red", "2♥", True),
+            GuessEvent("Matti", "Red or Black", "Red", "2❤︎⁠", True),
             GiveEvent("Matti", "Teppo", 1),
         ).toDict()
 
@@ -73,7 +73,7 @@ class TestToDictCorrectGuess(SilentTest):
     def testTurnGuess(self):
         turn = self.data["phases"][0]["turns"][0]
         self.assertEqual(turn["guess"], "Red")
-        self.assertEqual(turn["card"], "2♥")
+        self.assertEqual(turn["card"], "2❤︎⁠")
         self.assertTrue(turn["correct"])
 
     def testTurnGaveTo(self):
@@ -133,7 +133,7 @@ class TestToDictMultiplePhases(SilentTest):
         super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
-            GuessEvent("Matti", "Red or Black", "Red", "2♥", True),
+            GuessEvent("Matti", "Red or Black", "Red", "2❤︎⁠", True),
             GiveEvent("Matti", "Teppo", 1),
             PhaseEvent("Higher or Lower", "Matti"),
             GuessEvent("Matti", "Higher or Lower", "Higher", "K♠", False),
@@ -158,7 +158,7 @@ class TestToDictMultipleTurnsSamePhase(SilentTest):
         super().setUp()
         self.data = makeLog(
             PhaseEvent("Red or Black", "Matti"),
-            GuessEvent("Matti", "Red or Black", "Red", "2♥", True),
+            GuessEvent("Matti", "Red or Black", "Red", "2❤︎⁠", True),
             GiveEvent("Matti", "Teppo", 1),
             PhaseEvent("Red or Black", "Teppo"),
             GuessEvent("Teppo", "Red or Black", "Black", "7♦", False),
@@ -179,11 +179,11 @@ class TestToDictBoard(SilentTest):
     def testBoardDrink(self):
         data = makeLog(
             PhaseEvent("Board", ""),
-            BoardCardEvent("7♥", "drink", 2, ["Matti"]),
+            BoardCardEvent("7❤︎⁠", "drink", 2, ["Matti"]),
             DrinkEvent("Matti", 2, "board"),
         ).toDict()
         card = data["board"][0]
-        self.assertEqual(card["card"], "7♥")
+        self.assertEqual(card["card"], "7❤︎⁠")
         self.assertEqual(card["action"], "drink")
         self.assertEqual(card["drinks"], 2)
         self.assertEqual(card["matched"], ["Matti"])
@@ -225,13 +225,13 @@ class TestToDictBoard(SilentTest):
     def testMultipleBoardCards(self):
         data = makeLog(
             PhaseEvent("Board", ""),
-            BoardCardEvent("7♥", "drink", 2, ["Matti"]),
+            BoardCardEvent("7❤︎⁠", "drink", 2, ["Matti"]),
             DrinkEvent("Matti", 2, "board"),
             BoardCardEvent("K♠", "give", 4, ["Teppo"]),
             GiveEvent("Teppo", "Matti", 4),
         ).toDict()
         self.assertEqual(len(data["board"]), 2)
-        self.assertEqual(data["board"][0]["card"], "7♥")
+        self.assertEqual(data["board"][0]["card"], "7❤︎⁠")
         self.assertEqual(data["board"][1]["card"], "K♠")
 
 class TestToDictScores(SilentTest):

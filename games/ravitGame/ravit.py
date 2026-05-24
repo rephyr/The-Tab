@@ -59,16 +59,8 @@ class RavitGame(RavitEventsMixin, Game):
     def _jockeyForHorse(self, horse: Horse) -> Jockey | None:
         return self._jockeyMap.get(horse.id)
 
-    def _bettingPhase(self) -> None:
-        self.emit(RaceStartEvent(
-            players=[p.getName() for p in self.players],
-            horses=[h.toDict() for h in self.horses],
-        ))
-
-        debug = self._getConfig("debug", False)
+    def _showHorseList(self, debug: bool) -> None:
         nw = self._nameWidth()
-        maxBet = self._getConfig("maxBet", 5)
-
         print("\n=== VEDONLYÖNTI ===\n")
         print(f"{'':>{3 + nw}}  kerroin  jockey")
         for h in self.horses:
@@ -76,7 +68,6 @@ class RavitGame(RavitEventsMixin, Game):
             jStr = f"  [{j.name}]" if j else ""
             stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck}]" if debug else ""
             print(f"  {h.id}. {h.name:<{nw}}  x{h.odds}{jStr}{stats}")
-
         print()
         for h in self.horses:
             j = self._jockeyMap.get(h.id)
@@ -84,7 +75,18 @@ class RavitGame(RavitEventsMixin, Game):
                 print(f"  {j.name}: {j.description}")
         print()
 
+    def _bettingPhase(self) -> None:
+        self.emit(RaceStartEvent(
+            players=[p.getName() for p in self.players],
+            horses=[h.toDict() for h in self.horses],
+        ))
+
+        debug = self._getConfig("debug", False)
+        maxBet = self._getConfig("maxBet", 5)
+
         for player in self.players:
+            self._clearScreen()
+            self._showHorseList(debug)
             print(f"{player.getName()}n panos:")
             while True:
                 raw = input(f"  Hevonen (1–{len(self.horses)}): ").strip()
@@ -114,6 +116,7 @@ class RavitGame(RavitEventsMixin, Game):
 
     def _raceLoop(self) -> None:
         trackLength = self._getConfig("trackLength", 20)
+        self._clearScreen()
         print("\n=== STARTTIVIIVA ===")
         for horse in self.horses:
             bar = "@" + "-" * 22
@@ -191,7 +194,6 @@ class RavitGame(RavitEventsMixin, Game):
                     self._eventedThisRound.add(h1.id)
                     self._eventedThisRound.add(h2.id)
                     detail = f"{h1.name} ja {h2.name} tappelevat!"
-                    print(f"  *** {detail}")
                     self._roundEvents.append({"horseName": h1.name, "eventType": ET.FIGHT_START, "detail": detail})
                     self.emit(HorseEventFiredEvent(
                         roundNumber=self._roundNumber,
@@ -253,7 +255,6 @@ class RavitGame(RavitEventsMixin, Game):
             f"Tappelu ohi! {winner.name} voitti — {loser.name} kuoli! "
             f"{winner.name} on loukkaantunut (kaikki tilastot -1)!"
         )
-        print(f"  *** {detail}")
         self._roundEvents.append({"horseName": winner.name, "eventType": ET.FIGHT_WIN, "detail": detail})
         self.emit(HorseEventFiredEvent(
             roundNumber=self._roundNumber,
@@ -391,6 +392,7 @@ class RavitGame(RavitEventsMixin, Game):
             })
             nextPlace += 1
 
+        self._clearScreen()
         print("\n=== LOPPUTULOS ===")
         for fp in finalPositions:
             if fp["status"] == "racing":
@@ -403,6 +405,7 @@ class RavitGame(RavitEventsMixin, Game):
             roundNumber=self._roundNumber,
             finalPositions=finalPositions,
         ))
+        input("\nPaina Enter jatkaaksesi...")
 
     def _drinkResolution(self) -> None:
         """Assign drinks: dead/DNF bettors drink double, winner gives to last-place bettors, rest drink bet."""
@@ -510,6 +513,10 @@ class RavitGame(RavitEventsMixin, Game):
             else:
                 status = ""
             print(f"{horse.name:<{self._nameWidth()}} [{bar}]  {horse.position}/{trackLength}{status}")
+        if self._roundEvents:
+            print()
+            for ev in self._roundEvents:
+                print(f"  *** {ev['detail']}")
 
     def _nameWidth(self) -> int:
         return max((len(h.name) for h in self.horses), default=14)

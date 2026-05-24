@@ -9,14 +9,14 @@ Python 3.10 or newer.
 Install dependencies:
 
 ```
-pip install python-escpos pillow pywin32
+pip install -r requirements.txt
 ```
 
-| Package | Purpose |
-|---|---|
-| `python-escpos` | ESC/POS thermal printer communication |
-| `pillow` | Card image rendering for receipt printer |
-| `pywin32` | Windows raw printer port access (`win32raw` connection) |
+On Windows, also install `pywin32` if you want to use the `win32raw` printer connection:
+
+```
+pip install pywin32
+```
 
 `pywin32` is Windows-only. On other platforms omit it and use `stdout` as the printer connection.
 
@@ -86,6 +86,31 @@ Then everyone plays a shared board phase where cards are revealed one by one. Ea
 * `boardIncrement`: drinks added per row
 * `drinkAmount`: drinks for a wrong guess in the phase rounds
 * `deckCount`: number of decks to use
+
+Settings can be adjusted before each game from the CLI without editing the config file.
+
+---
+
+### Mexico
+
+A dice bluffing game. Players take turns rolling two dice and announcing a score — truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
+
+**Scoring:**
+
+* Regular rolls are ranked by their two-digit value (e.g. 65 beats 54)
+* Doubles beat all regular rolls (e.g. 33 beats 65)
+* Mexico (2-1) is the highest value and beats everything
+
+**On a challenge:**
+
+* If the claimer lied → claimer drinks
+* If the claimer told the truth → challenger drinks
+* Mexico doubles the drink penalty
+
+**Mexico settings** (`config.json`):
+
+* `drinkAmount`: drinks for a lost challenge (default: 1)
+* `mexicoDrinks`: drinks when Mexico is involved in a challenge (default: 2)
 
 Settings can be adjusted before each game from the CLI without editing the config file.
 

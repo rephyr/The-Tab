@@ -17,7 +17,7 @@ class MockPrinter:
     def text(self, text=""): self.lines.append(str(text))
     def cut(self): self.cuts += 1
 
-def makeTurn(player="Testi Matti", guess="Red", card="♥A", correct=True,
+def makeTurn(player="Testi Matti", guess="Red", card="❤︎⁠A", correct=True,
              gaveTo="Testi Timo", drinks=1, note=None, handBefore=None):
     return {
         "player": player,
@@ -44,8 +44,8 @@ class TestFormatTurn(SilentTest):
 
     def testShowsCard(self):
         p = MockPrinter()
-        formatTurn("Red or Black", makeTurn(card="♥A"), p)
-        self.assertTrue(any("♥A" in line for line in p.lines))
+        formatTurn("Red or Black", makeTurn(card="❤︎⁠A"), p)
+        self.assertTrue(any("❤︎⁠A" in line for line in p.lines))
 
     def testShowsGaveToOnCorrect(self):
         p = MockPrinter()
@@ -66,15 +66,15 @@ class TestFormatTurn(SilentTest):
 
     def testHigherOrLowerShowsBothCards(self):
         p = MockPrinter()
-        turn = makeTurn(card="♥9", handBefore=["♥5"])
+        turn = makeTurn(card="❤︎⁠9", handBefore=["❤︎⁠5"])
         formatTurn("Isompi vai pienempi?", turn, p)
-        self.assertTrue(any("♥5" in line and "♥9" in line for line in p.lines))
+        self.assertTrue(any("❤︎⁠5" in line and "❤︎⁠9" in line for line in p.lines))
 
     def testInsideOrOutsideShowsHand(self):
         p = MockPrinter()
-        turn = makeTurn(handBefore=["♥3", "♥9"])
+        turn = makeTurn(handBefore=["❤︎⁠3", "❤︎⁠9"])
         formatTurn("Välistä vai ulkoa?", turn, p)
-        self.assertTrue(any("♥3" in line for line in p.lines))
+        self.assertTrue(any("❤︎⁠3" in line for line in p.lines))
 
     def testNoCutInsideTurn(self):
         p = MockPrinter()
@@ -85,35 +85,35 @@ class TestFormatHand(SilentTest):
 
     def testShowsPlayerName(self):
         p = MockPrinter()
-        formatHand("Testi Matti", ["♥A", "♦K"], p)
+        formatHand("Testi Matti", ["❤︎⁠A", "♦K"], p)
         self.assertTrue(any("TESTI MATTI" in line for line in p.lines))
 
     def testShowsAllCardsSideBySide(self):
         p = MockPrinter()
-        formatHand("Testi Matti", ["♥A", "♦K", "♣Q"], p)
-        self.assertTrue(any("♥A" in line and "♦K" in line and "♣Q" in line for line in p.lines))
+        formatHand("Testi Matti", ["❤︎⁠A", "♦K", "♣Q"], p)
+        self.assertTrue(any("❤︎⁠A" in line and "♦K" in line and "♣Q" in line for line in p.lines))
 
     def testNoCut(self):
         p = MockPrinter()
-        formatHand("Testi Matti", ["♥A"], p)
+        formatHand("Testi Matti", ["❤︎⁠A"], p)
         self.assertEqual(p.cuts, 0)
 
 class TestFormatBoardCard(SilentTest):
 
     def testShowsCard(self):
         p = MockPrinter()
-        formatBoardCard({"card": "♥A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
-        self.assertTrue(any("♥A" in line for line in p.lines))
+        formatBoardCard({"card": "❤︎⁠A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
+        self.assertTrue(any("❤︎⁠A" in line for line in p.lines))
 
     def testShowsNoMatchWhenEmpty(self):
         p = MockPrinter()
-        formatBoardCard({"card": "♥A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
+        formatBoardCard({"card": "❤︎⁠A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}, p)
         self.assertTrue(any("Ei osumia" in line for line in p.lines))
 
     def testShowsDrinkOutcome(self):
         p = MockPrinter()
         card = {
-            "card": "♥A", "action": "drink", "drinks": 4,
+            "card": "❤︎⁠A", "action": "drink", "drinks": 4,
             "matched": ["Testi Matti"],
             "outcomes": [{"type": "drink", "player": "Testi Matti", "drinks": 4}],
         }
@@ -123,7 +123,7 @@ class TestFormatBoardCard(SilentTest):
     def testShowsGiveOutcome(self):
         p = MockPrinter()
         card = {
-            "card": "♥A", "action": "give", "drinks": 4,
+            "card": "❤︎⁠A", "action": "give", "drinks": 4,
             "matched": ["Testi Matti"],
             "outcomes": [{"type": "give", "giver": "Testi Matti", "receiver": "Testi Timo", "drinks": 4}],
         }
@@ -133,7 +133,7 @@ class TestFormatBoardCard(SilentTest):
     def testShowsShareOutcome(self):
         p = MockPrinter()
         card = {
-            "card": "♥A", "action": "share", "drinks": 4,
+            "card": "❤︎⁠A", "action": "share", "drinks": 4,
             "matched": ["Testi Matti"],
             "outcomes": [{"type": "share", "player1": "Testi Matti", "player2": "Testi Timo", "drinks": 4}],
         }
@@ -170,7 +170,7 @@ class TestFormatReceipt(SilentTest):
         p = MockPrinter()
         data = {
             "phases": [],
-            "hands": {"Testi Matti": ["♥A"], "Testi Timo": ["♦K"]},
+            "hands": {"Testi Matti": ["❤︎⁠A"], "Testi Timo": ["♦K"]},
             "board": [],
             "scores": [],
         }
@@ -179,7 +179,7 @@ class TestFormatReceipt(SilentTest):
 
     def testCutsAfterEachBoardCard(self):
         p = MockPrinter()
-        card = {"card": "♥A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}
+        card = {"card": "❤︎⁠A", "action": "drink", "drinks": 2, "matched": [], "outcomes": []}
         data = {"phases": [], "hands": {}, "board": [card, card], "scores": []}
         formatReceipt(data, p)
         self.assertEqual(p.cuts, 2)

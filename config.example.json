@@ -24,6 +24,10 @@
     "commonCount": 4,
     "specialCount": 2
   },
+  "mexico": {
+    "drinkAmount": 1,
+    "mexicoDrinks": 2
+  },
   "buja": {
     "boardLength": 3,
     "boardStartDrinks": 2,

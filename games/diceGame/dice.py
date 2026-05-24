@@ -14,9 +14,6 @@ from core.game import Game
 from core.events import GameStartEvent, GameEndEvent, DrinkEvent
 from games.diceGame.diceEvents import MexicanRollEvent, MexicanChallengeEvent, MexicanAcceptEvent
 
-_SEP = "=" * 32
-
-
 def _scoreRoll(d1: int, d2: int) -> int:
     """Return an integer score where higher always beats lower.
 
@@ -144,19 +141,23 @@ class MexicanGame(Game):
             for p in self.players
         ]))
 
+    @property
+    def _sep(self) -> str:
+        return "=" * int(self.config.get("separatorWidth", 32))
+
     def _drinkAmount(self, wasMexico: bool) -> int:
         if wasMexico:
             return int(self.config.get("mexicoDrinks", 2))
         return int(self.config.get("drinkAmount", 1))
 
     def _showRollPrompt(self, rollerName: str, previousClaim: Optional[int]) -> None:
-        print("\n" + _SEP)
+        print("\n" + self._sep)
         if previousClaim is not None:
             print(f"  Ylitettävä: {_displayClaimScore(previousClaim)}")
         print(f"\n  >>> {rollerName.upper()} HEITTÄÄ <<<\n")
         print("  Paina Enter heittääksesi")
         print('  (tai "quit" lopettaaksesi)')
-        print(_SEP)
+        print(self._sep)
 
     def _getClaimFromOperator(
         self,
@@ -166,11 +167,11 @@ class MexicanGame(Game):
         actual: int,
         previousClaim: Optional[int],
     ) -> Optional[int]:
-        print("\n" + _SEP)
+        print("\n" + self._sep)
         print(f"  Heitto: {d1} ja {d2}  —  {_displayScore(d1, d2)}")
         if previousClaim is not None:
             print(f"  Pitää ylittää: {_displayClaimScore(previousClaim)}")
-        print(_SEP + "\n")
+        print(self._sep + "\n")
 
         while True:
             raw = input(f"  {rollerName} sanoo: ").strip()
@@ -204,7 +205,7 @@ class MexicanGame(Game):
         claimedStr = _displayClaimScore(claimed)
         actualStr = _displayScore(d1, d2)
         rollerLied = actual < claimed
-        print("\n" + _SEP)
+        print("\n" + self._sep)
         if rollerLied:
             print(f"  {rollerName} valehteli!")
         else:
@@ -214,14 +215,14 @@ class MexicanGame(Game):
         print(f"  Todellinen: {actualStr}")
         print()
         print(f"  {loserName.upper()} JUO {drinks}")
-        print(_SEP)
+        print(self._sep)
 
     def _getChallengeDecision(self, rollerName: str, challengerName: str, claimed: int) -> str:
-        print("\n" + _SEP)
+        print("\n" + self._sep)
         print(f"  {rollerName} väitti: {_displayClaimScore(claimed)}")
         print()
         print(f"  {challengerName.upper()}: haasta vai hyväksy?")
         print()
         print("  c = haasta | Enter = hyväksy")
-        print(_SEP + "\n")
+        print(self._sep + "\n")
         return input("  Päätös: ").strip().lower()

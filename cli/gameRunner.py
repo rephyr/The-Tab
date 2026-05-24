@@ -25,23 +25,25 @@ def configureGame(gameTitle: str, configData: dict) -> dict:
     if not defaults:
         return {}
 
-    _clearScreen()
-    print(f"\nPeliasetukset ({gameTitle}):")
-    for key, value in defaults.items():
-        print(f"  {key} = {value}")
-
+    keys = list(defaults.keys())
     overrides = dict(defaults)
 
     while True:
-        key = input("\nMuuta asetus? (kirjoita nimi tai paina Enter ohittaaksesi): ").strip()
-        if not key:
+        _clearScreen()
+        print(f"\nPeliasetukset ({gameTitle}):\n")
+        for i, key in enumerate(keys, 1):
+            print(f"  {i}. {key} = {overrides[key]}")
+
+        raw = input("\nMuuta asetus? (numero tai Enter ohittaaksesi): ").strip()
+        if not raw:
             break
-        if key not in defaults:
-            print(f"Tuntematon asetus '{key}'.")
+        if not raw.isdigit() or not (1 <= int(raw) <= len(keys)):
+            print("Virheellinen valinta.")
             continue
-        raw = input(f"Uusi arvo asetukselle {key}: ").strip()
+        key = keys[int(raw) - 1]
+        newVal = input(f"  {key} = ").strip()
         try:
-            overrides[key] = type(defaults[key])(raw)
+            overrides[key] = type(defaults[key])(newVal)
         except (ValueError, TypeError):
             print("Virheellinen arvo, pidetään alkuperäinen.")
 
@@ -91,6 +93,7 @@ def runGame(
     printerConfig: dict,
 ) -> dict:
     gameConfig = _checkDeckCount(gameClass, players, gameConfig)
+    gameConfig.setdefault("separatorWidth", int(printerConfig.get("receiptWidth", 32)))
 
     printer = ReceiptPrinter(printerConfig, debug=debug) if receiptMode else NullPrinter()
     log = GameLog()

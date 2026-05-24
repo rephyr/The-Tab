@@ -5,7 +5,7 @@ from tests.testUtils import SilentTest
 class TestCard(SilentTest):
 
     def testStr(self):
-        self.assertEqual(str(Card("A", "Hearts")), "♥A")
+        self.assertEqual(str(Card("A", "Hearts")), "❤︎⁠A")
         self.assertEqual(str(Card("10", "Spades")), "♠10")
 
     def testValueNumbers(self):

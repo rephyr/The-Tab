@@ -45,7 +45,6 @@ class RavitEventsMixin:
             eventType = ET.LIGHTNING_DEATH
 
         self._eventedThisRound.add(horse.id)
-        print(f"  *** {detail}")
         self._roundEvents.append({"horseName": horse.name, "eventType": eventType, "detail": detail})
         self.emit(HorseEventFiredEvent(
             roundNumber=self._roundNumber,

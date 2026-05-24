@@ -17,7 +17,7 @@ def makeLog():
     return log
 
 
-def addPhaseTurn(log, phase, player, card="♥A", guess="Red", correct=True, gaveTo="Testi Timo", drinks=1):
+def addPhaseTurn(log, phase, player, card="❤︎⁠A", guess="Red", correct=True, gaveTo="Testi Timo", drinks=1):
     log.add(PhaseEvent(phase, player))
     log.add(GuessEvent(player, phase, guess, card, correct))
     if gaveTo:
@@ -77,7 +77,7 @@ class TestLivePrinterBoard(SilentTest):
         log.on(LivePrinter(printer).hook)
 
         log.add(PhaseEvent("Board", ""))
-        log.add(BoardCardEvent("♥A", "drink", 2, []))
+        log.add(BoardCardEvent("❤︎⁠A", "drink", 2, []))
         log.add(BoardCardDoneEvent())
 
         # 2 hands + 1 board card
@@ -89,7 +89,7 @@ class TestLivePrinterBoard(SilentTest):
         log.on(LivePrinter(printer).hook)
 
         log.add(PhaseEvent("Board", ""))
-        log.add(BoardCardEvent("♥A", "drink", 2, ["Testi Matti"]))
+        log.add(BoardCardEvent("❤︎⁠A", "drink", 2, ["Testi Matti"]))
         log.add(DrinkEvent("Testi Matti", 2, "board"))
         log.add(BoardCardDoneEvent())
 
@@ -102,7 +102,7 @@ class TestLivePrinterBoard(SilentTest):
         log.on(LivePrinter(printer).hook)
 
         log.add(PhaseEvent("Board", ""))
-        log.add(BoardCardEvent("♥A", "drink", 2, []))
+        log.add(BoardCardEvent("❤︎⁠A", "drink", 2, []))
         log.add(BoardCardDoneEvent())
         log.add(GameEndEvent([{"name": "Testi Matti", "drinksTaken": 1, "drinksToGive": 0}]))
 
@@ -184,13 +184,13 @@ class TestNullPrinterWithLivePrinter(SilentTest):
     def testPhaseAndGuessEventsDoNotCrash(self):
         log = self._makeLog()
         log.add(PhaseEvent("Red or Black", "A"))
-        log.add(GuessEvent("A", "Red or Black", "Red", "♥A", True))
+        log.add(GuessEvent("A", "Red or Black", "Red", "❤︎⁠A", True))
         log.add(GiveEvent("A", "B", 1))
 
     def testBoardEventsDoNotCrash(self):
         log = self._makeLog()
         log.add(PhaseEvent("Board", ""))
-        log.add(BoardCardEvent("♥A", "drink", 2, []))
+        log.add(BoardCardEvent("❤︎⁠A", "drink", 2, []))
         log.add(BoardCardDoneEvent())
 
     def testTaskDrawDoesNotCrash(self):
