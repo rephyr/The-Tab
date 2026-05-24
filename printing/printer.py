@@ -58,7 +58,8 @@ class ReceiptPrinter:
             pid = int(self.config.get("productId", "0x0202"), 16)
             inEp = int(self.config.get("inEp", "0x82"), 16)
             outEp = int(self.config.get("outEp", "0x01"), 16)
-            self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp)
+            profile = self.config.get("escposProfile", "default")
+            self._p = Usb(vid, pid, in_ep=inEp, out_ep=outEp, profile=profile)
             font = self.config.get("escposFont", "a")
             if font != "a":
                 self._p = FontWrapper(self._p, font)
@@ -70,7 +71,8 @@ class ReceiptPrinter:
                 raise RuntimeError("python-escpos not installed. Run: pip install python-escpos")
             port = self.config.get("port", "COM1")
             baud = int(self.config.get("baudrate", 9600))
-            self._p = Serial(port, baudrate=baud)
+            profile = self.config.get("escposProfile", "default")
+            self._p = Serial(port, baudrate=baud, profile=profile)
 
         elif conn == "file":
             self._p = FilePrinter(self.config.get("path", "receipt.txt"))
@@ -86,14 +88,14 @@ class ReceiptPrinter:
 
     def printWith(self, fn) -> None:
         """Call fn(p) to write content, then cut the paper."""
-        if self._p is None:
-            self._connect()
         try:
+            if self._p is None:
+                self._connect()
             fn(self._p)
             self._p.cut()
         except Exception as e:
             print(f"[Tulostin: virhe tulostuksessa — {e}]")
-            self._p = None
+            self._p = self._fallback()
             return
         # win32raw batches everything into one spooler job until close() is called.
         # Wait briefly for the printer to process the receipt, then purge the whole
@@ -113,6 +115,7 @@ class ReceiptPrinter:
 
     def _win32DeleteJobs(self, printerName: str, jobs) -> None:
         try:
+            #windows only not on top of the file for that reason 
             import win32print
             handle = win32print.OpenPrinter(printerName)
             try:
@@ -247,9 +250,12 @@ class CardAwareWrapper:
             if cards:
                 img = _buildCardRowImage(cards, self._config)
                 if img is not None:
-                    self._p.set(invert=False)
-                    self._p.image(img)
-                    return
+                    try:
+                        self._p.set(invert=False)
+                        self._p.image(img)
+                        return
+                    except Exception:
+                        pass
         self._p.textln(text)
 
     def text(self, text=""):

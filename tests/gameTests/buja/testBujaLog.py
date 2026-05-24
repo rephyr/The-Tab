@@ -3,7 +3,7 @@ from unittest.mock import patch
 from core.cards import Card
 from core.deck import Deck
 from core.player import Player
-from core.events import GameStartEvent, GameEndEvent, GuessEvent, DrinkEvent, GiveEvent
+from core.events import GameStartEvent, GameEndEvent, DrinkEvent, GiveEvent
 from games.bujaGame.buja import Buja
 from printing.log import GameLog
 from printing.printer import StdoutPrinter
@@ -138,8 +138,8 @@ class TestFullPipeline(SilentTest):
         players = [makePlayer(1, "Testi Matti"), makePlayer(2, "Testi Timo")]
         game = Buja(players=players, deck=deck, config={}, log=log)
 
-        # 2 players × 4 phases = 8 guesses, then 10 enter presses for the board (9 cards + 1 final)
-        inputs = ["r", "b", "h", "l", "i", "o", "h", "d"] + [""] * 10
+        # 2 players × 4 phases = 8 guesses + 8 end-of-turn enters, then 10 enters for the board
+        inputs = ["r", "", "b", "", "h", "", "l", "", "i", "", "o", "", "h", "", "d", ""] + [""] * 10
 
         with patch("builtins.input", side_effect=inputs), \
              patch("builtins.print"), \

@@ -57,6 +57,7 @@ class TaskGame(Game):
         running = True
         while running:
             for player in self.players:
+                self._clearScreen()
                 self._tickPenalties()
                 self._showLinks()
                 while True:
@@ -98,13 +99,21 @@ class TaskGame(Game):
                         targets=[p.getName() for p in targets],
                     ))
 
+                beforeDrinks = {p.getId(): p.getDrinksTaken() for p in self.players}
+                beforePending = {p.getId(): p.pendingGive for p in self.players}
+
                 self._handlePostTask(task, targets, player)
 
-                if drinkType != "chain" and any(p.getDrinksTaken() > 0 or p.pendingGive > 0 for p in self.players):
-                    self.emit(TaskDrinkSummaryEvent([
-                        {"name": p.getName(), "drank": p.getDrinksTaken(), "toGive": p.pendingGive}
+                if drinkType != "chain":
+                    deltas = [
+                        {"name": p.getName(),
+                         "drank": p.getDrinksTaken() - beforeDrinks[p.getId()],
+                         "toGive": p.pendingGive - beforePending[p.getId()]}
                         for p in self.players
-                    ]))
+                        if p.getDrinksTaken() > beforeDrinks[p.getId()] or p.pendingGive > beforePending[p.getId()]
+                    ]
+                    if deltas:
+                        self.emit(TaskDrinkSummaryEvent(deltas))
 
                 while True:
                     raw = input("\nJatketaan? (Enter = kyllä, quit = lopeta, j = kirjaa juomat): ").strip().lower()
@@ -254,7 +263,7 @@ class TaskGame(Game):
         for p1, p2 in self.activePairs:
             parts.append(f"{p1.getName()} <-> {p2.getName()} (pari)")
         for master, huora in self.activeHuoras:
-            parts.append(f"{huora.getName()} -> {master.getName()} (huora)")
+            parts.append(f"{master.getName()} -> {huora.getName()} (huora)")
         for p in self.immunePlayers:
             parts.append(f"{p.getName()} (immuuni)")
         if self.doubleNext:
@@ -285,8 +294,8 @@ class TaskGame(Game):
                 self._assignDrinks(drawer, amount)
 
         elif drinkType == "give":
-            print(f"\n{drawer.getName()} saa antaa {drinks} juomaa lopussa.")
             drawer.pendingGive += drinks
+            self._interactiveGivePhase()
 
         elif drinkType == "social":
             if drinks is not None:
@@ -354,7 +363,7 @@ class TaskGame(Game):
     def _applyPenaltyToLoser(self) -> None:
         """Draw a random penalty and apply it to the player who lost the competition."""
         penalty = drawPenalty()
-        print(f"\n--- RANGAISTUS ---")
+        print("\n--- RANGAISTUS ---")
         print(f">>> {penalty['title']}")
         print(penalty["description"])
 

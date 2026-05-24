@@ -9,10 +9,9 @@ Printer API used in this module:
 p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
+from printing.receipts.textWrapper import wrapText as _wrapText
 
 _W = 32
-
-from printing.receipts.textWrapper import wrapText as _wrapText
 
 
 def configure(config: dict) -> None:
@@ -39,9 +38,6 @@ def formatChainDraw(event, p) -> None:
     p.textln(event.title.upper())
     p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("=" * _W)
-    for line in _wrapText(event.description, _W):
-        p.textln(line)
-    p.textln("-" * _W)
     for a in event.assignments:
         p.textln(f"{a['name']}: {a['amount']}")
         for c in a.get("cascades", []):
@@ -50,32 +46,34 @@ def formatChainDraw(event, p) -> None:
 
 
 def formatDrinkSummary(event, p) -> None:
-    """Print a mid-game drink tally card after each turn."""
-    active = [s for s in event.scores if s["drank"] > 0 or s["toGive"] > 0]
-    if not active:
+    """Print a per-round drink summary — only players who drank this turn, with this turn's amounts."""
+    if not event.scores:
         return
     p.set(align="center", bold=True)
-    p.textln("LASKURI")
+    p.textln("JUOMAT")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    for s in active:
-        p.textln(f"{s['name']}: joi {s['drank']} | antaa {s['toGive']}")
+    for s in event.scores:
+        parts = []
+        if s["drank"] > 0:
+            parts.append(f"juo {s['drank']}")
+        if s["toGive"] > 0:
+            parts.append(f"antaa {s['toGive']}")
+        p.textln(f"{s['name']}: {' | '.join(parts)}")
     p.textln("=" * _W)
 
 
-def formatReceipt(data: dict, p) -> None:
-    """Print the end-of-game summary: title, timestamp, players, and drink scores."""
-    p.set(align="center", bold=True, double_width=True, double_height=True)
-    p.textln("TASKGAME")
-    p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("=" * _W)
-    p.textln(data["timestamp"])
-    p.textln(", ".join(data["players"]))
-    p.textln("=" * _W)
+def formatTally(scores: list, p) -> None:
+    """Print the final drink tally."""
     p.set(align="center", bold=True)
     p.textln("LOPPUSALDO")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    for score in data["scores"]:
-        p.textln(f"{score['name']}: joi {score['drank']} | antoi {score['gave']}")
+    for s in scores:
+        p.textln(f"{s['name']}: joi {s['drank']} | antoi {s['gave']}")
     p.textln("=" * _W)
+
+
+def formatReceipt(data: dict, p) -> None:
+    """Print the end-of-game tally."""
+    formatTally(data["scores"], p)

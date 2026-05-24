@@ -156,7 +156,7 @@ class TestBujaBoard(SilentTest):
 
     @patch("builtins.input", return_value="")
     @patch("builtins.print")
-    def testBoardRuns(self, mockPrint, mockInput):
+    def testBoardRuns(self, _mockPrint, _mockInput):
         with patch.object(self.game.deck, "drawCard", side_effect=[
             makeCard("A"), makeCard("K"), makeCard("Q"),
             makeCard("J"), makeCard("10"), makeCard("9"),
@@ -167,6 +167,62 @@ class TestBujaBoard(SilentTest):
 
         self.assertTrue(self.testiMatti.getDrinksTaken() >= 0)
         self.assertTrue(self.testiTimo.getDrinksTaken() >= 0)
+
+class TestBujaGivePhaseTiming(SilentTest):
+    def testGivePhaseCalledAfterEachOfFourGuessPhases(self):
+        game = makeBuja()
+        call_count = [0]
+        game._interactiveGivePhase = lambda: call_count.__setitem__(0, call_count[0] + 1)
+        game._board = lambda: None
+
+        # 2 players × 4 phases = 8 per-player calls, no post-board call
+        # each turn ends with a "press Enter" pause → interleave with ""
+        inputs = ["r", "", "b", "", "h", "", "l", "", "i", "", "o", "", "h", "", "s", ""]
+        with patch.object(game.deck, "drawCard", return_value=makeCard("A", "Hearts")), \
+             patch("builtins.input", side_effect=inputs):
+            game.playRound()
+
+        self.assertEqual(call_count[0], 8)
+
+    def testBoardJaaGivesImmediately(self):
+        """Board 'jaa' card asks for a target immediately; pendingGive stays 0."""
+        game = makeBuja()
+        testiMatti = game.players[0]
+        testiTimo = game.players[1]
+
+        # All phase draws are "A Hearts" so both players hold rank "A".
+        # Board jaa card is also "A" → both players match and both choose targets.
+        board_cards = [makeCard("2"), makeCard("A"), makeCard("3"),
+                       makeCard("4"), makeCard("5"), makeCard("6"),
+                       makeCard("7"), makeCard("8"), makeCard("9"),
+                       makeCard("10")]
+
+        # Full input sequence:
+        # ph1: Matti "r" (correct→give→"1"→enter), Timo "b" (wrong→enter)
+        # ph2: Matti "h" (same value→enter), Timo "l" (same value→enter)
+        # ph3: Matti "i" (boundary→enter), Timo "o" (boundary→enter)
+        # ph4: Matti "h" (correct→give→"1"→enter), Timo "s" (wrong→enter)
+        # board: Enter×2 then "1"+"1" for both jaa targets, then Enter×8
+        all_inputs = [
+            "r", "1", "", "b", "",    # phase 1
+            "h", "", "l", "",         # phase 2
+            "i", "", "o", "",         # phase 3
+            "h", "1", "", "s", "",   # phase 4
+            "", "",                   # reveal juo card, reveal jaa card
+            "1", "1",                 # Matti→Timo, Timo→Matti (jaa immediate)
+            "", "", "", "", "", "", "", "",  # remaining board reveals
+        ]
+
+        with patch.object(game.deck, "drawCard", side_effect=(
+            [makeCard("A", "Hearts")] * 8 + board_cards
+        )), patch("builtins.input", side_effect=all_inputs), \
+             patch("builtins.print"):
+            game.playRound()
+
+        self.assertEqual(testiMatti.pendingGive, 0)
+        self.assertEqual(testiTimo.pendingGive, 0)
+        self.assertGreater(testiMatti.drinksToGive, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

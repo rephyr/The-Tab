@@ -2,14 +2,14 @@
   "printer": {
     "receiptWidth": 32,
     "connection": "usb",
-    "vendorId": "0x0000",
-    "productId": "0x0000",
+    "vendorId": "0x4b43",
+    "productId": "0x3830",
     "inEp": "0x81",
-    "outEp": "0x01",
-    "escposFont": "a",
-    "saveImages": false,
-    "useCardImages": false,
-    "outputDir": "output",
+    "outEp": "0x03",
+    "escposFont": "b",
+    "saveImages": true,
+    "useCardImages": true,
+    "outputDir": "output",  
     "widthImage": 576,
     "heightImage": 120,
     "rankFont": "fonts/JqkasWild-w1YD6.ttf",
@@ -17,16 +17,11 @@
     "receiptFont": "fonts/timesbd.ttf",
     "rankFontSize": "80",
     "suitFontSize": "90",
-    "imageCardScale": 0.8,
-    "escposProfile": "POS-5890"
+    "imageCardScale": 0.8
   },
   "taskgame": {
     "commonCount": 4,
     "specialCount": 2
-  },
-  "mexico": {
-    "drinkAmount": 1,
-    "mexicoDrinks": 2
   },
   "buja": {
     "boardLength": 3,
