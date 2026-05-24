@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import ClassVar, List
 
 SUIT_SYMBOLS = {
-    "Hearts": "♥",
+    "Hearts": "❤︎⁠",
     "Diamonds": "♦",
     "Clubs": "♣",
     "Spades": "♠",

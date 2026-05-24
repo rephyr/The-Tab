@@ -277,13 +277,13 @@ class Buja(Game):
                     print("Ei osumia.")
                 elif action == "kippistä":
                     for player in matchedPlayers:
+                        print(f"\n{player.getName()} kippistää — kenen kanssa?")
                         target = self._chooseTarget(player)
                         if target is None:
                             print(f"{player.getName()} juo {drinks} (ei muita pelaajia)")
                             player.addDrinks(drinks)
                             self.emit(DrinkEvent(player.getName(), drinks, "kippistä yksin"))
                         else:
-                            print(f"{player.getName()} osui! Kenen kanssa kippistää?")
                             print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
                             player.addDrinks(drinks)
                             target.addDrinks(drinks)
@@ -293,13 +293,13 @@ class Buja(Game):
                     continue
                 elif action == "jaa":
                     for player in matchedPlayers:
+                        print(f"\n{player.getName()} jakaa — kenelle?")
                         target = self._chooseTarget(player)
                         if target is None:
                             print(f"{player.getName()} juo {drinks} (ei muita pelaajia)")
                             player.addDrinks(drinks)
                             self.emit(DrinkEvent(player.getName(), drinks, "jaa yksin"))
                         else:
-                            print(f"{player.getName()} osui! Kenelle antaa?")
                             print(f"{player.getName()} antaa {target.getName()} {drinks}")
                             target.addDrinks(drinks)
                             player.addDrinksToGive(drinks)
@@ -326,13 +326,13 @@ class Buja(Game):
             print("Ei osumia.")
         else:
             for player in matchedPlayers:
+                print(f"\n{player.getName()} kippistää — kenen kanssa?")
                 target = self._chooseTarget(player)
                 if target is None:
                     print(f"{player.getName()} juo {finalDrinks} (ei muita pelaajia)")
                     player.addDrinks(finalDrinks)
                     self.emit(DrinkEvent(player.getName(), finalDrinks, "kippistä yksin"))
                 else:
-                    print(f"{player.getName()} osui! Kenen kanssa kippistää?")
                     print(f"{player.getName()} ja {target.getName()} kippistää {finalDrinks}")
                     player.addDrinks(finalDrinks)
                     target.addDrinks(finalDrinks)
