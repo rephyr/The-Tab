@@ -7,6 +7,8 @@ from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCard
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatBoardCardReveal, formatBoardCardOutcome, formatTally, formatRouletteResult, configure as _configureBujaFormatter
 from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSummary, formatChainDraw, formatTally as formatTaskTally, configure as _configureTaskGameFormatter
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
+from games.diceGame.diceEvents import MexicanChallengeEvent
+from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
 
 
 class LivePrinter:
@@ -18,6 +20,7 @@ class LivePrinter:
         _configureBujaFormatter(printerConfig)
         _configureTaskGameFormatter(printerConfig)
         _configureRavitFormatter(printerConfig)
+        _configureDiceFormatter(printerConfig)
         self._inBoard = False
         self._boardCardCount = 0
         self._printedBoardCards = set()
@@ -118,9 +121,14 @@ class LivePrinter:
         elif isinstance(event, TiebreakWinnerEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakWinner(e, p))
 
+        elif isinstance(event, MexicanChallengeEvent):
+            self._printer.printWith(lambda p, e=event: _formatMexicoChallenge(e, p))
+
         elif isinstance(event, GameEndEvent):
             data = log.toDict()
-            if self._gameTitle == "TaskGame":
+            if self._gameTitle == "Mexico":
+                self._printer.printWith(lambda p, s=data["scores"]: _formatMexicoTally(s, p))
+            elif self._gameTitle == "TaskGame":
                 self._printer.printWith(lambda p, s=data["scores"]: formatTaskTally(s, p))
             elif self._gameTitle == "Buja":
                 self._printer.printWith(lambda p, s=data["scores"]: formatTally(s, p))

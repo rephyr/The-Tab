@@ -51,32 +51,41 @@ class Buja(Game):
 
         print("Mikä maa?")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._redOrBlack(player)
             self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
         print("\nIsompi vai pienempi?\n")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Isompi vai pienempi?", player.getName()))
             self._higherOrLower(player)
             self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
         print("\nVälistä vai ulkoa?\n")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Välistä vai ulkoa?", player.getName()))
             self._insideOrOutside(player)
             self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
         print("\nMikä maa?\n")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._suit(player)
             self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
+        self._clearScreen()
         print("\nKädet:\n")
         for player in self.players:
             handStr = ", ".join(str(c) for c in player.getHand())
@@ -244,15 +253,15 @@ class Buja(Game):
                 for cardIndex, card in enumerate(row):
                     action = actions[cardIndex % len(actions)]
                     rowPreview.append(f"{card} ({action.upper()})")
-                print(f"Rivi {rowIndex + 1} | {drinks} ryyppyä | " + " | ".join(rowPreview))
-            print(f"Loppu  | {finalDrinks} ryyppyä | {finalCard} (KIPPISTÄ)")
+                print(f"Rivi {rowIndex + 1} | {drinks} Juo | " + " | ".join(rowPreview))
+            print(f"Loppu  | {finalDrinks} Juo | {finalCard} (KIPPISTÄ)")
 
         print("\n=== LAUTA ALKAA ===\n")
 
         for rowIndex, row in enumerate(board):
             drinks = startDrinks + rowIndex * increment
-
-            print(f"\nRivi {rowIndex + 1} | {drinks} ryyppyä")
+            self._clearScreen()
+            print(f"\nRivi {rowIndex + 1} | {drinks} Juo")
 
             for cardIndex, card in enumerate(row):
                 action = actions[cardIndex % len(actions)]
@@ -305,7 +314,8 @@ class Buja(Game):
 
                 self.emit(BoardCardDoneEvent())
 
-        print(f"\n=== LOPPU | {finalDrinks} ryyppyä | KIPPISTÄ ===")
+        self._clearScreen()
+        print(f"\n=== LOPPU | {finalDrinks} Juo | KIPPISTÄ ===")
         input("\nPaina Enter paljastaaksesi")
         print(f"Kortti: {finalCard} | Toiminto: KIPPISTÄ")
 

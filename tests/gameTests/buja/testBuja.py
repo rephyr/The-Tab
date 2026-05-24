@@ -176,7 +176,8 @@ class TestBujaGivePhaseTiming(SilentTest):
         game._board = lambda: None
 
         # 2 players × 4 phases = 8 per-player calls, no post-board call
-        inputs = ["r", "b", "h", "l", "i", "o", "h", "s"]
+        # each turn ends with a "press Enter" pause → interleave with ""
+        inputs = ["r", "", "b", "", "h", "", "l", "", "i", "", "o", "", "h", "", "s", ""]
         with patch.object(game.deck, "drawCard", return_value=makeCard("A", "Hearts")), \
              patch("builtins.input", side_effect=inputs):
             game.playRound()
@@ -197,18 +198,18 @@ class TestBujaGivePhaseTiming(SilentTest):
                        makeCard("10")]
 
         # Full input sequence:
-        # ph1: Matti "r" (correct→give→"1"), Timo "b" (wrong)
-        # ph2: Matti "h" (same value), Timo "l" (same value)
-        # ph3: Matti "i" (boundary), Timo "o" (boundary)
-        # ph4: Matti "h" (correct→give→"1"), Timo "s" (wrong)
+        # ph1: Matti "r" (correct→give→"1"→enter), Timo "b" (wrong→enter)
+        # ph2: Matti "h" (same value→enter), Timo "l" (same value→enter)
+        # ph3: Matti "i" (boundary→enter), Timo "o" (boundary→enter)
+        # ph4: Matti "h" (correct→give→"1"→enter), Timo "s" (wrong→enter)
         # board: Enter×2 then "1"+"1" for both jaa targets, then Enter×8
         all_inputs = [
-            "r", "1", "b",        # phase 1
-            "h", "l",             # phase 2
-            "i", "o",             # phase 3
-            "h", "1", "s",        # phase 4
-            "", "",               # reveal juo card, reveal jaa card
-            "1", "1",             # Matti→Timo, Timo→Matti (jaa immediate)
+            "r", "1", "", "b", "",    # phase 1
+            "h", "", "l", "",         # phase 2
+            "i", "", "o", "",         # phase 3
+            "h", "1", "", "s", "",   # phase 4
+            "", "",                   # reveal juo card, reveal jaa card
+            "1", "1",                 # Matti→Timo, Timo→Matti (jaa immediate)
             "", "", "", "", "", "", "", "",  # remaining board reveals
         ]
 

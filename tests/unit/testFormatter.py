@@ -2,7 +2,9 @@ import unittest
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatRouletteResult
 from printing.receipts.ravitFormatter import formatRaceRound, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
+from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
 from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
+from games.diceGame.diceEvents import MexicanChallengeEvent
 from tests.testUtils import SilentTest
 
 class MockPrinter:
@@ -329,6 +331,79 @@ class TestTiebreakDisplay(SilentTest):
         bar_line = next(line for line in p.lines if "Ukko" in line and "[" in line)
         bar = bar_line[bar_line.index("[") + 1: bar_line.index("]")]
         self.assertGreater(len(bar), 6)
+
+
+class TestFormatMexicoChallenge(SilentTest):
+
+    def _makeEvent(self, wasMexico=False, loser="Testi Tatti", claimer="Testi Tatti", challenger="Testi Matti"):
+        return MexicanChallengeEvent(
+            challenger=challenger,
+            claimer=claimer,
+            claimed=1000 if wasMexico else 65,
+            actual=43,
+            d1=4,
+            d2=3,
+            loser=loser,
+            drinks=2 if wasMexico else 1,
+            wasMexico=wasMexico,
+        )
+
+    def testShowsClaimer(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testShowsChallenger(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(), p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testShowsVerdictClaimerLied(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(loser="Testi Tatti", claimer="Testi Tatti"), p)
+        self.assertTrue(any("VALEHTELI" in line for line in p.lines))
+
+    def testShowsVerdictChallengerWrong(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(loser="Testi Matti", challenger="Testi Matti"), p)
+        self.assertTrue(any("TURHAAN" in line for line in p.lines))
+
+    def testShowsDrinkAmount(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(), p)
+        self.assertTrue(any("1" in line for line in p.lines))
+
+    def testMexicoLabelWhenWasMexico(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(wasMexico=True), p)
+        self.assertTrue(any("MEXICO" in line for line in p.lines))
+
+    def testNoMexicoLabelWhenNotMexico(self):
+        p = MockPrinter()
+        formatMexicoChallenge(self._makeEvent(wasMexico=False), p)
+        labels = [line for line in p.lines if line.strip() == "MEXICO!"]
+        self.assertEqual(len(labels), 0)
+
+
+class TestFormatMexicoTally(SilentTest):
+
+    def testShowsAllPlayers(self):
+        p = MockPrinter()
+        scores = [{"name": "Testi Tatti", "drank": 3, "gave": 0}, {"name": "Testi Matti", "drank": 1, "gave": 0}]
+        formatMexicoTally(scores, p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testShowsDrinkCounts(self):
+        p = MockPrinter()
+        scores = [{"name": "Testi Tatti", "drank": 5, "gave": 0}]
+        formatMexicoTally(scores, p)
+        self.assertTrue(any("5" in line for line in p.lines))
+
+    def testNoCut(self):
+        p = MockPrinter()
+        formatMexicoTally([{"name": "X", "drank": 1, "gave": 0}], p)
+        self.assertEqual(p.cuts, 0)
 
 
 if __name__ == "__main__":

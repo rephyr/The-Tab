@@ -135,6 +135,7 @@ class RavitGame(RavitEventsMixin, Game):
             input("\nPaina Enter jatkaaksesi...")
 
     def _runOneRound(self) -> None:
+        self._clearScreen()
         self._roundEvents = []
         self._eventedThisRound = set()
         self._resolveFights()
@@ -290,6 +291,7 @@ class RavitGame(RavitEventsMixin, Game):
             roundNum += 1
             print(f"\n  --- TAISTELUKIERROS {roundNum} ---")
             input("  Paina Enter...")
+            self._clearScreen()
 
             thisRound = list(combatants)
             for attacker in thisRound:

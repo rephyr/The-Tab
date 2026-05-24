@@ -1,4 +1,5 @@
 import importlib
+import os
 import pkgutil
 import games
 from core.game import Game
@@ -8,6 +9,10 @@ from printing.log import GameLog
 from printing.printer import ReceiptPrinter
 from printing.live import LivePrinter
 from config import Config
+
+
+def _clearScreen() -> None:
+    os.system("clear")
 
 
 def listGames():
@@ -44,6 +49,7 @@ def showSessionResult(scores, title):
     """Print the scores from a single just-completed game."""
     if not scores:
         return
+    _clearScreen()
     print(f"\n--- {title} — tulos ---\n")
     print(f"{'Nimi':<20} {'Joi':>6} {'Antoi':>6}")
     print("-" * 34)
@@ -56,7 +62,7 @@ def showSessionResult(scores, title):
 def showLeaderboard(store):
     """Print the all-time leaderboard ranked by drinks taken."""
     board = store.getLeaderboard()
-
+    _clearScreen()
     if not board:
         print("\nEi dataa vielä.\n")
         input("Paina Enter jatkaaksesi...")
@@ -82,6 +88,7 @@ def _printSessionList(sessions):
 def showSession(store):
     """List sessions and display full details for a chosen one."""
     sessions = store.getSessions()
+    _clearScreen()
     if not sessions:
         print("\nEi sessioita tallennettu.")
         input("Paina Enter jatkaaksesi...")
@@ -98,6 +105,7 @@ def showSession(store):
         return
 
     s = sessions[int(raw) - 1]
+    _clearScreen()
     print(f"\n[{s['timestamp']}] {s['game']}\n")
     print(f"{'Nimi':<20} {'Joi':>6} {'Antoi':>6}")
     print("-" * 35)
@@ -111,6 +119,7 @@ def manageData(store):
     """Sub-menu for viewing, deleting players or sessions."""
     try:
         while True:
+            _clearScreen()
             print("\nHallitse dataa:")
             print("1. Katso sessiot")
             print("2. Poista pelaaja")
@@ -186,6 +195,7 @@ def configureGame(gameTitle, configData):
     if not defaults:
         return {}
 
+    _clearScreen()
     print(f"\nPeliasetukset ({gameTitle}):")
     for key, value in defaults.items():
         print(f"  {key} = {value}")
@@ -214,6 +224,7 @@ def selectPlayers(store):
     players = []
     existingNames = set()
 
+    _clearScreen()
     print("\nSyötä pelaajat:")
     if savedNames:
         print()
@@ -254,7 +265,7 @@ def showDailyLeaderboard(store):
     """Show a numbered list of dates with sessions; display the chosen day's leaderboard."""
     sessions = store.getSessions()
     dates = sorted({s["timestamp"][:10] for s in sessions}, reverse=True)
-
+    _clearScreen()
     if not dates:
         print("\nEi sessioita tallennettu.\n")
         input("Paina Enter jatkaaksesi...")
@@ -273,7 +284,7 @@ def showDailyLeaderboard(store):
 
     date = dates[int(raw) - 1]
     board = store.getDailyLeaderboard(date)
-
+    _clearScreen()
     print(f"\n--- {date} ---\n")
     print(f"{'#':<4} {'Nimi':<20} {'Joi':>6} {'Antoi':>6} {'Pelit':>6}")
     print("-" * 46)
@@ -293,6 +304,7 @@ def showPrintTest(config, debug):
 
     try:
         while True:
+            _clearScreen()
             print("\nTulosta testikuitit — valitse peli:")
             for i, name in enumerate(gameNames, 1):
                 print(f"{i}. {name}")
@@ -310,6 +322,7 @@ def showPrintTest(config, debug):
                 gameParts = GAMES[gameName]
 
                 while True:
+                    _clearScreen()
                     print(f"\n{gameName} — valitse osio:")
                     for i, (_, label) in enumerate(gameParts, 1):
                         print(f"{i}. {label}")
@@ -356,6 +369,7 @@ def runCli(adminMode=False, debug=False):
         modeLabel += " [DEBUG]"
     try:
         while True:
+            _clearScreen()
             receiptLabel = "PÄÄLLÄ" if receiptMode else "POIS"
             saveLabel = "PÄÄLLÄ" if saveData else "POIS"
             print(f"\nPelit{modeLabel}:\n")

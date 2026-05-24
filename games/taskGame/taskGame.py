@@ -57,6 +57,7 @@ class TaskGame(Game):
         running = True
         while running:
             for player in self.players:
+                self._clearScreen()
                 self._tickPenalties()
                 self._showLinks()
                 while True:
