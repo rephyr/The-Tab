@@ -21,9 +21,11 @@ _MARGIN = 6
 _CARD_PADDING = 20
 _CARD_GAP = 8
 
-_SUIT_MAP = {"♥": "Hearts", "♦": "Diamonds", "♣": "Clubs", "♠": "Spades"}
+_SUIT_MAP = {"❤︎⁠": "Hearts", "♥": "Hearts", "♦": "Diamonds", "♣": "Clubs", "♠": "Spades"}
 _VALID_RANKS = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"}
-_INVERTED_SUITS = {"♥", "♦"}
+_INVERTED_SUITS = {"❤︎⁠", "♥", "♦"}
+# Normalize suit symbols to font-renderable equivalents for image building
+_SUIT_FONT_SYMBOL = {"❤︎⁠": "♥"}
 
 def _loadFont(path, size=_FONT_SIZE):
     if path:
@@ -62,12 +64,13 @@ def _parseCards(text):
         return None
     result = []
     for token in tokens:
-        if token[0] not in _SUIT_MAP:
+        suit_sym = next((s for s in sorted(_SUIT_MAP, key=len, reverse=True) if token.startswith(s)), None)
+        if suit_sym is None:
             return None
-        rank = token[1:]
+        rank = token[len(suit_sym):]
         if rank not in _VALID_RANKS:
             return None
-        result.append((rank, token[0]))
+        result.append((rank, suit_sym))
     return result
 
 
@@ -99,7 +102,7 @@ def _buildCardRowImage(cards, config):
     try:
         cardImgs = []
         for rank, suit in cards:
-            ci = _cropCard(buildCardImage(rank, suit, cfg))
+            ci = _cropCard(buildCardImage(rank, _SUIT_FONT_SYMBOL.get(suit, suit), cfg))
             if suit in _INVERTED_SUITS:
                 ci = ImageOps.invert(ci)
             cardImgs.append(ci)
