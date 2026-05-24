@@ -17,7 +17,8 @@
     "receiptFont": "fonts/timesbd.ttf",
     "rankFontSize": "80",
     "suitFontSize": "90",
-    "imageCardScale": 0.8
+    "imageCardScale": 0.8,
+    "escposProfile": "POS-5890"
   },
   "taskgame": {
     "commonCount": 4,

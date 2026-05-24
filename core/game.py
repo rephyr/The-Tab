@@ -1,6 +1,7 @@
 """
 Base class for all games. Handles players, event emitting, and defines the playRound interface.
 """
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -18,6 +19,9 @@ class Game(ABC):
         """Send an event to the log. Does nothing if no log is attached."""
         if self.log is not None:
             self.log.add(event)
+
+    def _clearScreen(self) -> None:
+        os.system("clear")
 
     def _interactiveGivePhase(self) -> None:
         """Let each player with pending gives choose a target from the numbered player list."""
@@ -72,11 +76,13 @@ class Game(ABC):
                 continue
 
             amountRaw = input(f"  Montako {target.getName()}lle? ").strip()
-            if not amountRaw.isdigit() or int(amountRaw) <= 0:
+            try:
+                amount = int(amountRaw)
+                if amount <= 0:
+                    raise ValueError
+            except ValueError:
                 print("  Virheellinen määrä.")
                 continue
-
-            amount = int(amountRaw)
             if remaining is not None and amount > remaining:
                 print(f"  Liikaa! Voit antaa enintään {remaining} juomaa.")
                 continue

@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 from tests.testUtils import SilentTest
 from core.player import Player
-from core.events import DrinkEvent, GiveEvent, GameEndEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
+from core.events import DrinkEvent, GiveEvent, GameEndEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent, HorseEventFiredEvent
 from games.ravitGame.horses import Horse, _generateHorse, generateHorses, _assignRelativeOdds
 from games.ravitGame.jockeys import Jockey, dealJockeys
 from games.ravitGame.ravit import RavitGame
@@ -392,6 +392,38 @@ class TestRandomEvents(SilentTest):
             game._tryFireEvent(h)
         self.assertEqual(h.speed, 1)
 
+    def testFatalLightningEmitsLightningDeathEventType(self):
+        from printing.log import GameLog
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game.log = GameLog()
+        game._roundNumber = 2
+        h = makeHorse(id=1, name="Ukko", luck=3)
+        game.horses = [h]
+        # randint(0,2)==2 → fatal branch in _eventLightning
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["lightning"]), \
+             patch("random.randint", return_value=2):
+            game._tryFireEvent(h)
+        events = [e for e in game.log.events if isinstance(e, HorseEventFiredEvent)]
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].eventType, "lightningDeath")
+
+    def testSurviveLightningEmitsLightningEventType(self):
+        from printing.log import GameLog
+        game = makeRavit({"trackLength": 20, "eventChance": 1.0})
+        game.log = GameLog()
+        game._roundNumber = 2
+        h = makeHorse(id=1, name="Ukko", luck=3)
+        game.horses = [h]
+        # randint(0,2)==0 → survive branch in _eventLightning
+        with patch("random.random", return_value=0.0), \
+             patch("random.choices", return_value=["lightning"]), \
+             patch("random.randint", return_value=0):
+            game._tryFireEvent(h)
+        events = [e for e in game.log.events if isinstance(e, HorseEventFiredEvent)]
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].eventType, "lightning")
+
     def testDrunkFanCanHitAnyRacingHorse(self):
         game = makeRavit({"trackLength": 20, "eventChance": 1.0})
         game._roundNumber = 2
@@ -566,6 +598,36 @@ class TestTiebreakFight(SilentTest):
             game._tiebreakFight([h1, h2])
         elims = [e for e in log.events if isinstance(e, TiebreakEliminationEvent)]
         self.assertGreater(len(elims), 0)
+
+    def testLoserStatusSetToDeadAfterTiebreak(self):
+        game, log = self._makeGameWithLog()
+        h1 = makeHorse(id=1, name="Ukko")
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.fightMaxHealth = 10
+        h2.fightMaxHealth = 10
+        game.horses = [h1, h2]
+        # h1 always attacks h2 and deals lethal damage (5 > maxHealth=10 after one round? no)
+        # Use randint=11 so first hit kills: damage=11, h2 health=10-11=-1 <= 0
+        with patch("random.randint", return_value=11), \
+             patch("random.choice", return_value=h2), \
+             patch("builtins.input", return_value=""), \
+             patch("builtins.print"):
+            game._tiebreakFight([h1, h2])
+        self.assertEqual(h2.status, "dead")
+
+    def testWinnerStatusRemainsRacingAfterTiebreak(self):
+        game, log = self._makeGameWithLog()
+        h1 = makeHorse(id=1, name="Ukko")
+        h2 = makeHorse(id=2, name="Myrsky")
+        h1.fightMaxHealth = 10
+        h2.fightMaxHealth = 10
+        game.horses = [h1, h2]
+        with patch("random.randint", return_value=11), \
+             patch("random.choice", return_value=h2), \
+             patch("builtins.input", return_value=""), \
+             patch("builtins.print"):
+            winner = game._tiebreakFight([h1, h2])
+        self.assertEqual(winner.status, "racing")
 
 
 class TestDrinkResolution(SilentTest):

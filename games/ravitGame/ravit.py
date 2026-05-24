@@ -76,6 +76,12 @@ class RavitGame(RavitEventsMixin, Game):
             jStr = f"  [{j.name}]" if j else ""
             stats = f"  [nop:{h.speed} kes:{h.endurance} tur:{h.luck}]" if debug else ""
             print(f"  {h.id}. {h.name:<{nw}}  x{h.odds}{jStr}{stats}")
+
+        print()
+        for h in self.horses:
+            j = self._jockeyMap.get(h.id)
+            if j:
+                print(f"  {j.name}: {j.description}")
         print()
 
         for player in self.players:
@@ -129,6 +135,7 @@ class RavitGame(RavitEventsMixin, Game):
             input("\nPaina Enter jatkaaksesi...")
 
     def _runOneRound(self) -> None:
+        self._clearScreen()
         self._roundEvents = []
         self._eventedThisRound = set()
         self._resolveFights()
@@ -284,6 +291,7 @@ class RavitGame(RavitEventsMixin, Game):
             roundNum += 1
             print(f"\n  --- TAISTELUKIERROS {roundNum} ---")
             input("  Paina Enter...")
+            self._clearScreen()
 
             thisRound = list(combatants)
             for attacker in thisRound:
@@ -306,6 +314,7 @@ class RavitGame(RavitEventsMixin, Game):
             self.emit(TiebreakRoundEvent(roundNumber=roundNum, combatants=allState))
 
             for loser in eliminated:
+                loser.status = "dead"
                 print(f"\n  *** {loser.name} kuoli!")
                 self.emit(TiebreakEliminationEvent(
                     loserName=loser.name,
@@ -355,7 +364,8 @@ class RavitGame(RavitEventsMixin, Game):
             if len(closeFinish) > 1:
                 winner = self._tiebreakFight(closeFinish)
                 if winner is not None:
-                    aliveHorses = [winner] + [h for h in aliveHorses if h.id != winner.id]
+                    aliveHorses = [winner] + [h for h in aliveHorses if h.id != winner.id and h.status == "racing"]
+                    outHorses = [h for h in self.horses if h.status != "racing"]
 
         finalPositions = []
         for place, horse in enumerate(aliveHorses, start=1):

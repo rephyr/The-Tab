@@ -4,6 +4,7 @@ Change the values here to see how different content looks when printed.
 """
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
 from printing.receipts.taskGameFormatter import formatTaskDraw
+from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
 from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
@@ -15,6 +16,7 @@ from core.events import (
     RaceRoundEvent, TiebreakStartEvent, TiebreakEliminationEvent, TiebreakWinnerEvent,
     RavitBettorDrinkEvent,
 )
+from games.diceGame.diceEvents import MexicanChallengeEvent
 
 # ---------------------------------------------------------------------------
 # Buja
@@ -155,10 +157,47 @@ TEST_BETTOR_DRINK_RAVIT = RavitBettorDrinkEvent(
 )
 
 # ---------------------------------------------------------------------------
+# Mexico
+# ---------------------------------------------------------------------------
+
+TEST_MEXICO_CHALLENGE = MexicanChallengeEvent(
+    challenger="Testi Matti",
+    claimer="Testi Tatti",
+    claimed=65,
+    actual=43,
+    d1=4,
+    d2=3,
+    loser="Testi Tatti",
+    drinks=1,
+    wasMexico=False,
+)
+
+TEST_MEXICO_CHALLENGE_MEXICO = MexicanChallengeEvent(
+    challenger="Testi Matti",
+    claimer="Testi Tatti",
+    claimed=1000,
+    actual=43,
+    d1=4,
+    d2=3,
+    loser="Testi Tatti",
+    drinks=2,
+    wasMexico=True,
+)
+
+TEST_MEXICO_SCORES = [
+    {"name": "Testi Tatti", "drank": 3, "gave": 0},
+    {"name": "Testi Matti", "drank": 1, "gave": 0},
+]
+
+# ---------------------------------------------------------------------------
 # Game → parts registry  (used by cli.py to build the two-level menu)
 # ---------------------------------------------------------------------------
 
 GAMES = {
+    "Mexico": [
+        ("mexico-challenge", "Haaste"),
+        ("mexico-tally", "Loppusaldo"),
+    ],
     "Buja": [
         ("turns", "Vuorokuitit"),
         ("hands", "Kädet"),
@@ -183,6 +222,13 @@ def printTestReceipts(printer, parts=None) -> None:
     """Print test receipts. Pass None to print every part of every game."""
     if parts is None:
         parts = [key for game_parts in GAMES.values() for key, _ in game_parts]
+
+    if "mexico-challenge" in parts:
+        printer.printWith(lambda p, e=TEST_MEXICO_CHALLENGE: formatMexicoChallenge(e, p))
+        printer.printWith(lambda p, e=TEST_MEXICO_CHALLENGE_MEXICO: formatMexicoChallenge(e, p))
+
+    if "mexico-tally" in parts:
+        printer.printWith(lambda p: formatMexicoTally(TEST_MEXICO_SCORES, p))
 
     if "turns" in parts:
         for phaseName, turn in TEST_PHASES:

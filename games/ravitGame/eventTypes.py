@@ -21,3 +21,5 @@ HORSE_SHOE = "horseShoe"
 FIGHT_START = "fightStart"
 FIGHT_WIN = "fightWin"
 FIGHT_DEATH = "fightDeath"
+
+LIGHTNING_DEATH = "lightningDeath"

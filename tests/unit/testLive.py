@@ -93,8 +93,8 @@ class TestLivePrinterBoard(SilentTest):
         log.add(DrinkEvent("Testi Matti", 2, "board"))
         log.add(BoardCardDoneEvent())
 
-        # 2 hands + 1 board card (with outcomes)
-        self.assertEqual(printer.printWith.call_count, 3)
+        # 2 hands + 1 reveal + 1 outcome
+        self.assertEqual(printer.printWith.call_count, 4)
 
     def testPrintsLastBoardCardAndTallyAtGameEnd(self):
         printer = MagicMock()

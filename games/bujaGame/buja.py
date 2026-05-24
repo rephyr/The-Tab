@@ -7,7 +7,7 @@ from core.deck import Deck
 from core.player import Player
 from core.events import (
     GameStartEvent, PhaseEvent, GuessEvent,
-    DrinkEvent, ShareEvent,
+    DrinkEvent, GiveEvent, ShareEvent,
     BoardCardEvent, BoardCardDoneEvent, GameEndEvent,
 )
 from dataclasses import dataclass, field
@@ -51,28 +51,41 @@ class Buja(Game):
 
         print("Mikä maa?")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._redOrBlack(player)
+            self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
         print("\nIsompi vai pienempi?\n")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Isompi vai pienempi?", player.getName()))
             self._higherOrLower(player)
+            self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
         print("\nVälistä vai ulkoa?\n")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Välistä vai ulkoa?", player.getName()))
             self._insideOrOutside(player)
+            self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
         print("\nMikä maa?\n")
         for player in self.players:
+            self._clearScreen()
             print(f"\n{player.getName()}n vuoro")
             self.emit(PhaseEvent("Mikä maa?", player.getName()))
             self._suit(player)
+            self._interactiveGivePhase()
+            input("\nPaina Enter jatkaaksesi...")
 
+        self._clearScreen()
         print("\nKädet:\n")
         for player in self.players:
             handStr = ", ".join(str(c) for c in player.getHand())
@@ -81,8 +94,6 @@ class Buja(Game):
         print("\nSeuraavana lauta!\n")
         self.emit(PhaseEvent("Lauta", ""))
         self._board()
-
-        self._interactiveGivePhase()
 
         print("\nRyyppytaulu:\n")
         for player in self.players:
@@ -242,20 +253,20 @@ class Buja(Game):
                 for cardIndex, card in enumerate(row):
                     action = actions[cardIndex % len(actions)]
                     rowPreview.append(f"{card} ({action.upper()})")
-                print(f"Rivi {rowIndex + 1} | {drinks} ryyppyä | " + " | ".join(rowPreview))
-            print(f"Loppu  | {finalDrinks} ryyppyä | {finalCard} (KIPPISTÄ)")
+                print(f"Rivi {rowIndex + 1} | {drinks} Juo | " + " | ".join(rowPreview))
+            print(f"Loppu  | {finalDrinks} Juo | {finalCard} (KIPPISTÄ)")
 
         print("\n=== LAUTA ALKAA ===\n")
 
         for rowIndex, row in enumerate(board):
             drinks = startDrinks + rowIndex * increment
-
-            print(f"\nRivi {rowIndex + 1} | {drinks} ryyppyä")
+            self._clearScreen()
+            print(f"\nRivi {rowIndex + 1} | {drinks} Juo")
 
             for cardIndex, card in enumerate(row):
                 action = actions[cardIndex % len(actions)]
 
-                input(f"\nPaina Enter paljastaaksesi ({card} - {action.upper()})")
+                input("\nPaina Enter paljastaaksesi...")
 
                 print(f"Kortti: {card} | Toiminto: {action.upper()}")
 
@@ -267,27 +278,44 @@ class Buja(Game):
                 elif action == "kippistä":
                     for player in matchedPlayers:
                         target = self._chooseTarget(player)
-                        print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
-                        player.addDrinks(drinks)
-                        target.addDrinks(drinks)
-                        player.addDrinksToGive(drinks)
-                        self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+                        if target is None:
+                            print(f"{player.getName()} juo {drinks} (ei muita pelaajia)")
+                            player.addDrinks(drinks)
+                            self.emit(DrinkEvent(player.getName(), drinks, "kippistä yksin"))
+                        else:
+                            print(f"{player.getName()} osui! Kenen kanssa kippistää?")
+                            print(f"{player.getName()} ja {target.getName()} kippistää {drinks}")
+                            player.addDrinks(drinks)
+                            target.addDrinks(drinks)
+                            player.addDrinksToGive(drinks)
+                            self.emit(ShareEvent(player.getName(), target.getName(), drinks))
+                    self.emit(BoardCardDoneEvent())
+                    continue
+                elif action == "jaa":
+                    for player in matchedPlayers:
+                        target = self._chooseTarget(player)
+                        if target is None:
+                            print(f"{player.getName()} juo {drinks} (ei muita pelaajia)")
+                            player.addDrinks(drinks)
+                            self.emit(DrinkEvent(player.getName(), drinks, "jaa yksin"))
+                        else:
+                            print(f"{player.getName()} osui! Kenelle antaa?")
+                            print(f"{player.getName()} antaa {target.getName()} {drinks}")
+                            target.addDrinks(drinks)
+                            player.addDrinksToGive(drinks)
+                            self.emit(GiveEvent(player.getName(), target.getName(), drinks))
                     self.emit(BoardCardDoneEvent())
                     continue
                 else:
                     for player in matchedPlayers:
-                        if action == "juo":
-                            print(f"{player.getName()} juo {drinks}")
-                            player.addDrinks(drinks)
-                            self.emit(DrinkEvent(player.getName(), drinks, "lauta"))
-
-                        elif action == "jaa":
-                            print(f"{player.getName()} antaa {drinks} lopussa")
-                            player.pendingGive += drinks
+                        print(f"{player.getName()} juo {drinks}")
+                        player.addDrinks(drinks)
+                        self.emit(DrinkEvent(player.getName(), drinks, "lauta"))
 
                 self.emit(BoardCardDoneEvent())
 
-        print(f"\n=== LOPPU | {finalDrinks} ryyppyä | KIPPISTÄ ===")
+        self._clearScreen()
+        print(f"\n=== LOPPU | {finalDrinks} Juo | KIPPISTÄ ===")
         input("\nPaina Enter paljastaaksesi")
         print(f"Kortti: {finalCard} | Toiminto: KIPPISTÄ")
 
@@ -299,18 +327,26 @@ class Buja(Game):
         else:
             for player in matchedPlayers:
                 target = self._chooseTarget(player)
-                print(f"{player.getName()} ja {target.getName()} kippistää {finalDrinks}")
-                player.addDrinks(finalDrinks)
-                target.addDrinks(finalDrinks)
-                player.addDrinksToGive(finalDrinks)
-                self.emit(ShareEvent(player.getName(), target.getName(), finalDrinks))
+                if target is None:
+                    print(f"{player.getName()} juo {finalDrinks} (ei muita pelaajia)")
+                    player.addDrinks(finalDrinks)
+                    self.emit(DrinkEvent(player.getName(), finalDrinks, "kippistä yksin"))
+                else:
+                    print(f"{player.getName()} osui! Kenen kanssa kippistää?")
+                    print(f"{player.getName()} ja {target.getName()} kippistää {finalDrinks}")
+                    player.addDrinks(finalDrinks)
+                    target.addDrinks(finalDrinks)
+                    player.addDrinksToGive(finalDrinks)
+                    self.emit(ShareEvent(player.getName(), target.getName(), finalDrinks))
 
         self.emit(BoardCardDoneEvent())
 
         print("\n=== LAUTA LOPPU ===\n")
 
-    def _chooseTarget(self, player: Player) -> Player:
+    def _chooseTarget(self, player: Player):
         others = self._listPlayers(player)
+        if not others:
+            return None
 
         print("\nPelaajat:")
         for i, p in enumerate(others, 1):

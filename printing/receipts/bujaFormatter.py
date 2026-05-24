@@ -15,8 +15,9 @@ p.set(align, bold, double_width, double_height, invert)
 p.textln(text) — prints one line
 """
 
-_W = 32
+from printing.receipts.textWrapper import wrapText as _wrapText
 
+_W = 32
 
 
 def configure(config: dict) -> None:
@@ -80,6 +81,43 @@ def formatHand(player: str, cards: list, p) -> None:
     p.textln("=" * _W)
 
 
+def formatBoardCardReveal(card: dict, p) -> None:
+    """Print the card reveal receipt: big card symbol + matched players."""
+    p.set(align="center", bold=True, double_width=True, double_height=True, invert=bool(card["matched"]))
+    p.textln(card["card"])
+    p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+    p.textln("=" * _W)
+    p.textln(f"{card['action'].upper()} — {card['drinks']}")
+    p.textln("-" * _W)
+    if card["matched"]:
+        for name in card["matched"]:
+            p.set(bold=True)
+            p.textln(f"  {name}")
+            p.set(bold=False)
+    else:
+        p.textln("Ei osumia")
+    p.textln("=" * _W)
+
+
+def formatBoardCardOutcome(card: dict, p) -> None:
+    """Print a compact summary of what happened after a board card."""
+    if not card["outcomes"]:
+        return
+    p.textln("=" * _W)
+    for outcome in card["outcomes"]:
+        if outcome["type"] == "drink":
+            p.set(bold=True)
+            p.textln(f"{outcome['player']} juo {outcome['drinks']}")
+            p.set(bold=False)
+        elif outcome["type"] == "give":
+            for line in _wrapText(f"{outcome['giver']} -> {outcome['receiver']} {outcome['drinks']}x", _W):
+                p.textln(line)
+        elif outcome["type"] == "share":
+            for line in _wrapText(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}x", _W):
+                p.textln(line)
+    p.textln("=" * _W)
+
+
 def formatBoardCard(card: dict, p) -> None:
     """Print a board card receipt with its action and outcomes."""
     p.set(align="center", bold=True)
@@ -97,9 +135,11 @@ def formatBoardCard(card: dict, p) -> None:
             if outcome["type"] == "drink":
                 p.textln(f"{outcome['player']} juo {outcome['drinks']}")
             elif outcome["type"] == "give":
-                p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
+                for line in _wrapText(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}", _W):
+                    p.textln(line)
             elif outcome["type"] == "share":
-                p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
+                for line in _wrapText(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}", _W):
+                    p.textln(line)
     else:
         for name in card["matched"]:
             p.textln(name)
@@ -185,7 +225,7 @@ def formatEndReceipt(data: dict, p) -> None:
                     if outcome["type"] == "drink":
                         p.textln(f"{outcome['player']} juo {outcome['drinks']}")
                     elif outcome["type"] == "give":
-                        p.textln(f"{outcome['giver']} -> {outcome['receiver']} juo {outcome['drinks']}")
+                        p.textln(f"{outcome['giver']} antaa {outcome['receiver']} juo {outcome['drinks']}")
                     elif outcome["type"] == "share":
                         p.textln(f"{outcome['player1']} & {outcome['player2']} kippistää {outcome['drinks']}")
             p.textln("-" * _W)
