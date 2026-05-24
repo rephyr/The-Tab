@@ -122,6 +122,31 @@ Settings can be adjusted before each game from the CLI without editing the confi
 
 ---
 
+### Mexico
+
+A dice bluffing game. Players take turns rolling two dice and announcing a score — truthfully or lying. The next player either accepts the claim and must beat it, or challenges it.
+
+**Scoring:**
+
+* Regular rolls are ranked by their two-digit value (e.g. 65 beats 54)
+* Doubles beat all regular rolls (e.g. 33 beats 65)
+* Mexico (2-1) is the highest value and beats everything
+
+**On a challenge:**
+
+* If the claimer lied → claimer drinks
+* If the claimer told the truth → challenger drinks
+* Mexico doubles the drink penalty
+
+**Mexico settings** (`config.json`):
+
+* `drinkAmount`: drinks for a lost challenge (default: 1)
+* `mexicoDrinks`: drinks when Mexico is involved in a challenge (default: 2)
+
+Settings can be adjusted before each game from the CLI without editing the config file.
+
+---
+
 ### TaskGame
 
 A turn-based task card game. Players take turns drawing a random task from a shuffled deck. Each task tells a player what to do: drink, give drinks, start a social challenge, or create a persistent link between players. The game ends when the deck runs out.
