@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
@@ -6,11 +7,12 @@ class KetjuCardDrawnEvent:
     player: str
     card: str
     previousCard: str
-    guess: str        # "korkeampi" or "matalampi"
+    guess: str                           # Higher or Lower
     correct: bool
-    streak: int       # new streak if correct, streak before draw if wrong
+    streak: int                          # New streak if correct, streak before draw if wrong
     pot: int
     multiplier: int
+    chainedPlayer: Optional[str] = None  # set when wrong guess and a chain is active
 
 
 @dataclass
@@ -21,6 +23,7 @@ class KetjuEqualCardEvent:
     penalty: int
     multiplier: int
     total: int
+    chainedPlayer: Optional[str] = None
 
 
 @dataclass
@@ -32,7 +35,9 @@ class KetjuDoubleOrDoubleEvent:
     correct: bool
     pot: int
     multiplier: int
-    amount: int   # drinks given (correct) or drunk (wrong)
+    amount: int                          # drinks given (correct) or drunk (wrong)
+    chainedPlayer: Optional[str] = None  # set when wrong guess and a chain is active
+    target: Optional[str] = None         # set on correct guess: who receives the drinks
 
 
 @dataclass

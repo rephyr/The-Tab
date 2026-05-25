@@ -473,6 +473,22 @@ class TestFormatKetjuCardDraw(SilentTest):
         self.assertTrue(any("♠J" in line for line in p.lines))
         self.assertTrue(any("♦7" in line for line in p.lines))
 
+    def testChainShownOnWrong(self):
+        event = KetjuCardDrawnEvent(
+            player="Testi Matti", card="♣3", previousCard="♦7",
+            guess="korkeampi", correct=False, streak=2, pot=2, multiplier=1,
+            chainedPlayer="Testi Tatti",
+        )
+        p = MockPrinter()
+        formatKetjuCardDraw(event, p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testChainNotShownWhenAbsent(self):
+        p = MockPrinter()
+        formatKetjuCardDraw(self._wrong(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
 
 class TestFormatKetjuEqualCard(SilentTest):
 
@@ -502,6 +518,21 @@ class TestFormatKetjuEqualCard(SilentTest):
         formatKetjuEqualCard(self._event(), p)
         self.assertTrue(any("♥7" in line for line in p.lines))
         self.assertTrue(any("♦7" in line for line in p.lines))
+
+    def testChainShown(self):
+        event = KetjuEqualCardEvent(
+            player="Testi Tatti", card="♥7", previousCard="♦7",
+            penalty=3, multiplier=1, total=3, chainedPlayer="Testi Matti",
+        )
+        p = MockPrinter()
+        formatKetjuEqualCard(event, p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testChainNotShownWhenAbsent(self):
+        p = MockPrinter()
+        formatKetjuEqualCard(self._event(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
 
 
 class TestFormatKetjuDoubleOrDouble(SilentTest):
@@ -533,6 +564,28 @@ class TestFormatKetjuDoubleOrDouble(SilentTest):
         formatKetjuDouble(self._correct(), p)
         self.assertTrue(any("40" in line for line in p.lines))
 
+    def testTargetShownOnCorrect(self):
+        event = KetjuDoubleOrDoubleEvent(
+            player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
+            guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
+            target="Testi Matti",
+        )
+        p = MockPrinter()
+        formatKetjuDouble(event, p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testTargetAndChainShownOnCorrect(self):
+        event = KetjuDoubleOrDoubleEvent(
+            player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
+            guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
+            target="Testi Matti", chainedPlayer="Testi Kolmo",
+        )
+        p = MockPrinter()
+        formatKetjuDouble(event, p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Kolmo" in line for line in p.lines))
+
     def testVaarinOnWrong(self):
         p = MockPrinter()
         formatKetjuDouble(self._wrong(), p)
@@ -547,6 +600,27 @@ class TestFormatKetjuDoubleOrDouble(SilentTest):
         p = MockPrinter()
         formatKetjuDouble(self._correct(), p)
         self.assertTrue(any("♠A" in line for line in p.lines))
+
+    def testChainShownOnWrong(self):
+        event = KetjuDoubleOrDoubleEvent(
+            player="Testi Matti", challengeCard="♣2", previousCard="♦7",
+            guess="korkeampi", correct=False, pot=10, multiplier=1, amount=20,
+            chainedPlayer="Testi Tatti",
+        )
+        p = MockPrinter()
+        formatKetjuDouble(event, p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testChainNotShownOnCorrect(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._correct(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
+    def testChainNotShownWhenAbsent(self):
+        p = MockPrinter()
+        formatKetjuDouble(self._wrong(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
 
 
 class TestFormatKetjuExit(SilentTest):

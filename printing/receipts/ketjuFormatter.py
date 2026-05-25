@@ -39,6 +39,9 @@ def formatCardDraw(event, p) -> None:
         p.set(bold=True)
         for line in _wrapText(f"{event.player} juo {drinks}!", _W):
             p.textln(line)
+        if event.chainedPlayer:
+            for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {drinks}!", _W):
+                p.textln(line)
         p.set(bold=False)
 
     p.textln("-" * _W)
@@ -65,6 +68,9 @@ def formatEqualCard(event, p) -> None:
     p.set(bold=True)
     for line in _wrapText(f"{event.player} juo {event.total}!", _W):
         p.textln(line)
+    if event.chainedPlayer:
+        for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {event.total}!", _W):
+            p.textln(line)
     p.set(bold=False)
     p.textln("-" * _W)
     for line in _wrapText(f"Nostettu: {event.card}", _W):
@@ -93,8 +99,15 @@ def formatDoubleOrDouble(event, p) -> None:
         p.textln("OIKEIN!")
         p.set(align="left", bold=False, double_width=False, double_height=False)
         p.set(bold=True)
-        for line in _wrapText(f"Jaat {event.amount} juomaa!", _W):
-            p.textln(line)
+        if event.target:
+            for line in _wrapText(f"{event.target} juo {event.amount}!", _W):
+                p.textln(line)
+            if event.chainedPlayer:
+                for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {event.amount}!", _W):
+                    p.textln(line)
+        else:
+            for line in _wrapText(f"Jaat {event.amount} juomaa!", _W):
+                p.textln(line)
         p.set(bold=False)
     else:
         p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
@@ -103,6 +116,9 @@ def formatDoubleOrDouble(event, p) -> None:
         p.set(bold=True)
         for line in _wrapText(f"{event.player} juo {event.amount}!", _W):
             p.textln(line)
+        if event.chainedPlayer:
+            for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {event.amount}!", _W):
+                p.textln(line)
         p.set(bold=False)
 
     p.textln("-" * _W)
