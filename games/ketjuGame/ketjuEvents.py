@@ -9,7 +9,7 @@ class KetjuCardDrawnEvent:
     previousCard: str
     guess: str                           # Higher or Lower
     correct: bool
-    streak: int                          # New streak if correct, streak before draw if wrong
+    streak: int                          # new streak if correct, streak before draw if wrong
     pot: int
     multiplier: int
     chainedPlayer: Optional[str] = None  # set when wrong guess and a chain is active
@@ -35,7 +35,7 @@ class KetjuDoubleOrDoubleEvent:
     correct: bool
     pot: int
     multiplier: int
-    amount: int                          # drinks given (correct) or drunk (wrong)
+    amount: int                          # drinks given (correct) or drunk (wrong):
     chainedPlayer: Optional[str] = None  # set when wrong guess and a chain is active
     target: Optional[str] = None         # set on correct guess: who receives the drinks
 
