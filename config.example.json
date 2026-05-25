@@ -24,7 +24,7 @@
     "commonCount": 4,
     "specialCount": 2
   },
-  "ketju": {
+  "doubleOrDouble": {
     "deckCount": 1,
     "minStreakToExit": 3,
     "finalThreshold": 5,

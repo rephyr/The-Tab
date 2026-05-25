@@ -3,10 +3,10 @@ from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardC
 from printing.receipts.ravitFormatter import formatRaceRound, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
-from printing.receipts.ketjuFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
+from printing.receipts.doubleOrDoubleFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
 from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
-from games.ketjuGame.ketjuEvents import KetjuCardDrawnEvent, KetjuEqualCardEvent, KetjuDoubleOrDoubleEvent, KetjuExitEvent, KetjuLinkResolvedEvent
+from games.doubleOrDoubleGame.doubleOrDoubleEvents import DoDCardDrawnEvent as KetjuCardDrawnEvent, DoDEqualCardEvent as KetjuEqualCardEvent, DoDChallengeEvent as KetjuDoubleOrDoubleEvent, DoDExitEvent as KetjuExitEvent, DoDLinkResolvedEvent as KetjuLinkResolvedEvent
 from tests.testUtils import SilentTest
 
 class MockPrinter:
@@ -672,7 +672,7 @@ class TestFormatKetjuLinkResolved(SilentTest):
     def testLinkHeaderShown(self):
         p = MockPrinter()
         formatKetjuLink(self._event(), p)
-        self.assertTrue(any("LINKKI" in line for line in p.lines))
+        self.assertTrue(any("LINKITETTY" in line for line in p.lines))
 
 
 class TestFormatKetjuTally(SilentTest):

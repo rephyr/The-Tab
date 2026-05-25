@@ -5,7 +5,7 @@ Change the values here to see how different content looks when printed.
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
 from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
-from printing.receipts.ketjuFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
+from printing.receipts.doubleOrDoubleFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
 from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
@@ -18,9 +18,10 @@ from core.events import (
     RavitBettorDrinkEvent,
 )
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
-from games.ketjuGame.ketjuEvents import (
-    KetjuCardDrawnEvent, KetjuEqualCardEvent, KetjuDoubleOrDoubleEvent,
-    KetjuExitEvent, KetjuLinkResolvedEvent,
+from games.doubleOrDoubleGame.doubleOrDoubleEvents import (
+    DoDCardDrawnEvent as KetjuCardDrawnEvent, DoDEqualCardEvent as KetjuEqualCardEvent,
+    DoDChallengeEvent as KetjuDoubleOrDoubleEvent, DoDExitEvent as KetjuExitEvent,
+    DoDLinkResolvedEvent as KetjuLinkResolvedEvent,
 )
 
 # ---------------------------------------------------------------------------
@@ -258,12 +259,12 @@ GAMES = {
     "TaskGame": [
         ("tasks", "Tehtäväkortit"),
     ],
-    "Ketju": [
-        ("ketju-card",   "Kortit"),
-        ("ketju-double", "Double or Double"),
-        ("ketju-exit",   "Poistuminen"),
-        ("ketju-link",   "Linkki"),
-        ("ketju-tally",  "Loppusaldo"),
+    "DoubleOrDouble": [
+        ("dod-card",   "Kortit"),
+        ("dod-double", "Double or Double"),
+        ("dod-exit",   "Poistuminen"),
+        ("dod-link",   "Linkki"),
+        ("dod-tally",  "Loppusaldo"),
     ],
     "Ravit": [
         ("ravit-betting",      "Hevoset & Vedonlyönti"),
@@ -281,22 +282,22 @@ def printTestReceipts(printer, parts=None) -> None:
     if parts is None:
         parts = [key for game_parts in GAMES.values() for key, _ in game_parts]
 
-    if "ketju-card" in parts:
+    if "dod-card" in parts:
         printer.printWith(lambda p, e=TEST_KETJU_CARD_CORRECT: formatKetjuCardDraw(e, p))
         printer.printWith(lambda p, e=TEST_KETJU_CARD_WRONG: formatKetjuCardDraw(e, p))
         printer.printWith(lambda p, e=TEST_KETJU_EQUAL: formatKetjuEqualCard(e, p))
 
-    if "ketju-double" in parts:
+    if "dod-double" in parts:
         printer.printWith(lambda p, e=TEST_KETJU_DOUBLE_CORRECT: formatKetjuDouble(e, p))
         printer.printWith(lambda p, e=TEST_KETJU_DOUBLE_WRONG: formatKetjuDouble(e, p))
 
-    if "ketju-exit" in parts:
+    if "dod-exit" in parts:
         printer.printWith(lambda p, e=TEST_KETJU_EXIT: formatKetjuExit(e, p))
 
-    if "ketju-link" in parts:
+    if "dod-link" in parts:
         printer.printWith(lambda p, e=TEST_KETJU_LINK: formatKetjuLink(e, p))
 
-    if "ketju-tally" in parts:
+    if "dod-tally" in parts:
         printer.printWith(lambda p: formatKetjuTally(TEST_KETJU_SCORES, p))
 
     if "mexico-accept" in parts:

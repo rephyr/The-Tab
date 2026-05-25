@@ -3,7 +3,7 @@ from typing import Optional
 
 
 @dataclass
-class KetjuCardDrawnEvent:
+class DoDCardDrawnEvent:
     player: str
     card: str
     previousCard: str
@@ -16,7 +16,7 @@ class KetjuCardDrawnEvent:
 
 
 @dataclass
-class KetjuEqualCardEvent:
+class DoDEqualCardEvent:
     player: str
     card: str
     previousCard: str
@@ -27,7 +27,7 @@ class KetjuEqualCardEvent:
 
 
 @dataclass
-class KetjuDoubleOrDoubleEvent:
+class DoDChallengeEvent:
     player: str
     challengeCard: str
     previousCard: str
@@ -41,14 +41,14 @@ class KetjuDoubleOrDoubleEvent:
 
 
 @dataclass
-class KetjuExitEvent:
+class DoDExitEvent:
     player: str
     pot: int
     streak: int
 
 
 @dataclass
-class KetjuLinkResolvedEvent:
+class DoDLinkResolvedEvent:
     linkedPlayer: str
     triggerPlayer: str
     amount: int

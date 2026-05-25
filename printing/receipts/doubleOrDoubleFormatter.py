@@ -1,4 +1,4 @@
-"""Receipt formatters for the Ketju higher/lower streak card game."""
+"""Receipt formatters for the Double or Double higher/lower streak card game."""
 from printing.receipts.textWrapper import wrapText as _wrapText
 
 _W = 32
@@ -12,7 +12,7 @@ def configure(config: dict) -> None:
 def formatCardDraw(event, p) -> None:
     """Print a receipt for each card drawn — streak progress or wrong guess."""
     p.set(align="center", bold=True)
-    p.textln("KETJU")
+    p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
     for line in _wrapText(event.player, _W):
@@ -53,7 +53,7 @@ def formatCardDraw(event, p) -> None:
 def formatEqualCard(event, p) -> None:
     """Print a receipt when an equal card is drawn."""
     p.set(align="center", bold=True)
-    p.textln("KETJU")
+    p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
     for line in _wrapText(event.player, _W):
@@ -81,7 +81,7 @@ def formatEqualCard(event, p) -> None:
 def formatDoubleOrDouble(event, p) -> None:
     """Print a receipt for the Double or Double challenge."""
     p.set(align="center", bold=True)
-    p.textln("KETJU")
+    p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
     p.set(align="center", bold=True)
@@ -90,7 +90,7 @@ def formatDoubleOrDouble(event, p) -> None:
     p.textln("-" * _W)
     for line in _wrapText(event.player, _W):
         p.textln(line)
-    for line in _wrapText(f"Nykyinen: {event.previousCard}", _W):
+    for line in _wrapText(f"DOD kortti: {event.previousCard}", _W):
         p.textln(line)
     p.textln("-" * _W)
 
@@ -130,7 +130,7 @@ def formatDoubleOrDouble(event, p) -> None:
 def formatExit(event, p) -> None:
     """Print a receipt when a player exits the streak voluntarily."""
     p.set(align="center", bold=True)
-    p.textln("KETJU")
+    p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
     for line in _wrapText(f"{event.player}", _W):
@@ -150,11 +150,11 @@ def formatExit(event, p) -> None:
 def formatLinkResolved(event, p) -> None:
     """Print a receipt when the link fires and the linked player drinks."""
     p.set(align="center", bold=True)
-    p.textln("KETJU")
+    p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
     p.set(align="center", bold=True)
-    p.textln("LINKKI!")
+    p.textln("LINKITETTY!")
     p.set(align="left", bold=False)
     p.textln("-" * _W)
     for line in _wrapText(f"{event.triggerPlayer} joi {event.amount}", _W):
@@ -170,7 +170,7 @@ def formatLinkResolved(event, p) -> None:
 def formatTally(scores: list, p) -> None:
     """Print the final drink tally."""
     p.set(align="center", bold=True)
-    p.textln("KETJU")
+    p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
     p.set(align="center", bold=True)

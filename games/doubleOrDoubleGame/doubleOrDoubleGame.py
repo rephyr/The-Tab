@@ -1,5 +1,5 @@
 """
-Ketju — a higher/lower streak card game with escalating stakes.
+Double or Double — a higher/lower streak card game with escalating stakes.
 
 One player draws cards until their turn ends (wrong guess, equal card,
 voluntary exit, or Double or Double). The previous player is always
@@ -14,9 +14,9 @@ from core.game import Game
 from core.deck import Deck
 from core.cards import Card
 from core.events import GameStartEvent, GameEndEvent, DrinkEvent, GiveEvent
-from games.ketjuGame.ketjuEvents import (
-    KetjuCardDrawnEvent, KetjuEqualCardEvent, KetjuDoubleOrDoubleEvent,
-    KetjuExitEvent, KetjuLinkResolvedEvent,
+from games.doubleOrDoubleGame.doubleOrDoubleEvents import (
+    DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent,
+    DoDExitEvent, DoDLinkResolvedEvent,
 )
 
 _POT = {0: 1, 1: 2, 2: 3, 3: 3, 4: 4, 5: 5}
@@ -36,12 +36,12 @@ def _printCard(card) -> str:
 
 
 @dataclass
-class KetjuGame(Game):
-    gameTitle: str = "Ketju"
+class DoubleOrDoubleGame(Game):
+    gameTitle: str = "DoubleOrDouble"
     config: dict = field(default_factory=dict)
 
     def playRound(self) -> None:
-        cfg = self.config.get("ketju", {})
+        cfg = self.config.get("doubleOrDouble", {})
         deckCount = int(cfg.get("deckCount", 1))
         minStreakToExit = int(cfg.get("minStreakToExit", 3))
         finalThreshold = int(cfg.get("finalThreshold", 5))
@@ -56,7 +56,7 @@ class KetjuGame(Game):
         prevCard: Card = deck.drawCard()
         self._clearScreen()
         print(f"\n{_SEP}")
-        print("  KETJU")
+        print("  DOUBLE OR DOUBLE")
         print(f"\n  Aloituskortti: {prevCard}")
         print(f"\n{_SEP}")
         input("")
@@ -134,7 +134,7 @@ class KetjuGame(Game):
             if card.value() == prevCard.value():
                 total = equalPenalty * multiplier
                 player.addDrinks(total)
-                self.emit(KetjuEqualCardEvent(
+                self.emit(DoDEqualCardEvent(
                     player=player.getName(), card=_printCard(card), previousCard=_printCard(prevCard),
                     penalty=equalPenalty, multiplier=multiplier, total=total,
                     chainedPlayer=chainedPlayer if chainedPlayer != player.getName() else None,
@@ -158,7 +158,7 @@ class KetjuGame(Game):
             if not correct:
                 drinks = _pot(streak) * multiplier
                 player.addDrinks(drinks)
-                self.emit(KetjuCardDrawnEvent(
+                self.emit(DoDCardDrawnEvent(
                     player=player.getName(), card=_printCard(card), previousCard=_printCard(prevCard),
                     guess=guessWord, correct=False, streak=streak,
                     pot=_pot(streak), multiplier=multiplier,
@@ -179,7 +179,7 @@ class KetjuGame(Game):
 
             # Correct guess
             streak += 1
-            self.emit(KetjuCardDrawnEvent(
+            self.emit(DoDCardDrawnEvent(
                 player=player.getName(), card=_printCard(card), previousCard=_printCard(prevCard),
                 guess=guessWord, correct=True, streak=streak,
                 pot=_pot(streak), multiplier=multiplier,
@@ -206,7 +206,7 @@ class KetjuGame(Game):
                     return None
                 if raw == "e":
                     giveAmount = _pot(finalThreshold)
-                    self.emit(KetjuExitEvent(player.getName(), giveAmount, streak))
+                    self.emit(DoDExitEvent(player.getName(), giveAmount, streak))
                     player.pendingGive = giveAmount
                     self._interactiveGivePhase()
                     return (prevCard, 1, True)
@@ -236,7 +236,7 @@ class KetjuGame(Game):
                     return None
                 if raw == "e":
                     giveAmount = _pot(streak)
-                    self.emit(KetjuExitEvent(player.getName(), giveAmount, streak))
+                    self.emit(DoDExitEvent(player.getName(), giveAmount, streak))
                     player.pendingGive = giveAmount
                     self._interactiveGivePhase()
                     return (prevCard, 1, True)
@@ -259,7 +259,7 @@ class KetjuGame(Game):
             linked = next((p for p in self.players if p.getName() == chainedPlayer), None)
             if linked:
                 linked.addDrinks(amount)
-                self.emit(KetjuLinkResolvedEvent(chainedPlayer, triggerPlayer, amount))
+                self.emit(DoDLinkResolvedEvent(chainedPlayer, triggerPlayer, amount))
                 self.emit(DrinkEvent(chainedPlayer, amount, "ketju-linkki"))
 
     def _showTurnPrompt(
@@ -290,13 +290,16 @@ class KetjuGame(Game):
         chainedPlayer: Optional[str],
     ) -> Optional[Tuple[Card, int, bool]]:
         """Double or Double sub-game. Returns (newPrevCard, newMultiplier, updateChain) or None (quit)."""
-        # Step 1: show current card + ask for guess (challenge card still hidden)
+        # Step 1: draw the DoD reference card, then ask for guess
+        if deck.cardsRemaining() == 0:
+            deck.resetDeck()
+        dodCard = deck.drawCard()
         self._clearScreen()
         print(f"\n{_SEP}")
         print("  DOUBLE OR DOUBLE!")
         print(f"  Putki {finalThreshold} täynnä!")
         print(_DIV)
-        print(f"  Nykyinen kortti: {prevCard}")
+        print(f"  DOD KORTTI: {dodCard}")
         print(f"  Panos: {_pot(finalThreshold)} juo.  |  Kerroin: ×{multiplier}")
         print()
         print("  h = higher  |  l = lower")
@@ -316,7 +319,7 @@ class KetjuGame(Game):
         challengeCard = deck.drawCard()
 
         guessWord = "korkeampi" if raw == "h" else "matalampi"
-        actualHigher = challengeCard.value() > prevCard.value()
+        actualHigher = challengeCard.value() > dodCard.value()
         correct = (raw == "h" and actualHigher) or (raw == "l" and not actualHigher)
 
         # Step 3: reveal result
@@ -326,8 +329,8 @@ class KetjuGame(Game):
             payout = _pot(finalThreshold) * newMult
             returnMult = 1 if newMult >= multiplierCap else newMult
             print(f"\n{_SEP}")
-            print(f"  Nykyinen: {prevCard}")
-            print(f"  Haaste:   {challengeCard}  ({guessWord})")
+            print(f"  DOD:    {dodCard}")
+            print(f"  Haaste: {challengeCard}  ({guessWord})")
             print(_DIV)
             print(f"  OIKEIN!  {player.getName()} jakaa {payout} juomaa!")
             print(f"  Kerroin seuraavalle: ×{returnMult}")
@@ -351,9 +354,9 @@ class KetjuGame(Game):
                     linked.addDrinks(payout)
                     chainDrinker = chainedPlayer
                     self.emit(DrinkEvent(chainedPlayer, payout, "ketju-double-linkki"))
-            self.emit(KetjuDoubleOrDoubleEvent(
+            self.emit(DoDChallengeEvent(
                 player=player.getName(), challengeCard=_printCard(challengeCard),
-                previousCard=_printCard(prevCard), guess=guessWord, correct=True,
+                previousCard=_printCard(dodCard), guess=guessWord, correct=True,
                 pot=_pot(finalThreshold), multiplier=multiplier, amount=payout,
                 target=target.getName(), chainedPlayer=chainDrinker,
             ))
@@ -367,17 +370,17 @@ class KetjuGame(Game):
         else:
             drinks = _pot(finalThreshold) * 2
             player.addDrinks(drinks)
-            self.emit(KetjuDoubleOrDoubleEvent(
+            self.emit(DoDChallengeEvent(
                 player=player.getName(), challengeCard=_printCard(challengeCard),
-                previousCard=_printCard(prevCard), guess=guessWord, correct=False,
+                previousCard=_printCard(dodCard), guess=guessWord, correct=False,
                 pot=_pot(finalThreshold), multiplier=multiplier, amount=drinks,
                 chainedPlayer=chainedPlayer if chainedPlayer != player.getName() else None,
             ))
             self.emit(DrinkEvent(player.getName(), drinks, "ketju-double"))
             self._mirrorChain(chainedPlayer, player.getName(), drinks)
             print(f"\n{_SEP}")
-            print(f"  Nykyinen: {prevCard}")
-            print(f"  Haaste:   {challengeCard}  ({guessWord})")
+            print(f"  DOD:    {dodCard}")
+            print(f"  Haaste: {challengeCard}  ({guessWord})")
             print(_DIV)
             print(f"  VÄÄRIN!  {player.getName()} juo {drinks}!")
             if chainedPlayer and chainedPlayer != player.getName():

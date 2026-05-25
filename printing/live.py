@@ -4,13 +4,13 @@ LivePrinter listens to game events and prints receipts in real time as the game 
 Register it with: log.on(LivePrinter(printer).hook)
 """
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
-from games.ketjuGame.ketjuEvents import KetjuCardDrawnEvent, KetjuEqualCardEvent, KetjuDoubleOrDoubleEvent, KetjuExitEvent, KetjuLinkResolvedEvent
+from games.doubleOrDoubleGame.doubleOrDoubleEvents import DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent, DoDExitEvent, DoDLinkResolvedEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatBoardCardReveal, formatBoardCardOutcome, formatTally, formatRouletteResult, configure as _configureBujaFormatter
 from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSummary, formatChainDraw, formatTally as formatTaskTally, configure as _configureTaskGameFormatter
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceRound, formatHorseEvent, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
 from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatAccept as _formatMexicoAccept, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
-from printing.receipts.ketjuFormatter import formatCardDraw as _formatKetjuCardDraw, formatEqualCard as _formatKetjuEqualCard, formatDoubleOrDouble as _formatKetjuDouble, formatExit as _formatKetjuExit, formatLinkResolved as _formatKetjuLink, formatTally as _formatKetjuTally, configure as _configureKetjuFormatter
+from printing.receipts.doubleOrDoubleFormatter import formatCardDraw as _formatDoDCardDraw, formatEqualCard as _formatDoDEqualCard, formatDoubleOrDouble as _formatDoDChallenge, formatExit as _formatDoDExit, formatLinkResolved as _formatDoDLink, formatTally as _formatDoDTally, configure as _configureDoDFormatter
 
 
 class LivePrinter:
@@ -23,7 +23,7 @@ class LivePrinter:
         _configureTaskGameFormatter(printerConfig)
         _configureRavitFormatter(printerConfig)
         _configureDiceFormatter(printerConfig)
-        _configureKetjuFormatter(printerConfig)
+        _configureDoDFormatter(printerConfig)
         self._inBoard = False
         self._boardCardCount = 0
         self._printedBoardCards = set()
@@ -124,20 +124,20 @@ class LivePrinter:
         elif isinstance(event, TiebreakWinnerEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakWinner(e, p))
 
-        elif isinstance(event, KetjuCardDrawnEvent):
-            self._printer.printWith(lambda p, e=event: _formatKetjuCardDraw(e, p))
+        elif isinstance(event, DoDCardDrawnEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDCardDraw(e, p))
 
-        elif isinstance(event, KetjuEqualCardEvent):
-            self._printer.printWith(lambda p, e=event: _formatKetjuEqualCard(e, p))
+        elif isinstance(event, DoDEqualCardEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDEqualCard(e, p))
 
-        elif isinstance(event, KetjuDoubleOrDoubleEvent):
-            self._printer.printWith(lambda p, e=event: _formatKetjuDouble(e, p))
+        elif isinstance(event, DoDChallengeEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDChallenge(e, p))
 
-        elif isinstance(event, KetjuExitEvent):
-            self._printer.printWith(lambda p, e=event: _formatKetjuExit(e, p))
+        elif isinstance(event, DoDExitEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDExit(e, p))
 
-        elif isinstance(event, KetjuLinkResolvedEvent):
-            self._printer.printWith(lambda p, e=event: _formatKetjuLink(e, p))
+        elif isinstance(event, DoDLinkResolvedEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDLink(e, p))
 
         elif isinstance(event, MexicanAcceptEvent):
             self._printer.printWith(lambda p, e=event: _formatMexicoAccept(e, p))
@@ -149,8 +149,8 @@ class LivePrinter:
             data = log.toDict()
             if self._gameTitle == "Mexico":
                 self._printer.printWith(lambda p, s=data["scores"]: _formatMexicoTally(s, p))
-            elif self._gameTitle == "Ketju":
-                self._printer.printWith(lambda p, s=data["scores"]: _formatKetjuTally(s, p))
+            elif self._gameTitle == "DoubleOrDouble":
+                self._printer.printWith(lambda p, s=data["scores"]: _formatDoDTally(s, p))
             elif self._gameTitle == "TaskGame":
                 self._printer.printWith(lambda p, s=data["scores"]: formatTaskTally(s, p))
             elif self._gameTitle == "Buja":
