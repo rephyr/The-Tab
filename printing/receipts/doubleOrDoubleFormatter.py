@@ -10,7 +10,7 @@ def configure(config: dict) -> None:
 
 
 def formatCardDraw(event, p) -> None:
-    """Print a receipt for each card drawn — streak progress or wrong guess."""
+    """Print a receipt for each card drawn streak progress or wrong guess."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
@@ -148,7 +148,7 @@ def formatExit(event, p) -> None:
 
 
 def formatLinkResolved(event, p) -> None:
-    """Print a receipt when the link fires and the linked player drinks."""
+    """Print a receipt when the link firs and the linked player drinks."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)

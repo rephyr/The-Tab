@@ -41,12 +41,11 @@ class DoubleOrDoubleGame(Game):
     config: dict = field(default_factory=dict)
 
     def playRound(self) -> None:
-        cfg = self.config.get("doubleOrDouble", {})
-        deckCount = int(cfg.get("deckCount", 1))
-        minStreakToExit = int(cfg.get("minStreakToExit", 3))
-        finalThreshold = int(cfg.get("finalThreshold", 5))
-        multiplierCap = int(cfg.get("multiplierCap", 8))
-        equalPenalty = int(cfg.get("equalPenalty", 3))
+        deckCount = int(self.config.get("deckCount", 1))
+        minStreakToExit = int(self.config.get("minStreakToExit", 3))
+        finalThreshold = int(self.config.get("finalThreshold", 5))
+        multiplierCap = int(self.config.get("multiplierCap", 8))
+        equalPenalty = int(self.config.get("equalPenalty", 3))
 
         deck = Deck(deckCount=deckCount)
         deck.resetDeck()

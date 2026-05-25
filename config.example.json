@@ -24,7 +24,7 @@
     "commonCount": 4,
     "specialCount": 2
   },
-  "doubleOrDouble": {
+  "doubleordouble": {
     "deckCount": 1,
     "minStreakToExit": 3,
     "finalThreshold": 5,

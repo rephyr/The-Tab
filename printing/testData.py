@@ -5,7 +5,7 @@ Change the values here to see how different content looks when printed.
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally
 from printing.receipts.taskGameFormatter import formatTaskDraw
 from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
-from printing.receipts.doubleOrDoubleFormatter import formatCardDraw as formatKetjuCardDraw, formatEqualCard as formatKetjuEqualCard, formatDoubleOrDouble as formatKetjuDouble, formatExit as formatKetjuExit, formatLinkResolved as formatKetjuLink, formatTally as formatKetjuTally
+from printing.receipts.doubleOrDoubleFormatter import formatCardDraw as formatDoDCardDraw, formatEqualCard as formatDoDEqualCard, formatDoubleOrDouble as formatDoDChallenge, formatExit as formatDoDExit, formatLinkResolved as formatDoDLink, formatTally as formatDoDTally
 from printing.receipts.ravitFormatter import (
     formatHorseList, formatJockeyList, formatBettingReceipt,
     formatRaceRound, formatHorseEvent, formatRavitFinal,
@@ -19,9 +19,7 @@ from core.events import (
 )
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
 from games.doubleOrDoubleGame.doubleOrDoubleEvents import (
-    DoDCardDrawnEvent as KetjuCardDrawnEvent, DoDEqualCardEvent as KetjuEqualCardEvent,
-    DoDChallengeEvent as KetjuDoubleOrDoubleEvent, DoDExitEvent as KetjuExitEvent,
-    DoDLinkResolvedEvent as KetjuLinkResolvedEvent,
+    DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent, DoDExitEvent, DoDLinkResolvedEvent,
 )
 
 # ---------------------------------------------------------------------------
@@ -201,41 +199,41 @@ TEST_MEXICO_SCORES = [
 ]
 
 # ---------------------------------------------------------------------------
-# Ketju
+# DoubleOrDouble
 # ---------------------------------------------------------------------------
 
-TEST_KETJU_CARD_CORRECT = KetjuCardDrawnEvent(
+TEST_DOD_CARD_CORRECT = DoDCardDrawnEvent(
     player="Testi Tatti", card="♠J", previousCard="♦7",
     guess="korkeampi", correct=True, streak=3, pot=3, multiplier=1,
 )
 
-TEST_KETJU_CARD_WRONG = KetjuCardDrawnEvent(
+TEST_DOD_CARD_WRONG = DoDCardDrawnEvent(
     player="Testi Matti", card="♣3", previousCard="♦7",
     guess="korkeampi", correct=False, streak=2, pot=2, multiplier=2,
 )
 
-TEST_KETJU_EQUAL = KetjuEqualCardEvent(
+TEST_DOD_EQUAL = DoDEqualCardEvent(
     player="Testi Tatti", card="♥7", previousCard="♦7",
     penalty=3, multiplier=2, total=6,
 )
 
-TEST_KETJU_DOUBLE_CORRECT = KetjuDoubleOrDoubleEvent(
+TEST_DOD_DOUBLE_CORRECT = DoDChallengeEvent(
     player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
     guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
 )
 
-TEST_KETJU_DOUBLE_WRONG = KetjuDoubleOrDoubleEvent(
+TEST_DOD_DOUBLE_WRONG = DoDChallengeEvent(
     player="Testi Matti", challengeCard="♣2", previousCard="♦7",
     guess="korkeampi", correct=False, pot=10, multiplier=1, amount=20,
 )
 
-TEST_KETJU_EXIT = KetjuExitEvent(player="Testi Tatti", pot=3, streak=3)
+TEST_DOD_EXIT = DoDExitEvent(player="Testi Tatti", pot=3, streak=3)
 
-TEST_KETJU_LINK = KetjuLinkResolvedEvent(
+TEST_DOD_LINK = DoDLinkResolvedEvent(
     linkedPlayer="Testi Tatti", triggerPlayer="Testi Matti", amount=4,
 )
 
-TEST_KETJU_SCORES = [
+TEST_DOD_SCORES = [
     {"name": "Testi Tatti", "drank": 6, "gave": 3},
     {"name": "Testi Matti", "drank": 20, "gave": 0},
 ]
@@ -283,22 +281,22 @@ def printTestReceipts(printer, parts=None) -> None:
         parts = [key for game_parts in GAMES.values() for key, _ in game_parts]
 
     if "dod-card" in parts:
-        printer.printWith(lambda p, e=TEST_KETJU_CARD_CORRECT: formatKetjuCardDraw(e, p))
-        printer.printWith(lambda p, e=TEST_KETJU_CARD_WRONG: formatKetjuCardDraw(e, p))
-        printer.printWith(lambda p, e=TEST_KETJU_EQUAL: formatKetjuEqualCard(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_CARD_CORRECT: formatDoDCardDraw(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_CARD_WRONG: formatDoDCardDraw(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_EQUAL: formatDoDEqualCard(e, p))
 
     if "dod-double" in parts:
-        printer.printWith(lambda p, e=TEST_KETJU_DOUBLE_CORRECT: formatKetjuDouble(e, p))
-        printer.printWith(lambda p, e=TEST_KETJU_DOUBLE_WRONG: formatKetjuDouble(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_DOUBLE_CORRECT: formatDoDChallenge(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_DOUBLE_WRONG: formatDoDChallenge(e, p))
 
     if "dod-exit" in parts:
-        printer.printWith(lambda p, e=TEST_KETJU_EXIT: formatKetjuExit(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_EXIT: formatDoDExit(e, p))
 
     if "dod-link" in parts:
-        printer.printWith(lambda p, e=TEST_KETJU_LINK: formatKetjuLink(e, p))
+        printer.printWith(lambda p, e=TEST_DOD_LINK: formatDoDLink(e, p))
 
     if "dod-tally" in parts:
-        printer.printWith(lambda p: formatKetjuTally(TEST_KETJU_SCORES, p))
+        printer.printWith(lambda p: formatDoDTally(TEST_DOD_SCORES, p))
 
     if "mexico-accept" in parts:
         printer.printWith(lambda p, e=TEST_MEXICO_ACCEPT: formatMexicoAccept(e, p))
