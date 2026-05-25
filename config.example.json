@@ -28,6 +28,13 @@
     "commonCount": 4,
     "specialCount": 2
   },
+  "doubleordouble": {
+    "deckCount": 1,
+    "minStreakToExit": 3,
+    "finalThreshold": 5,
+    "multiplierCap": 8,
+    "equalPenalty": 3
+  },
   "mexico": {
     "drinkAmount": 1,
     "mexicoDrinks": 2

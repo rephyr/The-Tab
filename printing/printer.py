@@ -126,7 +126,6 @@ class ReceiptPrinter:
         except Exception as e:
             print(f"[Tulostin: virhe tulostuksessa — {e}]")
             self._p = self._fallback()
-            return
         # win32raw batches everything into one spooler job until close() is called.
         # Wait briefly for the printer to process the receipt, then purge the whole
         # queue so offline jobs never accumulate between sessions.

@@ -23,6 +23,13 @@ def configureGame(gameTitle: str, configData: dict) -> dict:
     defaults = configData.get(gameTitle.lower(), {})
 
     if not defaults:
+        import json
+        from pathlib import Path
+        examplePath = Path("config.example.json")
+        if examplePath.exists():
+            with open(examplePath, "r", encoding="utf-8") as f:
+                defaults = json.load(f).get(gameTitle.lower(), {})
+    if not defaults:
         return {}
 
     keys = list(defaults.keys())
