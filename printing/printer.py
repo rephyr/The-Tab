@@ -103,6 +103,11 @@ class ReceiptPrinter:
             profile = self.config.get("escposProfile", "default")
             self._p = Serial(port, baudrate=baud, profile=profile)
             self._p = EscposSanitizerWrapper(self._p)
+            font = self.config.get("escposFont", "a")
+            if font != "a":
+                self._p = FontWrapper(self._p, font)
+            if self.config.get("useCardImages"):
+                self._p = CardAwareWrapper(self._p, self.config)
 
         elif conn == "file":
             self._p = FilePrinter(self.config.get("path", "receipt.txt"))

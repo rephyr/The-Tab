@@ -13,7 +13,7 @@
     "escposFont": "b",
     "escposProfile": "POS-5890",
     "saveImages": false,
-    "useCardImages": false,
+    "useCardImages": true,
     "outputDir": "output",
     "widthImage": 576,
     "heightImage": 120,

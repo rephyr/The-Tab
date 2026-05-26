@@ -10,22 +10,32 @@ def configure(config: dict) -> None:
 
 
 def formatCardDraw(event, p) -> None:
-    """Print a receipt for each card drawn streak progress or wrong guess."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    for line in _wrapText(event.player, _W):
-        p.textln(line)
-    p.textln("-" * _W)
-    for line in _wrapText(f"Nykyinen: {event.previousCard}", _W):
-        p.textln(line)
-    p.textln("-" * _W)
 
     if event.correct:
         p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln("OIKEIN!")
         p.set(align="left", bold=False, double_width=False, double_height=False)
+    else:
+        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+        p.textln("VÄÄRIN!")
+        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+
+    p.textln("-" * _W)
+    for line in _wrapText(event.player, _W):
+        p.textln(line)
+    for line in _wrapText(f"Arvaus: {event.guess}", _W):
+        p.textln(line)
+    p.textln("-" * _W)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(f"{event.previousCard}  {event.card}")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("-" * _W)
+
+    if event.correct:
         for line in _wrapText(f"Putki: {event.streak}  |  Panos: {event.pot}", _W):
             p.textln(line)
         if event.multiplier > 1:
@@ -33,9 +43,6 @@ def formatCardDraw(event, p) -> None:
                 p.textln(line)
     else:
         drinks = event.pot * event.multiplier
-        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
-        p.textln("VÄÄRIN!")
-        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
         p.set(bold=True)
         for line in _wrapText(f"{event.player} juo {drinks}!", _W):
             p.textln(line)
@@ -44,27 +51,25 @@ def formatCardDraw(event, p) -> None:
                 p.textln(line)
         p.set(bold=False)
 
-    p.textln("-" * _W)
-    for line in _wrapText(f"Nostettu: {event.card}", _W):
-        p.textln(line)
     p.textln("=" * _W)
 
 
 def formatEqualCard(event, p) -> None:
-    """Print a receipt when an equal card is drawn."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
     p.textln("=" * _W)
-    for line in _wrapText(event.player, _W):
-        p.textln(line)
-    p.textln("-" * _W)
-    for line in _wrapText(f"Nykyinen: {event.previousCard}", _W):
-        p.textln(line)
-    p.textln("-" * _W)
     p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
     p.textln("TASAINEN!")
     p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+    p.textln("-" * _W)
+    for line in _wrapText(event.player, _W):
+        p.textln(line)
+    p.textln("-" * _W)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(f"{event.previousCard}  {event.card}")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("-" * _W)
     p.set(bold=True)
     for line in _wrapText(f"{event.player} juo {event.total}!", _W):
         p.textln(line)
@@ -72,14 +77,10 @@ def formatEqualCard(event, p) -> None:
         for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {event.total}!", _W):
             p.textln(line)
     p.set(bold=False)
-    p.textln("-" * _W)
-    for line in _wrapText(f"Nostettu: {event.card}", _W):
-        p.textln(line)
     p.textln("=" * _W)
 
 
 def formatDoubleOrDouble(event, p) -> None:
-    """Print a receipt for the Double or Double challenge."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
@@ -88,16 +89,28 @@ def formatDoubleOrDouble(event, p) -> None:
     p.textln("DOUBLE OR DOUBLE")
     p.set(align="left", bold=False)
     p.textln("-" * _W)
-    for line in _wrapText(event.player, _W):
-        p.textln(line)
-    for line in _wrapText(f"DOD kortti: {event.previousCard}", _W):
-        p.textln(line)
-    p.textln("-" * _W)
 
     if event.correct:
         p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln("OIKEIN!")
         p.set(align="left", bold=False, double_width=False, double_height=False)
+    else:
+        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+        p.textln("VÄÄRIN!")
+        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
+
+    p.textln("-" * _W)
+    for line in _wrapText(event.player, _W):
+        p.textln(line)
+    for line in _wrapText(f"Arvaus: {event.guess}", _W):
+        p.textln(line)
+    p.textln("-" * _W)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(f"{event.previousCard}  {event.challengeCard}")
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("-" * _W)
+
+    if event.correct:
         p.set(bold=True)
         if event.target:
             for line in _wrapText(f"{event.target} juo {event.amount}!", _W):
@@ -110,9 +123,6 @@ def formatDoubleOrDouble(event, p) -> None:
                 p.textln(line)
         p.set(bold=False)
     else:
-        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
-        p.textln("VÄÄRIN!")
-        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
         p.set(bold=True)
         for line in _wrapText(f"{event.player} juo {event.amount}!", _W):
             p.textln(line)
@@ -121,14 +131,10 @@ def formatDoubleOrDouble(event, p) -> None:
                 p.textln(line)
         p.set(bold=False)
 
-    p.textln("-" * _W)
-    for line in _wrapText(f"Haaste: {event.challengeCard}", _W):
-        p.textln(line)
     p.textln("=" * _W)
 
 
 def formatExit(event, p) -> None:
-    """Print a receipt when a player exits the streak voluntarily."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
@@ -148,7 +154,6 @@ def formatExit(event, p) -> None:
 
 
 def formatLinkResolved(event, p) -> None:
-    """Print a receipt when the link firs and the linked player drinks."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
@@ -168,7 +173,6 @@ def formatLinkResolved(event, p) -> None:
 
 
 def formatTally(scores: list, p) -> None:
-    """Print the final drink tally."""
     p.set(align="center", bold=True)
     p.textln("DoD")
     p.set(align="left", bold=False)
