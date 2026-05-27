@@ -32,40 +32,40 @@ def formatTurn(phaseName: str, turn: dict, p) -> None:
     p.textln(phaseName.upper())
     p.set(align="left", bold=False)
     p.textln("-" * _W)
-    p.textln(f"Pelaaja : {turn['player']}")
-    if phaseName == "Välistä vai ulkoa?" and turn.get("handBefore"):
-        hand = turn["handBefore"]
-        p.textln("Kädessä:")
-        p.set(align="center", bold=True, double_width=True, double_height=True)
-        p.textln("  ".join(hand))
-        p.set(align="left", bold=False, double_width=False, double_height=False)
-    if turn["guess"]:
-        p.textln(f"Arvaus  : {turn['guess']}")
+
     if turn["card"]:
         if phaseName == "Isompi vai pienempi?" and turn.get("handBefore"):
             display = f"{turn['handBefore'][-1]}  {turn['card']}"
         else:
             display = turn["card"]
-        p.textln("")
-        p.set(align="center", bold=True, double_width=True, double_height=True, invert=True)
+        p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln(display)
-        p.set(align="left", bold=False, double_width=False, double_height=False, invert=False)
-        p.textln("")
+        p.set(align="left", bold=False, double_width=False, double_height=False)
+
+    if turn["gaveTo"] or turn.get("correct") is True:
+        p.set(align="center", bold=True)
+        p.textln("OIKEIN!")
+        p.set(align="left", bold=False)
+    elif turn["drinks"] > 0:
+        p.set(align="center", bold=True)
+        p.textln("VÄÄRIN!")
+        p.set(align="left", bold=False)
+
+    p.textln("-" * _W)
+    p.textln(f"Pelaaja : {turn['player']}")
+    if phaseName == "Välistä vai ulkoa?" and turn.get("handBefore"):
+        p.textln("Kädessä:")
+        p.set(align="center", bold=True, double_width=True, double_height=True)
+        p.textln("  ".join(turn["handBefore"]))
+        p.set(align="left", bold=False, double_width=False, double_height=False)
+    if turn["guess"]:
+        p.textln(f"Arvaus  : {turn['guess']}")
     if turn["gaveTo"]:
-        p.textln(f"Oikein! {turn['gaveTo']} juo {turn['drinks']}.")
-    elif turn.get("correct") is True:
-        p.textln("Oikein!")
+        p.textln(f"{turn['gaveTo']} juo {turn['drinks']}.")
     elif turn["drinks"] > 0:
         note = f" ({turn['note']})" if turn["note"] else ""
-        p.textln(f"Väärin! Juo {turn['drinks']}{note}.")
-    currentHand = list(turn.get("handBefore") or [])
-    if turn.get("card"):
-        currentHand.append(turn["card"])
-    if currentHand:
-        p.textln("-" * _W)
-        p.set(align="center", bold=True, double_width=True, double_height=True)
-        p.textln("  ".join(currentHand))
-        p.set(align="left", bold=False, double_width=False, double_height=False)
+        p.textln(f"Juo {turn['drinks']}{note}.")
+
     p.textln("-" * _W)
 
 

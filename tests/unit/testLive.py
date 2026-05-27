@@ -34,7 +34,8 @@ class TestLivePrinterPhase(SilentTest):
 
         addPhaseTurn(log, "Red or Black", "Testi Matti", correct=False, gaveTo=None, drinks=1)
 
-        printer.printWith.assert_called_once()
+        # 1 turn receipt + 1 hand receipt
+        self.assertEqual(printer.printWith.call_count, 2)
 
     def testPrintsTurnAfterGiveEvent(self):
         printer = MagicMock()
@@ -43,7 +44,8 @@ class TestLivePrinterPhase(SilentTest):
 
         addPhaseTurn(log, "Red or Black", "Testi Matti", correct=True, gaveTo="Testi Timo", drinks=1)
 
-        printer.printWith.assert_called_once()
+        # 1 turn receipt + 1 hand receipt
+        self.assertEqual(printer.printWith.call_count, 2)
 
     def testPrintsTurnPerPlayer(self):
         printer = MagicMock()
@@ -53,7 +55,8 @@ class TestLivePrinterPhase(SilentTest):
         addPhaseTurn(log, "Red or Black", "Testi Matti", gaveTo="Testi Timo")
         addPhaseTurn(log, "Red or Black", "Testi Timo", gaveTo="Testi Matti")
 
-        self.assertEqual(printer.printWith.call_count, 2)
+        # 2 × (1 turn receipt + 1 hand receipt)
+        self.assertEqual(printer.printWith.call_count, 4)
 
 class TestLivePrinterHands(SilentTest):
 
@@ -66,8 +69,8 @@ class TestLivePrinterHands(SilentTest):
         addPhaseTurn(log, "Red or Black", "Testi Timo", gaveTo="Testi Matti")
         log.add(PhaseEvent("Board", ""))
 
-        # 2 turn receipts + 2 hand receipts
-        self.assertEqual(printer.printWith.call_count, 4)
+        # 2 × (1 turn receipt + 1 hand receipt) + 2 hand receipts at board start
+        self.assertEqual(printer.printWith.call_count, 6)
 
 class TestLivePrinterBoard(SilentTest):
 

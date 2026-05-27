@@ -32,6 +32,14 @@ class LivePrinter:
         self._ravitBets = []
         self._ravitFinalPositions = []
 
+    def _printHandAfterTurn(self, turn: dict) -> None:
+        hand = list(turn.get("handBefore") or [])
+        if turn.get("card"):
+            hand.append(turn["card"])
+        if hand:
+            player = turn["player"]
+            self._printer.printWith(lambda p, pl=player, h=hand: formatHand(pl, h, p))
+
     def hook(self, event, log):
         """Called by GameLog after every event. Decides what to print based on event type."""
         if isinstance(event, PhaseEvent) and event.player == "":
@@ -50,6 +58,7 @@ class LivePrinter:
             self._printer.printWith(
                 lambda p, ph=lastPhase["name"], t=lastTurn: formatTurn(ph, t, p)
             )
+            self._printHandAfterTurn(lastTurn)
             self._turnPrinted = True
 
         elif isinstance(event, (DrinkEvent, GiveEvent)) and not self._inBoard and not self._turnPrinted:
@@ -61,6 +70,7 @@ class LivePrinter:
             self._printer.printWith(
                 lambda p, ph=lastPhase["name"], t=lastTurn: formatTurn(ph, t, p)
             )
+            self._printHandAfterTurn(lastTurn)
 
         elif isinstance(event, BoardCardEvent) and self._inBoard:
             self._boardCardCount += 1
