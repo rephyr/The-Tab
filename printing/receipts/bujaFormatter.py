@@ -41,6 +41,7 @@ def formatTurn(phaseName: str, turn: dict, p) -> None:
         p.set(align="center", bold=True, double_width=True, double_height=True)
         p.textln(display)
         p.set(align="left", bold=False, double_width=False, double_height=False)
+        p.textln("")
 
     if turn["gaveTo"] or turn.get("correct") is True:
         p.set(align="center", bold=True)
