@@ -31,9 +31,12 @@ def formatTurnStart(event, p) -> None:
 
 def formatCardReveal(card: str, p) -> None:
     """Print just the drawn card — no result, no context."""
+    p.textln("=" * _W)
     p.set(align="center", bold=True, double_width=True, double_height=True)
     p.textln(card)
     p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("")
+    p.textln("=" * _W)
 
 
 def formatCardDraw(event, p) -> None:
@@ -56,10 +59,6 @@ def formatCardDraw(event, p) -> None:
         p.textln(line)
     for line in _wrapText(f"Arvaus: {event.guess}", _W):
         p.textln(line)
-    p.textln("-" * _W)
-    p.set(align="center", bold=True, double_width=True, double_height=True)
-    p.textln(f"{event.previousCard}  {event.card}")
-    p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("-" * _W)
 
     if event.correct:
@@ -92,10 +91,6 @@ def formatEqualCard(event, p) -> None:
     p.textln("-" * _W)
     for line in _wrapText(event.player, _W):
         p.textln(line)
-    p.textln("-" * _W)
-    p.set(align="center", bold=True, double_width=True, double_height=True)
-    p.textln(f"{event.previousCard}  {event.card}")
-    p.set(align="left", bold=False, double_width=False, double_height=False)
     p.textln("-" * _W)
     p.set(bold=True)
     for line in _wrapText(f"{event.player} juo {event.total}!", _W):
@@ -132,24 +127,8 @@ def formatDoubleOrDouble(event, p) -> None:
     for line in _wrapText(f"Arvaus: {event.guess}", _W):
         p.textln(line)
     p.textln("-" * _W)
-    p.set(align="center", bold=True, double_width=True, double_height=True)
-    p.textln(f"{event.previousCard}  {event.challengeCard}")
-    p.set(align="left", bold=False, double_width=False, double_height=False)
-    p.textln("-" * _W)
 
-    if event.correct:
-        p.set(bold=True)
-        if event.target:
-            for line in _wrapText(f"{event.target} juo {event.amount}!", _W):
-                p.textln(line)
-            if event.chainedPlayer:
-                for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {event.amount}!", _W):
-                    p.textln(line)
-        else:
-            for line in _wrapText(f"Jaat {event.amount} juomaa!", _W):
-                p.textln(line)
-        p.set(bold=False)
-    else:
+    if not event.correct:
         p.set(bold=True)
         for line in _wrapText(f"{event.player} juo {event.amount}!", _W):
             p.textln(line)
@@ -158,6 +137,23 @@ def formatDoubleOrDouble(event, p) -> None:
                 p.textln(line)
         p.set(bold=False)
 
+    p.textln("=" * _W)
+
+
+def formatDoDDrinksGiven(event, p) -> None:
+    """Clean slip for the player(s) receiving drinks after a correct DoD challenge."""
+    p.textln("=" * _W)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(event.target.upper())
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("-" * _W)
+    p.set(bold=True)
+    for line in _wrapText(f"Juo {event.amount}!", _W):
+        p.textln(line)
+    if event.chainedPlayer:
+        for line in _wrapText(f"KETJU: {event.chainedPlayer} juo {event.amount}!", _W):
+            p.textln(line)
+    p.set(bold=False)
     p.textln("=" * _W)
 
 

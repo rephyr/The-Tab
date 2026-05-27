@@ -10,7 +10,7 @@ from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSumma
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceEvents, formatRaceTrack, formatHorseEvent, formatRavitWinner, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
 from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
 from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatAccept as _formatMexicoAccept, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
-from printing.receipts.doubleOrDoubleFormatter import formatTurnStart as _formatDoDTurnStart, formatCardReveal as _formatDoDCardReveal, formatCardDraw as _formatDoDCardDraw, formatEqualCard as _formatDoDEqualCard, formatDoubleOrDouble as _formatDoDChallenge, formatExit as _formatDoDExit, formatLinkResolved as _formatDoDLink, formatTally as _formatDoDTally, configure as _configureDoDFormatter
+from printing.receipts.doubleOrDoubleFormatter import formatTurnStart as _formatDoDTurnStart, formatCardReveal as _formatDoDCardReveal, formatCardDraw as _formatDoDCardDraw, formatEqualCard as _formatDoDEqualCard, formatDoubleOrDouble as _formatDoDChallenge, formatDoDDrinksGiven as _formatDoDDrinksGiven, formatExit as _formatDoDExit, formatLinkResolved as _formatDoDLink, formatTally as _formatDoDTally, configure as _configureDoDFormatter
 
 
 class LivePrinter:
@@ -155,6 +155,8 @@ class LivePrinter:
         elif isinstance(event, DoDChallengeEvent):
             self._printer.printWith(lambda p, e=event: _formatDoDCardReveal(e.challengeCard, p))
             self._printer.printWith(lambda p, e=event: _formatDoDChallenge(e, p))
+            if event.correct and event.target:
+                self._printer.printWith(lambda p, e=event: _formatDoDDrinksGiven(e, p))
 
         elif isinstance(event, DoDExitEvent):
             self._printer.printWith(lambda p, e=event: _formatDoDExit(e, p))
