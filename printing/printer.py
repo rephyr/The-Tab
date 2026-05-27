@@ -17,6 +17,9 @@ try:
     ESCPOS_AVAILABLE = True
 except ImportError:
     ESCPOS_AVAILABLE = False
+    Usb = None
+    Serial = None
+    Win32Raw = None
 
 # Characters that don't survive ESC/POS codepages → safe fallbacks
 _PRINTER_SUBSTITUTIONS = {
