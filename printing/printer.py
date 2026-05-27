@@ -22,10 +22,16 @@ except ImportError:
     Win32Raw = None
 
 # Characters that don't survive ESC/POS codepages → safe fallbacks
+# These three look identical in editors but are distinct byte sequences:
+#   U+2764 U+FE0E U+2060   — heavy heart + text-variation-selector + word-joiner
+#   U+2764 U+FE0E          — heavy heart + text-variation-selector
+#   U+2764                 — bare heavy heart
+# All three can appear depending on how the card string was typed or pasted,
+# so all three need mapping to the plain ♥ (U+2665) the printer codepage supports.
 _PRINTER_SUBSTITUTIONS = {
-    "❤︎⁠": "♥",  # ❤︎⁠ (heavy heart + variation selector + word joiner)
-    "❤︎": "♥",  # ❤︎ (heavy heart + variation selector)
-    "❤": "♥",  # ❤ (bare heavy heart)
+    "❤︎⁠": "♥",
+    "❤︎": "♥",
+    "❤": "♥",
 }
 
 
