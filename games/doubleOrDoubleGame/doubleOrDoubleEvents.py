@@ -3,6 +3,16 @@ from typing import Optional
 
 
 @dataclass
+class DoDTurnStartEvent:
+    player: str
+    previousCard: str
+    streak: int
+    pot: int
+    multiplier: int
+    chainedPlayer: Optional[str] = None
+
+
+@dataclass
 class DoDCardDrawnEvent:
     player: str
     card: str

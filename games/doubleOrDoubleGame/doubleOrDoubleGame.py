@@ -15,7 +15,7 @@ from core.deck import Deck
 from core.cards import Card
 from core.events import GameStartEvent, GameEndEvent, DrinkEvent, GiveEvent
 from games.doubleOrDoubleGame.doubleOrDoubleEvents import (
-    DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent,
+    DoDTurnStartEvent, DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent,
     DoDExitEvent, DoDLinkResolvedEvent,
 )
 
@@ -111,6 +111,12 @@ class DoubleOrDoubleGame(Game):
         while True:
             self._clearScreen()
             self._showTurnPrompt(player.getName(), prevCard, streak, multiplier, chainedPlayer)
+
+            self.emit(DoDTurnStartEvent(
+                player=player.getName(), previousCard=_printCard(prevCard),
+                streak=streak, pot=_pot(streak), multiplier=multiplier,
+                chainedPlayer=chainedPlayer if chainedPlayer != player.getName() else None,
+            ))
 
             # Guess BEFORE drawing
             while True:
@@ -293,6 +299,11 @@ class DoubleOrDoubleGame(Game):
         if deck.cardsRemaining() == 0:
             deck.resetDeck()
         dodCard = deck.drawCard()
+        self.emit(DoDTurnStartEvent(
+            player=player.getName(), previousCard=_printCard(dodCard),
+            streak=finalThreshold, pot=_pot(finalThreshold), multiplier=multiplier,
+            chainedPlayer=chainedPlayer if chainedPlayer != player.getName() else None,
+        ))
         self._clearScreen()
         print(f"\n{_SEP}")
         print("  DOUBLE OR DOUBLE!")

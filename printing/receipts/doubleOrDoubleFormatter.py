@@ -9,6 +9,33 @@ def configure(config: dict) -> None:
     _W = int(config.get("receiptWidth", 32))
 
 
+def formatTurnStart(event, p) -> None:
+    """Print the reference card before the player guesses."""
+    p.set(align="center", bold=True)
+    p.textln("DoD")
+    p.set(align="left", bold=False)
+    p.textln("=" * _W)
+    for line in _wrapText(event.player, _W):
+        p.textln(line)
+    for line in _wrapText(f"Putki: {event.streak}  |  Panos: {event.pot}", _W):
+        p.textln(line)
+    if event.multiplier > 1:
+        for line in _wrapText(f"Kerroin: x{event.multiplier}", _W):
+            p.textln(line)
+    p.textln("-" * _W)
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(event.previousCard)
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+    p.textln("=" * _W)
+
+
+def formatCardReveal(card: str, p) -> None:
+    """Print just the drawn card — no result, no context."""
+    p.set(align="center", bold=True, double_width=True, double_height=True)
+    p.textln(card)
+    p.set(align="left", bold=False, double_width=False, double_height=False)
+
+
 def formatCardDraw(event, p) -> None:
     p.set(align="center", bold=True)
     p.textln("DoD")
