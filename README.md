@@ -95,7 +95,6 @@ Settings can be adjusted before each game from the CLI without editing the confi
 
 ![Buja](assets/buja.png)
 
-<<<<<<< HEAD
 ---
 
 ### Mexico
@@ -121,8 +120,6 @@ A dice bluffing game. Players take turns rolling two dice and announcing a score
 
 Settings can be adjusted before each game from the CLI without editing the config file.
 
-=======
->>>>>>> main
 ---
 
 ### Mexico
