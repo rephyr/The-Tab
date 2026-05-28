@@ -4,11 +4,13 @@ LivePrinter listens to game events and prints receipts in real time as the game 
 Register it with: log.on(LivePrinter(printer).hook)
 """
 from core.events import DrinkEvent, GiveEvent, GuessEvent, PhaseEvent, BoardCardEvent, BoardCardDoneEvent, GameEndEvent, TaskDrawEvent, TaskDrinkSummaryEvent, TaskChainStartEvent, RouletteResultEvent, RaceStartEvent, BetsPlacedEvent, RaceRoundEvent, HorseEventFiredEvent, RaceFinishedEvent, TiebreakStartEvent, TiebreakRoundEvent, TiebreakEliminationEvent, TiebreakWinnerEvent, RavitBettorDrinkEvent
+from games.doubleOrDoubleGame.doubleOrDoubleEvents import DoDTurnStartEvent, DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent, DoDExitEvent, DoDLinkResolvedEvent
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatBoardCardReveal, formatBoardCardOutcome, formatTally, formatRouletteResult, configure as _configureBujaFormatter
 from printing.receipts.taskGameFormatter import formatTaskDraw, formatDrinkSummary, formatChainDraw, formatTally as formatTaskTally, configure as _configureTaskGameFormatter
 from printing.receipts.ravitFormatter import formatHorseList, formatBettingReceipt, formatJockeyList, formatRaceEvents, formatRaceTrack, formatHorseEvent, formatRavitWinner, formatRavitFinal, formatTiebreakStart, formatTiebreakRound, formatTiebreakElimination, formatTiebreakWinner, formatBettorDrink, configure as _configureRavitFormatter
-from games.diceGame.diceEvents import MexicanChallengeEvent
-from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
+from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
+from printing.receipts.diceFormatter import formatChallenge as _formatMexicoChallenge, formatAccept as _formatMexicoAccept, formatTally as _formatMexicoTally, configure as _configureDiceFormatter
+from printing.receipts.doubleOrDoubleFormatter import formatTurnStart as _formatDoDTurnStart, formatCardReveal as _formatDoDCardReveal, formatCardDraw as _formatDoDCardDraw, formatEqualCard as _formatDoDEqualCard, formatDoubleOrDouble as _formatDoDChallenge, formatDoDDrinksGiven as _formatDoDDrinksGiven, formatExit as _formatDoDExit, formatLinkResolved as _formatDoDLink, formatTally as _formatDoDTally, configure as _configureDoDFormatter
 
 
 class LivePrinter:
@@ -21,6 +23,7 @@ class LivePrinter:
         _configureTaskGameFormatter(printerConfig)
         _configureRavitFormatter(printerConfig)
         _configureDiceFormatter(printerConfig)
+        _configureDoDFormatter(printerConfig)
         self._inBoard = False
         self._boardCardCount = 0
         self._printedBoardCards = set()
@@ -28,6 +31,14 @@ class LivePrinter:
         self._ravitHorses = []
         self._ravitBets = []
         self._ravitFinalPositions = []
+
+    def _printHandAfterTurn(self, turn: dict) -> None:
+        hand = list(turn.get("handBefore") or [])
+        if turn.get("card"):
+            hand.append(turn["card"])
+        if hand:
+            player = turn["player"]
+            self._printer.printWith(lambda p, pl=player, h=hand: formatHand(pl, h, p))
 
     def hook(self, event, log):
         """Called by GameLog after every event. Decides what to print based on event type."""
@@ -47,6 +58,7 @@ class LivePrinter:
             self._printer.printWith(
                 lambda p, ph=lastPhase["name"], t=lastTurn: formatTurn(ph, t, p)
             )
+            self._printHandAfterTurn(lastTurn)
             self._turnPrinted = True
 
         elif isinstance(event, (DrinkEvent, GiveEvent)) and not self._inBoard and not self._turnPrinted:
@@ -58,6 +70,7 @@ class LivePrinter:
             self._printer.printWith(
                 lambda p, ph=lastPhase["name"], t=lastTurn: formatTurn(ph, t, p)
             )
+            self._printHandAfterTurn(lastTurn)
 
         elif isinstance(event, BoardCardEvent) and self._inBoard:
             self._boardCardCount += 1
@@ -129,6 +142,31 @@ class LivePrinter:
         elif isinstance(event, TiebreakWinnerEvent):
             self._printer.printWith(lambda p, e=event: formatTiebreakWinner(e, p))
 
+        elif isinstance(event, DoDTurnStartEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDTurnStart(e, p))
+
+        elif isinstance(event, DoDCardDrawnEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDCardReveal(e.card, p))
+            self._printer.printWith(lambda p, e=event: _formatDoDCardDraw(e, p))
+
+        elif isinstance(event, DoDEqualCardEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDEqualCard(e, p))
+
+        elif isinstance(event, DoDChallengeEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDCardReveal(e.challengeCard, p))
+            self._printer.printWith(lambda p, e=event: _formatDoDChallenge(e, p))
+            if event.correct and event.target:
+                self._printer.printWith(lambda p, e=event: _formatDoDDrinksGiven(e, p))
+
+        elif isinstance(event, DoDExitEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDExit(e, p))
+
+        elif isinstance(event, DoDLinkResolvedEvent):
+            self._printer.printWith(lambda p, e=event: _formatDoDLink(e, p))
+
+        elif isinstance(event, MexicanAcceptEvent):
+            self._printer.printWith(lambda p, e=event: _formatMexicoAccept(e, p))
+
         elif isinstance(event, MexicanChallengeEvent):
             self._printer.printWith(lambda p, e=event: _formatMexicoChallenge(e, p))
 
@@ -136,6 +174,8 @@ class LivePrinter:
             data = log.toDict()
             if self._gameTitle == "Mexico":
                 self._printer.printWith(lambda p, s=data["scores"]: _formatMexicoTally(s, p))
+            elif self._gameTitle == "DoubleOrDouble":
+                self._printer.printWith(lambda p, s=data["scores"]: _formatDoDTally(s, p))
             elif self._gameTitle == "TaskGame":
                 self._printer.printWith(lambda p, s=data["scores"]: formatTaskTally(s, p))
             elif self._gameTitle == "Buja":

@@ -2,9 +2,11 @@ import unittest
 from printing.receipts.bujaFormatter import formatTurn, formatHand, formatBoardCard, formatTally, formatReceipt, formatRouletteResult
 from printing.receipts.ravitFormatter import formatRaceEvents, formatRaceTrack, formatRavitWinner, formatBettorDrink, formatJockeyList, formatTiebreakStart, formatTiebreakRound
 from printing.receipts.taskGameFormatter import formatTaskDraw
-from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatTally as formatMexicoTally
+from printing.receipts.diceFormatter import formatChallenge as formatMexicoChallenge, formatAccept as formatMexicoAccept, formatTally as formatMexicoTally
+from printing.receipts.doubleOrDoubleFormatter import formatCardDraw as formatDoDCardDraw, formatEqualCard as formatDoDEqualCard, formatDoubleOrDouble as formatDoDChallenge, formatDoDDrinksGiven, formatExit as formatDoDExit, formatLinkResolved as formatDoDLink, formatTally as formatDoDTally
 from core.events import TaskDrawEvent, RouletteResultEvent, RaceRoundEvent, RavitBettorDrinkEvent, TiebreakStartEvent, TiebreakRoundEvent
-from games.diceGame.diceEvents import MexicanChallengeEvent
+from games.diceGame.diceEvents import MexicanChallengeEvent, MexicanAcceptEvent
+from games.doubleOrDoubleGame.doubleOrDoubleEvents import DoDCardDrawnEvent, DoDEqualCardEvent, DoDChallengeEvent, DoDExitEvent, DoDLinkResolvedEvent
 from tests.testUtils import SilentTest
 
 class MockPrinter:
@@ -448,6 +450,281 @@ class TestFormatMexicoTally(SilentTest):
         p = MockPrinter()
         formatMexicoTally([{"name": "X", "drank": 1, "gave": 0}], p)
         self.assertEqual(p.cuts, 0)
+
+
+class TestFormatMexicoAccept(SilentTest):
+    def _makeEvent(self, claimed=65):
+        return MexicanAcceptEvent(accepter="Testi Matti", claimed=claimed)
+
+    def testClaimShown(self):
+        p = MockPrinter()
+        formatMexicoAccept(self._makeEvent(), p)
+        self.assertTrue(any("65" in line for line in p.lines))
+
+    def testAccepterShown(self):
+        p = MockPrinter()
+        formatMexicoAccept(self._makeEvent(), p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testMexicoClaimDisplayed(self):
+        p = MockPrinter()
+        formatMexicoAccept(self._makeEvent(claimed=1000), p)
+        self.assertTrue(any("Mexico" in line for line in p.lines))
+
+
+class TestFormatDoDCardDraw(SilentTest):
+
+    def _correct(self, streak=3, multiplier=1):
+        return DoDCardDrawnEvent(
+            player="Testi Tatti", card="♠J", previousCard="♦7",
+            guess="korkeampi", correct=True, streak=streak, pot=3, multiplier=multiplier,
+        )
+
+    def _wrong(self, streak=2, multiplier=2):
+        return DoDCardDrawnEvent(
+            player="Testi Matti", card="♣3", previousCard="♦7",
+            guess="korkeampi", correct=False, streak=streak, pot=2, multiplier=multiplier,
+        )
+
+    def testPlayerNameShown(self):
+        p = MockPrinter()
+        formatDoDCardDraw(self._correct(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testStreakShownOnCorrect(self):
+        p = MockPrinter()
+        formatDoDCardDraw(self._correct(streak=3), p)
+        self.assertTrue(any("3" in line for line in p.lines))
+
+    def testDrinksShownOnWrong(self):
+        p = MockPrinter()
+        formatDoDCardDraw(self._wrong(streak=2, multiplier=2), p)
+        self.assertTrue(any("4" in line for line in p.lines))
+
+    def testVaarinShownOnWrong(self):
+        p = MockPrinter()
+        formatDoDCardDraw(self._wrong(), p)
+        self.assertTrue(any("VÄÄRIN" in line for line in p.lines))
+
+    def testMultiplierShownWhenAboveOne(self):
+        p = MockPrinter()
+        formatDoDCardDraw(self._correct(multiplier=4), p)
+        self.assertTrue(any("4" in line for line in p.lines))
+
+    def testChainShownOnWrong(self):
+        event = DoDCardDrawnEvent(
+            player="Testi Matti", card="♣3", previousCard="♦7",
+            guess="korkeampi", correct=False, streak=2, pot=2, multiplier=1,
+            chainedPlayer="Testi Tatti",
+        )
+        p = MockPrinter()
+        formatDoDCardDraw(event, p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testChainNotShownWhenAbsent(self):
+        p = MockPrinter()
+        formatDoDCardDraw(self._wrong(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
+
+class TestFormatDoDEqualCard(SilentTest):
+
+    def _event(self, multiplier=2):
+        return DoDEqualCardEvent(
+            player="Testi Tatti", card="♥7", previousCard="♦7",
+            penalty=3, multiplier=multiplier, total=3 * multiplier,
+        )
+
+    def testPlayerShown(self):
+        p = MockPrinter()
+        formatDoDEqualCard(self._event(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testTotalDrinksShown(self):
+        p = MockPrinter()
+        formatDoDEqualCard(self._event(multiplier=2), p)
+        self.assertTrue(any("6" in line for line in p.lines))
+
+    def testTasainenShown(self):
+        p = MockPrinter()
+        formatDoDEqualCard(self._event(), p)
+        self.assertTrue(any("TASAINEN" in line for line in p.lines))
+
+    def testChainShown(self):
+        event = DoDEqualCardEvent(
+            player="Testi Tatti", card="♥7", previousCard="♦7",
+            penalty=3, multiplier=1, total=3, chainedPlayer="Testi Matti",
+        )
+        p = MockPrinter()
+        formatDoDEqualCard(event, p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testChainNotShownWhenAbsent(self):
+        p = MockPrinter()
+        formatDoDEqualCard(self._event(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
+
+class TestFormatDoDChallenge(SilentTest):
+
+    def _correct(self):
+        return DoDChallengeEvent(
+            player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
+            guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
+        )
+
+    def _wrong(self):
+        return DoDChallengeEvent(
+            player="Testi Matti", challengeCard="♣2", previousCard="♦7",
+            guess="korkeampi", correct=False, pot=10, multiplier=1, amount=20,
+        )
+
+    def testPlayerShown(self):
+        p = MockPrinter()
+        formatDoDChallenge(self._correct(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testOikeinOnCorrect(self):
+        p = MockPrinter()
+        formatDoDChallenge(self._correct(), p)
+        self.assertTrue(any("OIKEIN" in line for line in p.lines))
+
+    def testVaarinOnWrong(self):
+        p = MockPrinter()
+        formatDoDChallenge(self._wrong(), p)
+        self.assertTrue(any("VÄÄRIN" in line for line in p.lines))
+
+    def testDrinksShownOnWrong(self):
+        p = MockPrinter()
+        formatDoDChallenge(self._wrong(), p)
+        self.assertTrue(any("20" in line for line in p.lines))
+
+    def testChainShownOnWrong(self):
+        event = DoDChallengeEvent(
+            player="Testi Matti", challengeCard="♣2", previousCard="♦7",
+            guess="korkeampi", correct=False, pot=10, multiplier=1, amount=20,
+            chainedPlayer="Testi Tatti",
+        )
+        p = MockPrinter()
+        formatDoDChallenge(event, p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testChainNotShownOnCorrect(self):
+        p = MockPrinter()
+        formatDoDChallenge(self._correct(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
+    def testChainNotShownWhenAbsent(self):
+        p = MockPrinter()
+        formatDoDChallenge(self._wrong(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
+
+class TestFormatDoDDrinksGiven(SilentTest):
+
+    def _event(self, chainedPlayer=None):
+        return DoDChallengeEvent(
+            player="Testi Tatti", challengeCard="♠A", previousCard="♠J",
+            guess="korkeampi", correct=True, pot=10, multiplier=2, amount=40,
+            target="Testi Matti", chainedPlayer=chainedPlayer,
+        )
+
+    def testTargetShown(self):
+        p = MockPrinter()
+        formatDoDDrinksGiven(self._event(), p)
+        self.assertTrue(any("TESTI MATTI" in line for line in p.lines))
+
+    def testAmountShown(self):
+        p = MockPrinter()
+        formatDoDDrinksGiven(self._event(), p)
+        self.assertTrue(any("40" in line for line in p.lines))
+
+    def testChainShown(self):
+        p = MockPrinter()
+        formatDoDDrinksGiven(self._event(chainedPlayer="Testi Kolmo"), p)
+        self.assertTrue(any("KETJU:" in line for line in p.lines))
+        self.assertTrue(any("Testi Kolmo" in line for line in p.lines))
+
+    def testNoChainWhenAbsent(self):
+        p = MockPrinter()
+        formatDoDDrinksGiven(self._event(), p)
+        self.assertFalse(any("KETJU:" in line for line in p.lines))
+
+
+class TestFormatDoDExit(SilentTest):
+
+    def _event(self):
+        return DoDExitEvent(player="Testi Tatti", pot=3, streak=3)
+
+    def testPlayerShown(self):
+        p = MockPrinter()
+        formatDoDExit(self._event(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testPotShown(self):
+        p = MockPrinter()
+        formatDoDExit(self._event(), p)
+        self.assertTrue(any("3" in line for line in p.lines))
+
+    def testLinkitettyShown(self):
+        p = MockPrinter()
+        formatDoDExit(self._event(), p)
+        self.assertTrue(any("LINKITETTY" in line for line in p.lines))
+
+    def testStreakShown(self):
+        p = MockPrinter()
+        formatDoDExit(self._event(), p)
+        self.assertTrue(any("3" in line for line in p.lines))
+
+
+class TestFormatDoDLinkResolved(SilentTest):
+
+    def _event(self):
+        return DoDLinkResolvedEvent(linkedPlayer="Testi Tatti", triggerPlayer="Testi Matti", amount=4)
+
+    def testLinkedPlayerShown(self):
+        p = MockPrinter()
+        formatDoDLink(self._event(), p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+
+    def testTriggerPlayerShown(self):
+        p = MockPrinter()
+        formatDoDLink(self._event(), p)
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testAmountShown(self):
+        p = MockPrinter()
+        formatDoDLink(self._event(), p)
+        self.assertTrue(any("4" in line for line in p.lines))
+
+    def testLinkHeaderShown(self):
+        p = MockPrinter()
+        formatDoDLink(self._event(), p)
+        self.assertTrue(any("LINKITETTY" in line for line in p.lines))
+
+
+class TestFormatDoDTally(SilentTest):
+
+    def testAllPlayersShown(self):
+        p = MockPrinter()
+        scores = [{"name": "Testi Tatti", "drank": 6}, {"name": "Testi Matti", "drank": 20}]
+        formatDoDTally(scores, p)
+        self.assertTrue(any("Testi Tatti" in line for line in p.lines))
+        self.assertTrue(any("Testi Matti" in line for line in p.lines))
+
+    def testDrinkCountsShown(self):
+        p = MockPrinter()
+        scores = [{"name": "Testi Tatti", "drank": 6}]
+        formatDoDTally(scores, p)
+        self.assertTrue(any("6" in line for line in p.lines))
+
+    def testLoppusaltoShown(self):
+        p = MockPrinter()
+        formatDoDTally([{"name": "X", "drank": 1}], p)
+        self.assertTrue(any("LOPPUSALDO" in line for line in p.lines))
 
 
 if __name__ == "__main__":
